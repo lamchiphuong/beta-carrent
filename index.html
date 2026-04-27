@@ -3,11 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CarRent Pro - Quản Lý Thuê Xe</title>
+  <title>CarRent - Quản Lý Thuê Xe</title>
   
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+
+  <link rel="manifest" href="data:application/manifest+json,{
+    &quot;name&quot;:&quot;CarRent - Quản Lý Thuê Xe&quot;,
+    &quot;short_name&quot;:&quot;CarRent&quot;,
+    &quot;description&quot;:&quot;Quản lý thuê xe thông minh&quot;,
+    &quot;start_url&quot;:&quot;.&quot;,
+    &quot;display&quot;:&quot;standalone&quot;,
+    &quot;background_color&quot;:&quot;#f8fafc&quot;,
+    &quot;theme_color&quot;:&quot;#2563eb&quot;,
+    &quot;icons&quot;:[{
+      &quot;src&quot;:&quot;https://cdn-icons-png.flaticon.com/512/19006/19006139.png&quot;,
+      &quot;sizes&quot;:&quot;512x512&quot;,
+      &quot;type&quot;:&quot;image/png&quot;,
+      &quot;purpose&quot;:&quot;any maskable&quot;
+    }]
+  }">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   
   <style>
     :root {
@@ -27,74 +45,6 @@
       padding: 15px;
       padding-bottom: 130px;
     }
-
-    /* AUTH SCREEN */
-    #authScreen {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, #3a7bd5, #00d2ff);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-    }
-    .auth-box {
-      background: white;
-      padding: 30px 25px;
-      border-radius: 20px;
-      width: 380px;
-      max-width: 95%;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-    }
-    .auth-title {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #1e40af;
-      font-size: 1.8rem;
-    }
-    .auth-tabs {
-      display: flex;
-      background: #f1f5f9;
-      border-radius: 12px;
-      padding: 5px;
-      margin-bottom: 20px;
-    }
-    .auth-tab {
-      flex: 1;
-      padding: 12px;
-      text-align: center;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .auth-tab.active {
-      background: white;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-
-    .auth-input {
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-      border: 2px solid #e2e8f0;
-      border-radius: 12px;
-      font-size: 1rem;
-    }
-    .auth-btn {
-      width: 100%;
-      padding: 14px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 1.05rem;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    /* MAIN APP */
-    #mainApp { display: none; }
 
     .container { max-width: 1400px; margin: 0 auto; }
     header { text-align: center; margin-bottom: 25px; }
@@ -233,6 +183,7 @@
       font-size: 1.35rem;
       box-shadow: 0 4px 15px rgba(0,0,0,0.15);
       cursor: pointer;
+      transition: all 0.3s ease;
     }
 
     .modal {
@@ -504,70 +455,93 @@
     }
 
     @media print {
-      .tabs, .fab, .action-buttons, header, .modal, .action-popup, #authScreen { display: none !important; }
+      .tabs, .fab, .action-buttons, header, .modal, .action-popup { display: none !important; }
       #tab2 { display: block !important; box-shadow: none; }
       .table-container { overflow: visible; }
     }
+    /* ==================== CAR GRID - MOBILE FRIENDLY ==================== */
+.car-grid {
+  padding: 8px 0;
+}
+
+.car-card {
+  background: white;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.car-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(37,99,235,0.15);
+  border-color: var(--primary);
+}
+
+.car-card .car-icon {
+  font-size: 3.2rem;
+  color: var(--primary);
+  margin-bottom: 12px;
+  text-align: center;
+  display: block;
+}
+
+.car-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.25rem;
+  color: #1e40af;
+}
+
+.car-card .plate {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 6px 12px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.car-card .status {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.car-popup-content {
+  text-align: center;
+}
+
+.car-popup-content .price-info {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 16px;
+  margin: 20px 0;
+  text-align: left;
+}
+
+.car-popup-content .price-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.car-popup-content .price-row:last-child {
+  margin-bottom: 0;
+}
   </style>
 </head>
 <body>
-
-<!-- ====================== AUTH SCREEN ====================== -->
-<div id="authScreen">
-  <div class="auth-box">
-    <h2 class="auth-title"><i class="fas fa-car"></i> CarRent Pro</h2>
-    
-    <div class="auth-tabs">
-      <div class="auth-tab active" onclick="switchAuthTab(0)">Đăng nhập</div>
-      <div class="auth-tab" onclick="switchAuthTab(1)">Đăng ký</div>
-      <div class="auth-tab" onclick="switchAuthTab(2)">Kích hoạt License</div>
-    </div>
-
-<div id="auth-login">
-  <input id="log_user" class="auth-input" placeholder="Tên đăng nhập">
-  
-  <div style="position: relative;">
-    <input id="log_pass" type="password" class="auth-input" placeholder="Mật khẩu" style="padding-right: 50px;">
-    <span onclick="togglePassword('log_pass', this)" 
-          style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; font-size: 1.35rem; user-select: none;">
-      <span class="material-icons">visibility_off</span>
-    </span>
-  </div>
-
-  <button class="auth-btn" onclick="login()">Đăng nhập</button>
-</div>
-
-<div id="auth-register" style="display:none;">
-  <input id="reg_user" class="auth-input" placeholder="Tên đăng nhập">
-  
-  <div style="position: relative;">
-    <input id="reg_pass" type="password" class="auth-input" placeholder="Mật khẩu" style="padding-right: 50px;">
-    <span onclick="togglePassword('reg_pass', this)" 
-          style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #64748b; font-size: 1.35rem; user-select: none;">
-      <span class="material-icons">visibility_off</span>
-    </span>
-  </div>
-
-  <button class="auth-btn" onclick="register()">Tạo tài khoản</button>
-</div>
-
-    <div id="auth-license" style="display:none;">
-      <input id="license_key" class="auth-input" placeholder="PRO-20261231-XXXX-ABCD">
-      <button class="auth-btn" onclick="activateLicense()">Kích hoạt License</button>
-    </div>
-  </div>
-</div>
-
-<!-- ====================== MAIN APP ====================== -->
-<div id="mainApp">
   <div class="container">
     <header>
       <h1><i class="fas fa-car"></i> CarRent</h1>
       <p class="subtitle">Quản lý thuê xe thông minh</p>
-      <div style="margin:15px 0;">
-        <span id="currentUserDisplay" style="background:#dbeafe;color:#1e40af;padding:8px 16px;border-radius:30px;font-weight:600;"></span>
-        <button onclick="logout()" class="btn btn-secondary" style="margin-left:10px;">Đăng xuất</button>
-      </div>
     </header>
 
     <div class="tabs">
@@ -586,7 +560,8 @@
       </div>
 
       <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
-        <input type="text" id="searchInput" placeholder="🔎 Tìm tên khách, SĐT, biển số..." style="flex:1; min-width:250px; padding:14px; border:2px solid #e2e8f0; border-radius:12px;">
+        <input type="text" id="searchInput" placeholder="🔎 Tìm tên khách, SĐT, biển số..." 
+               style="flex:1; min-width:250px; padding:14px; border:2px solid #e2e8f0; border-radius:12px;">
         <select id="statusFilter" style="padding:14px; border:2px solid #e2e8f0; border-radius:12px; min-width:170px;">
           <option value="all">Tất cả trạng thái</option>
           <option value="Chưa nhận xe">Chưa nhận xe</option>
@@ -618,31 +593,20 @@
     </div>
 
     <!-- Tab 1 -->
-    <div id="tab1" class="card" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2><i class="fas fa-car-side"></i> Danh sách xe</h2>
-        <button class="btn btn-success" onclick="showAddCarModal()">
-          <i class="fas fa-plus"></i> Thêm xe mới
-        </button>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Loại xe</th>
-              <th>Biển số</th>
-              <th>Trạng thái xe</th>
-              <th>Giá ngày thường</th>
-              <th>Giá cuối tuần</th>
-              <th>Giá lễ/Tết</th>
-              <th>Lịch xe</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody id="carBody"></tbody>
-        </table>
-      </div>
-    </div>
+<!-- Tab 1 - Quản lý xe (Phiên bản Mobile Friendly) -->
+<div id="tab1" class="card" style="display: none;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <h2><i class="fas fa-car-side"></i> Danh sách xe</h2>
+    <button class="btn btn-success" onclick="showAddCarModal()">
+      <i class="fas fa-plus"></i> Thêm xe mới
+    </button>
+  </div>
+
+  <!-- Grid xe cho mobile -->
+  <div id="carGrid" class="car-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+    <!-- JS sẽ render vào đây -->
+  </div>
+</div>
 
     <!-- Tab 2 -->
     <div id="tab2" class="card" style="display: none;">
@@ -651,11 +615,14 @@
       <div style="margin: 20px 0; padding: 20px; background: #f8fafc; border-radius: 16px; display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Năm</label>
-          <select id="revenueYearFilter" onchange="filterCompletedContracts()" style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:140px;"></select>
+          <select id="revenueYearFilter" onchange="filterCompletedContracts()" 
+                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:140px;">
+          </select>
         </div>
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Tháng</label>
-          <select id="revenueMonthFilter" onchange="filterCompletedContracts()" style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:160px;">
+          <select id="revenueMonthFilter" onchange="filterCompletedContracts()" 
+                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:160px;">
             <option value="">Tất cả tháng</option>
             <option value="1">Tháng 1</option>
             <option value="2">Tháng 2</option>
@@ -673,20 +640,26 @@
         </div>
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Xe</label>
-          <select id="revenueCarFilter" onchange="filterCompletedContracts()" style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:220px;">
+          <select id="revenueCarFilter" onchange="filterCompletedContracts()" 
+                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:220px;">
             <option value="">Tất cả xe</option>
           </select>
         </div>
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Loại hợp đồng</label>
-          <select id="revenueTypeFilter" onchange="filterCompletedContracts()" style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px;">
+          <select id="revenueTypeFilter" onchange="filterCompletedContracts()" 
+                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px;">
             <option value="">Tất cả</option>
             <option value="app">Đặt qua app</option>
             <option value="normal">Thuê thường</option>
           </select>
         </div>
-        <button onclick="resetRevenueFilter()" class="btn btn-secondary" style="height:48px;"><i class="fas fa-sync"></i> Xem tất cả</button>
-        <button onclick="printRevenue()" class="btn btn-secondary" style="height:48px;"><i class="fas fa-print"></i> In báo cáo</button>
+        <button onclick="resetRevenueFilter()" class="btn btn-secondary" style="height: 48px;">
+          <i class="fas fa-sync"></i> Xem tất cả
+        </button>
+        <button onclick="printRevenue()" class="btn btn-secondary" style="height: 48px;">
+          <i class="fas fa-print"></i> In báo cáo
+        </button>
       </div>
 
       <div style="background:#f0fdf4; border-radius:16px; padding:20px; margin-bottom:25px; display:flex; justify-content:space-between; align-items:center;">
@@ -727,8 +700,275 @@
 
   <!-- Action buttons -->
   <div class="action-buttons">
-    <div class="action-btn" onclick="refreshApp()" title="Làm mới"><i class="fas fa-sync-alt"></i></div>
+    <div class="action-btn" onclick="refreshApp()" title="Làm mới trang"><i class="fas fa-sync-alt"></i></div>
     <div class="action-btn" onclick="goHome()" title="Về trang chính"><i class="fas fa-home"></i></div>
+  </div>
+
+  <!-- Modal Thêm/Sửa Hợp Đồng -->
+  <div id="contractModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="contractModalTitle">Thêm hợp đồng thuê xe</h2>
+        <span class="close" onclick="closeModal()">×</span>
+      </div>
+      <form id="contractForm">
+        <input type="hidden" id="contractId">
+
+        <label>Loại hợp đồng</label>
+        <div class="contract-type">
+          <div class="type-btn active" id="typeNormal" onclick="setContractType('normal')">Thuê thường</div>
+          <div class="type-btn" id="typeApp" onclick="setContractType('app')">Đặt qua app</div>
+        </div>
+        <input type="hidden" id="contractType" value="normal">
+
+        <select id="carSelect" required><option value="">Chọn xe</option></select>
+
+        <label>Tên khách thuê</label>
+        <input type="text" id="customerName" list="customerNameList" placeholder="Tên khách thuê" required>
+
+        <label>Số điện thoại</label>
+        <input type="tel" id="phone" list="phoneList" placeholder="Số điện thoại" required>
+
+        <datalist id="customerNameList"></datalist>
+        <datalist id="phoneList"></datalist>
+
+        <div class="form-grid">
+          <div><label>Ngày bắt đầu thuê</label><input type="date" id="rentDate" required></div>
+          <div><label>Thời gian nhận xe</label><input type="time" id="rentTime" value="08:00"></div>
+          <div><label>Ngày trả xe</label><input type="date" id="returnDate" required></div>
+          <div><label>Thời gian trả xe</label><input type="time" id="returnTime" value="20:00"></div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label>Nhận xe vào</label>
+          <select id="rentDayType">
+            <option value="cungngay" selected>Cùng ngày</option>
+            <option value="homtruoc">Tối hôm trước</option>
+          </select>
+        </div>
+
+        <!-- NỬA NGÀY -->
+        <div style="margin: 15px 0 20px 0; background:#f8fafc; padding:15px; border-radius:12px;">
+          <label style="display:block; margin-bottom:10px; font-weight:600; color:#475569;">Loại ngày tính giá</label>
+          <div class="form-grid">
+            <div>
+              <label>Ngày bắt đầu thuê</label>
+              <select id="rentHalf">
+                <option value="full" selected>Toàn ngày</option>
+                <option value="half">Nửa ngày đầu (50% giá)</option>
+              </select>
+            </div>
+            <div>
+              <label>Ngày trả xe</label>
+              <select id="returnHalf">
+                <option value="full" selected>Toàn ngày</option>
+                <option value="half">Nửa ngày cuối (50% giá)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="custom-price" id="customPriceSection">
+          <label>Giá tổng thuê xe (VNĐ) <small style="color:#16a34a;">(cho Đặt qua app)</small></label>
+          <input type="text" id="customTotalPrice" class="money-input" inputmode="numeric" pattern="[0-9\s]*" placeholder="Ví dụ: 1200000">
+        </div>
+
+        <div style="margin: 20px 0 10px 0;">
+          <label>Ghi chú hợp đồng (đang xử lý)</label>
+          <textarea id="activeNote" rows="3" placeholder="Ghi chú cho hợp đồng đang xử lý..."></textarea>
+        </div>
+
+        <div class="money-group">
+          <label>Số tiền cọc (VNĐ)</label>
+          <input type="text" id="deposit" class="money-input" inputmode="numeric" pattern="[0-9\s]*" placeholder="Ví dụ: 500000" required>
+        </div>
+
+        <div class="money-group">
+          <label>Giảm giá (VNĐ) <small style="color:#16a34a;">(nếu có)</small></label>
+          <input type="text" id="discount" class="money-input" inputmode="numeric" pattern="[0-9\s]*" placeholder="0" value="0">
+        </div>
+
+        <div style="margin: 20px 0 10px 0;">
+          <h4 style="color: #64748b; margin-bottom: 8px;">Phụ phí phát sinh (nếu có)</h4>
+          <div id="extraFeesList"></div>
+          <button type="button" onclick="addExtraFeeField()" class="btn btn-info" style="width:100%; margin-top:8px;">
+            <i class="fas fa-plus"></i> Thêm phụ phí khác
+          </button>
+        </div>
+
+        <select id="status" required>
+          <option value="Chưa nhận xe" selected>Chưa nhận xe</option>
+          <option value="Đang thuê">Đang thuê</option>
+          <option value="Đã hoàn tất">Đã hoàn tất</option>
+        </select>
+
+        <div style="margin-top: 25px; display: flex; gap: 15px;">
+          <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeModal()">Huỷ</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;" id="contractSubmitBtn">Lưu hợp đồng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Action Popup -->
+  <div id="actionPopup" class="action-popup">
+    <div class="action-popup-content">
+      <div class="action-popup-header">
+        <h2 id="popupContractTitle" class="action-popup-title"></h2>
+        <div id="popupContractInfo" class="action-popup-info"></div>
+      </div>
+      <div class="action-buttons-grid">
+        <button onclick="editFromPopup()" class="btn btn-edit" style="width:100%; justify-content:center;">
+          <i class="fas fa-edit"></i> Sửa hợp đồng
+        </button>
+        <button onclick="openActiveNoteFromPopup()" class="btn btn-note" style="width:100%; justify-content:center;">
+          <i class="fas fa-sticky-note"></i> Ghi chú
+        </button>
+        <button id="receiveBtnPopup" onclick="confirmReceiveFromPopup()" class="btn btn-success" style="width:100%; justify-content:center;">
+          <i class="fas fa-car"></i> Nhận xe
+        </button>
+        <button id="returnBtnPopup" onclick="confirmReturnFromPopup()" class="btn btn-info" style="width:100%; justify-content:center; display:none;">
+          <i class="fas fa-undo"></i> Trả xe
+        </button>
+        <button onclick="deleteFromPopup()" class="btn btn-danger" style="width:100%; justify-content:center;">
+          <i class="fas fa-trash"></i> Huỷ hợp đồng
+        </button>
+        <button onclick="closeActionPopup()" class="btn btn-secondary" style="width:100%; justify-content:center;">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Note Modal -->
+  <div id="noteModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="noteModalTitle">Ghi chú hợp đồng</h2>
+        <span class="close" onclick="closeNoteModal()">×</span>
+      </div>
+      <textarea id="noteText" rows="6" style="width:100%; resize:vertical;" placeholder="Nhập ghi chú cho hợp đồng đang xử lý..."></textarea>
+      <input type="hidden" id="noteContractId">
+      <div style="margin-top:20px; display:flex; gap:12px;">
+        <button onclick="closeNoteModal()" class="btn btn-secondary" style="flex:1;">Huỷ</button>
+        <button onclick="saveActiveNote()" class="btn btn-primary" style="flex:1;">Lưu ghi chú</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Note Modal -->
+  <div id="historyNoteModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 id="historyNoteModalTitle">Ghi chú lịch sử</h2>
+        <span class="close" onclick="closeHistoryNoteModal()">×</span>
+      </div>
+      <textarea id="historyNoteText" rows="6" style="width:100%; resize:vertical;" placeholder="Nhập ghi chú cho hợp đồng đã hoàn tất..."></textarea>
+      <input type="hidden" id="historyNoteContractId">
+      <div style="margin-top:20px; display:flex; gap:12px;">
+        <button onclick="closeHistoryNoteModal()" class="btn btn-secondary" style="flex:1;">Huỷ</button>
+        <button onclick="saveHistoryNote()" class="btn btn-primary" style="flex:1;">Lưu ghi chú lịch sử</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Car Modal -->
+  <div id="carModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="carModalTitle">Thêm xe mới</h2>
+        <span class="close" onclick="closeCarModal()">×</span>
+      </div>
+      <form id="carForm">
+        <input type="hidden" id="carId">
+        <input type="text" id="carType" placeholder="Loại xe (ví dụ: Toyota Vios)" required>
+        <input type="text" id="licensePlate" placeholder="Biển số xe" required>
+        
+        <div class="form-grid">
+          <div><label>Giá ngày thường (VNĐ/ngày)</label><input type="text" id="dailyPrice" class="money-input" inputmode="numeric" pattern="[0-9\s]*" placeholder="Nhập giá tiền" required></div>
+          <div><label>Giá cuối tuần (VNĐ/ngày)</label><input type="text" id="weekendPrice" class="money-input" inputmode="numeric" pattern="[0-9\s]*" placeholder="Nhập giá tiền" required></div>
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label>Giá ngày lễ/Tết (VNĐ/ngày)</label>
+          <input type="text" id="holidayPrice" class="money-input" inputmode="numeric" pattern="[0-9\s]*" placeholder="Nhập giá tiền" required>
+        </div>
+
+        <div style="margin-top: 25px; display: flex; gap: 15px;">
+          <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeCarModal()">Huỷ</button>
+          <button type="submit" class="btn btn-success" style="flex:1;" id="carSubmitBtn">Thêm xe</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header" style="justify-content: center; flex-direction: column; text-align: center;">
+        <div id="confirmIcon" class="confirm-icon"></div>
+        <h2 id="confirmTitle" class="confirm-title"></h2>
+        <span class="close" onclick="closeConfirmModal()" style="position:absolute; top:15px; right:20px;">×</span>
+      </div>
+      <div id="confirmMessage" class="confirm-message"></div>
+      <div class="confirm-buttons">
+        <button id="confirmCancelBtn" class="btn btn-warning">Chưa thu đủ</button>
+        <button id="confirmOkBtn" class="btn btn-success">Đã thu đủ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Simple Confirm Modal -->
+  <div id="simpleConfirmModal" class="modal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header" style="justify-content: center; text-align: center;">
+        <h2 id="simpleConfirmTitle">Xác nhận</h2>
+        <span class="close" onclick="closeSimpleConfirmModal()">×</span>
+      </div>
+      <div id="simpleConfirmMessage" style="text-align:center; color:#475569; margin:20px 0; font-size:1.05rem; line-height:1.6;"></div>
+      <div style="display:flex; gap:12px;">
+        <button onclick="closeSimpleConfirmModal()" class="btn btn-secondary" style="flex:1;">Hủy bỏ</button>
+        <button id="simpleConfirmOkBtn" class="btn btn-danger" style="flex:1;">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Modal -->
+  <div id="scheduleModal" class="modal calendar-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="scheduleTitle">Lịch xe</h2>
+        <span class="close" onclick="closeScheduleModal()">×</span>
+      </div>
+      <div style="margin-bottom: 15px; display:flex; gap:10px; justify-content:center;">
+        <button onclick="prevMonth()" class="btn" style="padding:8px 16px;">←</button>
+        <h3 id="currentMonth" style="margin:0; padding:8px 0; min-width:180px; text-align:center;"></h3>
+        <button onclick="nextMonth()" class="btn" style="padding:8px 16px;">→</button>
+      </div>
+      <div class="calendar-header">
+        <div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div>
+      </div>
+      <div id="calendarGrid" class="calendar"></div>
+      <div style="margin-top:15px; font-size:0.9rem; color:#64748b;">
+        <span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:4px;">Đang bận</span>
+      </div>
+      <div style="margin-top: 25px; text-align: center;">
+        <button onclick="closeScheduleModal()" class="btn btn-secondary" style="min-width: 120px;">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contract Detail Modal -->
+  <div id="contractDetailModal" class="modal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h2>Thông tin hợp đồng ngày <span id="detailDate" style="color:var(--primary);"></span></h2>
+        <span class="close" onclick="closeContractDetailModal()">×</span>
+      </div>
+      <div id="detailContent" style="padding: 10px 0; max-height: 60vh; overflow-y:auto;"></div>
+      <div style="margin-top: 20px; text-align: center;">
+        <button onclick="closeContractDetailModal()" class="btn btn-secondary" style="min-width: 160px;">Đóng</button>
+      </div>
+    </div>
   </div>
 
   <!-- Toast -->
@@ -740,421 +980,12 @@
   <div class="version">
     CarRent v1.3.1 (2026)
   </div>
-</div>
-
-<!-- ====================== ALL MODALS ====================== -->
-
-<!-- Contract Modal -->
-<div id="contractModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 id="contractModalTitle">Thêm hợp đồng thuê xe</h2>
-      <span class="close" onclick="closeModal()">×</span>
-    </div>
-    <form id="contractForm">
-      <input type="hidden" id="contractId">
-      <label>Loại hợp đồng</label>
-      <div class="contract-type">
-        <div class="type-btn active" id="typeNormal" onclick="setContractType('normal')">Thuê thường</div>
-        <div class="type-btn" id="typeApp" onclick="setContractType('app')">Đặt qua app</div>
-      </div>
-      <input type="hidden" id="contractType" value="normal">
-
-      <select id="carSelect" required><option value="">Chọn xe</option></select>
-
-      <label>Tên khách thuê</label>
-      <input type="text" id="customerName" list="customerNameList" placeholder="Tên khách thuê" required>
-
-      <label>Số điện thoại</label>
-      <input type="tel" id="phone" list="phoneList" placeholder="Số điện thoại" required>
-
-      <datalist id="customerNameList"></datalist>
-      <datalist id="phoneList"></datalist>
-
-      <div class="form-grid">
-        <div><label>Ngày bắt đầu thuê</label><input type="date" id="rentDate" required></div>
-        <div><label>Thời gian nhận xe</label><input type="time" id="rentTime" value="08:00"></div>
-        <div><label>Ngày trả xe</label><input type="date" id="returnDate" required></div>
-        <div><label>Thời gian trả xe</label><input type="time" id="returnTime" value="20:00"></div>
-      </div>
-
-      <div style="margin-bottom:20px;">
-        <label>Nhận xe vào</label>
-        <select id="rentDayType">
-          <option value="cungngay" selected>Cùng ngày</option>
-          <option value="homtruoc">Tối hôm trước</option>
-        </select>
-      </div>
-
-      <div style="margin:15px 0 20px 0;background:#f8fafc;padding:15px;border-radius:12px;">
-        <label style="display:block;margin-bottom:10px;font-weight:600;color:#475569;">Loại ngày tính giá</label>
-        <div class="form-grid">
-          <div>
-            <label>Ngày bắt đầu thuê</label>
-            <select id="rentHalf">
-              <option value="full" selected>Toàn ngày</option>
-              <option value="half">Nửa ngày đầu (50% giá)</option>
-            </select>
-          </div>
-          <div>
-            <label>Ngày trả xe</label>
-            <select id="returnHalf">
-              <option value="full" selected>Toàn ngày</option>
-              <option value="half">Nửa ngày cuối (50% giá)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="custom-price" id="customPriceSection">
-        <label>Giá tổng thuê xe (VNĐ)</label>
-        <input type="text" id="customTotalPrice" class="money-input" placeholder="Ví dụ: 1200000">
-      </div>
-
-      <div style="margin:20px 0 10px 0;">
-        <label>Ghi chú hợp đồng</label>
-        <textarea id="activeNote" rows="3" placeholder="Ghi chú..."></textarea>
-      </div>
-
-      <div class="money-group">
-        <label>Số tiền cọc (VNĐ)</label>
-        <input type="text" id="deposit" class="money-input" placeholder="Ví dụ: 500000" required>
-      </div>
-
-      <div class="money-group">
-        <label>Giảm giá (VNĐ)</label>
-        <input type="text" id="discount" class="money-input" value="0">
-      </div>
-
-      <div style="margin:20px 0 10px 0;">
-        <h4 style="color:#64748b;margin-bottom:8px;">Phụ phí phát sinh</h4>
-        <div id="extraFeesList"></div>
-        <button type="button" onclick="addExtraFeeField()" class="btn btn-info" style="width:100%;margin-top:8px;">
-          <i class="fas fa-plus"></i> Thêm phụ phí
-        </button>
-      </div>
-
-      <select id="status" required>
-        <option value="Chưa nhận xe" selected>Chưa nhận xe</option>
-        <option value="Đang thuê">Đang thuê</option>
-        <option value="Đã hoàn tất">Đã hoàn tất</option>
-      </select>
-
-      <div style="margin-top:25px;display:flex;gap:15px;">
-        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeModal()">Huỷ</button>
-        <button type="submit" class="btn btn-primary" style="flex:1;" id="contractSubmitBtn">Lưu hợp đồng</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Action Popup -->
-<div id="actionPopup" class="action-popup">
-  <div class="action-popup-content">
-    <div class="action-popup-header">
-      <h2 id="popupContractTitle" class="action-popup-title"></h2>
-      <div id="popupContractInfo" class="action-popup-info"></div>
-    </div>
-    <div class="action-buttons-grid">
-      <button onclick="editFromPopup()" class="btn btn-edit" style="width:100%;justify-content:center;">Sửa hợp đồng</button>
-      <button onclick="openActiveNoteFromPopup()" class="btn btn-note" style="width:100%;justify-content:center;">Ghi chú</button>
-      <button id="receiveBtnPopup" onclick="confirmReceiveFromPopup()" class="btn btn-success" style="width:100%;justify-content:center;">Nhận xe</button>
-      <button id="returnBtnPopup" onclick="confirmReturnFromPopup()" class="btn btn-info" style="width:100%;justify-content:center;display:none;">Trả xe</button>
-      <button onclick="deleteFromPopup()" class="btn btn-danger" style="width:100%;justify-content:center;">Huỷ hợp đồng</button>
-      <button onclick="closeActionPopup()" class="btn btn-secondary" style="width:100%;justify-content:center;">Đóng</button>
-    </div>
-  </div>
-</div>
-
-<!-- Note Modal -->
-<div id="noteModal" class="modal">
-  <div class="modal-content" style="max-width:500px;">
-    <div class="modal-header">
-      <h2 id="noteModalTitle">Ghi chú hợp đồng</h2>
-      <span class="close" onclick="closeNoteModal()">×</span>
-    </div>
-    <textarea id="noteText" rows="6" style="width:100%;resize:vertical;"></textarea>
-    <input type="hidden" id="noteContractId">
-    <div style="margin-top:20px;display:flex;gap:12px;">
-      <button onclick="closeNoteModal()" class="btn btn-secondary" style="flex:1;">Huỷ</button>
-      <button onclick="saveActiveNote()" class="btn btn-primary" style="flex:1;">Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- History Note Modal -->
-<div id="historyNoteModal" class="modal">
-  <div class="modal-content" style="max-width:500px;">
-    <div class="modal-header">
-      <h2 id="historyNoteModalTitle">Ghi chú lịch sử</h2>
-      <span class="close" onclick="closeHistoryNoteModal()">×</span>
-    </div>
-    <textarea id="historyNoteText" rows="6" style="width:100%;resize:vertical;"></textarea>
-    <input type="hidden" id="historyNoteContractId">
-    <div style="margin-top:20px;display:flex;gap:12px;">
-      <button onclick="closeHistoryNoteModal()" class="btn btn-secondary" style="flex:1;">Huỷ</button>
-      <button onclick="saveHistoryNote()" class="btn btn-primary" style="flex:1;">Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- Car Modal -->
-<div id="carModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 id="carModalTitle">Thêm xe mới</h2>
-      <span class="close" onclick="closeCarModal()">×</span>
-    </div>
-    <form id="carForm">
-      <input type="hidden" id="carId">
-      <input type="text" id="carType" placeholder="Loại xe (ví dụ: Toyota Vios)" required>
-      <input type="text" id="licensePlate" placeholder="Biển số xe" required>
-      
-      <div class="form-grid">
-        <div><label>Giá ngày thường (VNĐ/ngày)</label><input type="text" id="dailyPrice" class="money-input" required></div>
-        <div><label>Giá cuối tuần (VNĐ/ngày)</label><input type="text" id="weekendPrice" class="money-input" required></div>
-      </div>
-      <div style="margin-bottom:15px;">
-        <label>Giá ngày lễ/Tết (VNĐ/ngày)</label>
-        <input type="text" id="holidayPrice" class="money-input" required>
-      </div>
-
-      <div style="margin-top:25px;display:flex;gap:15px;">
-        <button type="button" class="btn btn-secondary" style="flex:1;" onclick="closeCarModal()">Huỷ</button>
-        <button type="submit" class="btn btn-success" style="flex:1;" id="carSubmitBtn">Thêm xe</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Confirm Modal -->
-<div id="confirmModal" class="modal">
-  <div class="modal-content" style="max-width:480px;">
-    <div class="modal-header" style="justify-content:center;flex-direction:column;text-align:center;">
-      <div id="confirmIcon" class="confirm-icon"></div>
-      <h2 id="confirmTitle" class="confirm-title"></h2>
-      <span class="close" onclick="closeConfirmModal()" style="position:absolute;top:15px;right:20px;">×</span>
-    </div>
-    <div id="confirmMessage" class="confirm-message"></div>
-    <div class="confirm-buttons">
-      <button id="confirmCancelBtn" class="btn btn-warning">Chưa thu đủ</button>
-      <button id="confirmOkBtn" class="btn btn-success">Đã thu đủ</button>
-    </div>
-  </div>
-</div>
-
-<!-- Simple Confirm Modal -->
-<div id="simpleConfirmModal" class="modal">
-  <div class="modal-content" style="max-width:480px;">
-    <div class="modal-header" style="justify-content:center;text-align:center;">
-      <h2 id="simpleConfirmTitle">Xác nhận</h2>
-      <span class="close" onclick="closeSimpleConfirmModal()">×</span>
-    </div>
-    <div id="simpleConfirmMessage" style="text-align:center;color:#475569;margin:20px 0;font-size:1.05rem;line-height:1.6;"></div>
-    <div style="display:flex;gap:12px;">
-      <button onclick="closeSimpleConfirmModal()" class="btn btn-secondary" style="flex:1;">Hủy</button>
-      <button id="simpleConfirmOkBtn" class="btn btn-danger" style="flex:1;">Xác nhận</button>
-    </div>
-  </div>
-</div>
-
-<!-- Schedule Modal -->
-<div id="scheduleModal" class="modal calendar-modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2 id="scheduleTitle">Lịch xe</h2>
-      <span class="close" onclick="closeScheduleModal()">×</span>
-    </div>
-    <div style="margin-bottom:15px;display:flex;gap:10px;justify-content:center;">
-      <button onclick="prevMonth()" class="btn" style="padding:8px 16px;">←</button>
-      <h3 id="currentMonth" style="margin:0;padding:8px 0;min-width:180px;text-align:center;"></h3>
-      <button onclick="nextMonth()" class="btn" style="padding:8px 16px;">→</button>
-    </div>
-    <div class="calendar-header">
-      <div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div>
-    </div>
-    <div id="calendarGrid" class="calendar"></div>
-    <div style="margin-top:15px;font-size:0.9rem;color:#64748b;">
-      <span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:4px;">Đang bận</span>
-    </div>
-    <div style="margin-top:25px;text-align:center;">
-      <button onclick="closeScheduleModal()" class="btn btn-secondary" style="min-width:120px;">Đóng</button>
-    </div>
-  </div>
-</div>
-
-<!-- Contract Detail Modal -->
-<div id="contractDetailModal" class="modal">
-  <div class="modal-content" style="max-width:520px;">
-    <div class="modal-header">
-      <h2>Thông tin hợp đồng ngày <span id="detailDate" style="color:var(--primary);"></span></h2>
-      <span class="close" onclick="closeContractDetailModal()">×</span>
-    </div>
-    <div id="detailContent" style="padding:10px 0;max-height:60vh;overflow-y:auto;"></div>
-    <div style="margin-top:20px;text-align:center;">
-      <button onclick="closeContractDetailModal()" class="btn btn-secondary" style="min-width:160px;">Đóng</button>
-    </div>
-  </div>
-</div>
 
 <script>
-// ====================== AUTH CONFIG ======================
-const AUTH_BIN_ID = "69e9daab36566621a8e21633";
-const CAR_BIN_ID = "69cbce71856a682189e72759";
+// ==================== CẤU HÌNH ====================
 const MASTER_KEY = "$2a$10$w8HuZEOH5lKslhwqq1vyc.pW/hNhvuAzCkMse5cgH4R9cX.n27ISO";
-const SECRET = "MY_SECRET_KEY";
+const BIN_ID = "69cbce71856a682189e72759";
 
-let currentUsername = null;
-
-function switchAuthTab(n) {
-  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', i === n));
-  document.getElementById('auth-login').style.display = n === 0 ? 'block' : 'none';
-  document.getElementById('auth-register').style.display = n === 1 ? 'block' : 'none';
-  document.getElementById('auth-license').style.display = n === 2 ? 'block' : 'none';
-}
-
-async function hashPassword(password) {
-  const buffer = new TextEncoder().encode(password);
-  const hash = await crypto.subtle.digest("SHA-256", buffer);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
-}
-
-function simpleHash(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash).toString(36).toUpperCase().slice(0,4);
-}
-
-function verifyKey(key) {
-  let parts = key.split("-");
-  if (parts.length !== 4) return false;
-  let [plan, expiry, random, signature] = parts;
-  let check = simpleHash(plan + expiry + random + SECRET);
-  return check === signature;
-}
-
-async function getAuthData() {
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${AUTH_BIN_ID}`, {
-    headers: { "X-Master-Key": MASTER_KEY }
-  });
-  return (await res.json()).record;
-}
-
-async function saveAuthData(data) {
-  await fetch(`https://api.jsonbin.io/v3/b/${AUTH_BIN_ID}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY },
-    body: JSON.stringify(data)
-  });
-}
-
-async function getCarData() {
-  let res = await fetch(`https://api.jsonbin.io/v3/b/${CAR_BIN_ID}`, {
-    headers: { "X-Master-Key": MASTER_KEY }
-  });
-  return (await res.json()).record || { cars: [], contracts: [] };
-}
-
-async function saveCarData(data) {
-  await fetch(`https://api.jsonbin.io/v3/b/${CAR_BIN_ID}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", "X-Master-Key": MASTER_KEY },
-    body: JSON.stringify(data)
-  });
-}
-
-function isExpired(expiry) {
-  if (!expiry) return true;
-  return new Date() > new Date(expiry);
-}
-
-async function register() {
-  let user = document.getElementById('reg_user').value.trim();
-  let pass = document.getElementById('reg_pass').value;
-  if (!user || !pass) return alert("Vui lòng nhập đầy đủ!");
-
-  let db = await getAuthData();
-  if (!db.users) db.users = [];
-
-  if (db.users.some(u => u.username === user)) return alert("Username đã tồn tại!");
-
-  let hashed = await hashPassword(pass);
-
-  db.users.push({
-    username: user,
-    password_hash: hashed,
-    plan: null,
-    expiry: null,
-    license: null
-  });
-
-  await saveAuthData(db);
-  alert("Tạo tài khoản thành công!");
-  switchAuthTab(0);
-}
-
-async function login() {
-  let user = document.getElementById('log_user').value.trim();
-  let pass = document.getElementById('log_pass').value;
-
-  if (!user || !pass) return alert("Vui lòng nhập đầy đủ!");
-
-  let db = await getAuthData();
-  let hashed = await hashPassword(pass);
-
-  let found = db.users.find(u => u.username === user && u.password_hash === hashed);
-
-  if (!found) return alert("Sai tài khoản hoặc mật khẩu!");
-
-  currentUsername = user;
-  localStorage.setItem("currentUser", user);
-
-  if (!found.plan || isExpired(found.expiry)) {
-    alert("Tài khoản chưa có gói hoặc đã hết hạn!\nVui lòng kích hoạt License.");
-    switchAuthTab(2);
-    return;
-  }
-
-  showMainApp(found);
-}
-
-async function activateLicense() {
-  let key = document.getElementById('license_key').value.trim();
-  if (!verifyKey(key)) return alert("Key không hợp lệ!");
-
-  let db = await getAuthData();
-  let user = db.users.find(u => u.username === currentUsername || u.username === localStorage.getItem("currentUser"));
-
-  if (!user) return alert("Chưa login!");
-
-  let [plan, raw] = key.split("-");
-  user.plan = plan;
-  user.expiry = raw.slice(0,4) + "-" + raw.slice(4,6) + "-" + raw.slice(6,8);
-  user.license = key;
-
-  await saveAuthData(db);
-  alert("Kích hoạt thành công!");
-  showMainApp(user);
-}
-
-function showMainApp(user) {
-  document.getElementById('authScreen').style.display = 'none';
-  document.getElementById('mainApp').style.display = 'block';
-  document.getElementById('currentUserDisplay').innerHTML = `👤 ${user.username} <span style="background:#16a34a;color:white;padding:2px 8px;border-radius:12px;">${user.plan || "Pro"}</span>`;
-  initCarRent();
-}
-
-function logout() {
-  if (confirm("Bạn có chắc muốn đăng xuất?")) {
-    localStorage.removeItem("currentUser");
-    location.reload();
-  }
-}
-
-// ====================== CARRENT FULL SCRIPT ======================
 let cars = [], contracts = [];
 let holidays = ["2026-01-01", "2026-04-25","2026-04-26","2026-04-27", "2026-04-28","2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02","2026-05-03","2026-09-02"];
 
@@ -1176,6 +1007,7 @@ let currentRevenueType = '';
 let currentContractType = 'normal';
 let currentActionContractId = null;
 
+// ====================== HELPER ======================
 function formatMoney(num) {
   return Number(num || 0).toLocaleString('vi-VN').replace(/,/g, ' ');
 }
@@ -1197,19 +1029,7 @@ function showToast(msg) {
   toast.style.display = 'flex';
   setTimeout(() => toast.style.display = 'none', 4000);
 }
-// ====================== TOGGLE PASSWORD - GOOGLE MATERIAL ICON ======================
-function togglePassword(inputId, spanElement) {
-  const input = document.getElementById(inputId);
-  const icon = spanElement.querySelector('.material-icons');
-  
-  if (input.type === "password") {
-    input.type = "text";
-    icon.textContent = "visibility";        // Mắt mở (hiện password)
-  } else {
-    input.type = "password";
-    icon.textContent = "visibility_off";    // Mắt bị gạch (ẩn password)
-  }
-}
+
 let customerHistory = {};
 
 function buildCustomerHistory() {
@@ -1230,13 +1050,13 @@ function updateCustomerDatalists() {
   buildCustomerHistory();
   const nameList = document.getElementById('customerNameList');
   const phoneList = document.getElementById('phoneList');
-  if (nameList) nameList.innerHTML = '';
-  if (phoneList) phoneList.innerHTML = '';
+  nameList.innerHTML = '';
+  phoneList.innerHTML = '';
 
   Object.keys(customerHistory).forEach(phone => {
     const option = document.createElement('option');
     option.value = phone;
-    if (phoneList) phoneList.appendChild(option);
+    phoneList.appendChild(option);
   });
 
   const uniqueNames = new Set();
@@ -1244,7 +1064,7 @@ function updateCustomerDatalists() {
     if (!uniqueNames.has(data.name)) {
       const option = document.createElement('option');
       option.value = data.name;
-      if (nameList) nameList.appendChild(option);
+      nameList.appendChild(option);
       uniqueNames.add(data.name);
     }
   });
@@ -1253,31 +1073,43 @@ function updateCustomerDatalists() {
 function autoFillFromPhone() {
   const phoneInput = document.getElementById('phone').value.trim();
   if (!phoneInput || !customerHistory[phoneInput]) return;
+  
+  // Chỉ điền khi khớp chính xác 100%
   document.getElementById('customerName').value = customerHistory[phoneInput].name;
 }
 
 function autoFillFromName() {
   const nameInput = document.getElementById('customerName').value.trim();
   if (!nameInput) return;
+
+  // Tìm exact match (khớp chính xác tên)
   for (const [phone, data] of Object.entries(customerHistory)) {
-    if (data.name === nameInput) {
+    if (data.name === nameInput) {   // === thay vì includes
       document.getElementById('phone').value = phone;
       return;
     }
   }
 }
 
-async function loadCarData() {
+async function loadData() {
   try {
-    const data = await getCarData();
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      headers: { 'X-Master-Key': MASTER_KEY }
+    });
+    const json = await res.json();
+    const data = json.record || json;
     cars = Array.isArray(data.cars) ? data.cars : [];
     contracts = Array.isArray(data.contracts) ? data.contracts : [];
   } catch (e) { console.error("Lỗi load:", e); }
 }
 
-async function saveCarDataToBin() {
+async function saveData() {
   try {
-    await saveCarData({ cars, contracts });
+    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY },
+      body: JSON.stringify({ cars, contracts })
+    });
   } catch (e) { console.error("Lỗi save:", e); }
 }
 
@@ -1393,6 +1225,7 @@ function getCompletedDisplay(con) {
   };
 }
 
+// ====================== XÁC NHẬN ======================
 function showConfirm(title, message, icon, callback) {
   document.getElementById('confirmTitle').textContent = title;
   document.getElementById('confirmMessage').innerHTML = message;
@@ -1416,6 +1249,7 @@ function closeSimpleConfirmModal() {
   document.getElementById('simpleConfirmModal').style.display = 'none';
 }
 
+// ====================== CONTRACT TYPE ======================
 function setContractType(type) {
   currentContractType = type;
   document.getElementById('contractType').value = type;
@@ -1424,6 +1258,7 @@ function setContractType(type) {
   document.getElementById('customPriceSection').classList.toggle('show', type === 'app');
 }
 
+// ====================== GHI CHÚ ======================
 function openActiveNoteModal(id) {
   const contract = contracts.find(c => c.id === id);
   if (!contract) return;
@@ -1439,8 +1274,8 @@ function saveActiveNote() {
   if (contract) {
     contract.activeNote = document.getElementById('noteText').value.trim();
     renderAll();
-    saveCarDataToBin();
-    showToast("Ghi chú đã được lưu!");
+    saveData();
+    showToast("Ghi chú đang xử lý đã được lưu!");
   }
   closeNoteModal();
 }
@@ -1464,7 +1299,7 @@ function saveHistoryNote() {
   if (contract) {
     contract.historyNote = document.getElementById('historyNoteText').value.trim();
     renderAll();
-    saveCarDataToBin();
+    saveData();
     showToast("Ghi chú lịch sử đã được lưu!");
   }
   closeHistoryNoteModal();
@@ -1474,6 +1309,7 @@ function closeHistoryNoteModal() {
   document.getElementById('historyNoteModal').style.display = 'none';
 }
 
+// ====================== POP-UP HÀNH ĐỘNG ======================
 function showActionPopup(id) {
   currentActionContractId = id;
   const contract = contracts.find(c => c.id === id);
@@ -1547,6 +1383,7 @@ function deleteFromPopup() {
   deleteContract(id);
 }
 
+// ====================== LỊCH XE ======================
 function renderCalendar(carId) {
   currentScheduleCarId = carId;
   const booked = new Set();
@@ -1637,19 +1474,16 @@ function showCarSchedule(id) {
   document.getElementById('scheduleModal').style.display = 'flex';
   renderCalendar(id);
 }
-
 function prevMonth() { 
   currentMonth--; 
   if (currentMonth < 0) { currentMonth = 11; currentYear--; } 
   renderCalendar(currentScheduleCarId); 
 }
-
 function nextMonth() { 
   currentMonth++; 
   if (currentMonth > 11) { currentMonth = 0; currentYear++; } 
   renderCalendar(currentScheduleCarId); 
 }
-
 function closeScheduleModal() { document.getElementById('scheduleModal').style.display = 'none'; }
 function closeContractDetailModal() { document.getElementById('contractDetailModal').style.display = 'none'; }
 
@@ -1671,6 +1505,7 @@ function addExtraFeeField() {
   container.appendChild(row);
 }
 
+// ====================== LOGIC NGÀY ======================
 function getRealReceiveDate(contract) {
   let date = new Date(contract.rentDate);
   if (contract.rentDayType === "homtruoc") {
@@ -1703,6 +1538,7 @@ function isOverdue(contract) {
   return retDate.getTime() < today.getTime() && contract.status === "Đang thuê";
 }
 
+// ====================== RENDER ======================
 function renderActiveContracts() {
   const tbody = document.getElementById('activeContractBody');
   tbody.innerHTML = '';
@@ -1785,29 +1621,117 @@ function renderActiveContracts() {
 }
 
 function renderCars() {
-  const tbody = document.getElementById('carBody');
-  tbody.innerHTML = '';
+  const container = document.getElementById('carGrid');
+  container.innerHTML = '';
+
   cars.forEach(car => {
     const busy = contracts.some(c => c.plate === car.plate && c.status !== "Đã hoàn tất");
-    const statusHTML = busy ? `<span class="status busy">Đang có lịch</span>` : `<span class="status available">Đang rảnh</span>`;
+    const statusHTML = busy 
+      ? `<span class="status busy">Đang có lịch</span>` 
+      : `<span class="status available">Đang rảnh</span>`;
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${car.type}</td>
-      <td><strong>${car.plate}</strong></td>
-      <td>${statusHTML}</td>
-      <td>${formatMoney(car.daily)} ₫</td>
-      <td>${formatMoney(car.weekend)} ₫</td>
-      <td>${formatMoney(car.holiday)} ₫</td>
-      <td><button onclick="showCarSchedule(${car.id}); event.stopImmediatePropagation();" class="btn btn-info" style="padding:8px 16px;font-size:0.9rem;">📅 Xem lịch</button></td>
-      <td style="display:flex; gap:6px;">
-        <button onclick="editCar(${car.id}); event.stopImmediatePropagation();" class="btn btn-edit" style="padding:8px 12px;"><i class="fas fa-edit"></i></button>
-        <button onclick="deleteCar(${car.id}); event.stopImmediatePropagation();" class="btn btn-danger" style="padding:8px 12px;"><i class="fas fa-trash"></i></button>
-      </td>
+    const card = document.createElement('div');
+    card.className = 'car-card';
+    card.onclick = () => showCarPopup(car.id);
+
+    card.innerHTML = `
+      <h3>${car.type}</h3>
+      <div class="plate">${car.plate}</div>
+      ${statusHTML}
     `;
-    tbody.appendChild(tr);
+
+    container.appendChild(card);
   });
+
+  // Nếu không có xe nào
+  if (cars.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:40px 20px; color:#64748b;">
+        <i class="fas fa-car" style="font-size:4rem; opacity:0.3; margin-bottom:15px;"></i>
+        <p>Chưa có xe nào. Hãy thêm xe mới!</p>
+      </div>
+    `;
+  }
 }
+
+// ====================== CAR POPUP (Mobile Friendly) ======================
+function showCarPopup(carId) {
+  const car = cars.find(c => c.id === carId);
+  if (!car) return;
+
+  const busy = contracts.some(c => c.plate === car.plate && c.status !== "Đã hoàn tất");
+
+  const popupHTML = `
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h2>Thông tin xe</h2>
+        <span class="close" onclick="closeCarPopup()">×</span>
+      </div>
+      <div class="car-popup-content">
+        <div style="font-size: 4rem; color: var(--primary); margin: 20px 0;">
+          <i class="fas fa-car"></i>
+        </div>
+        <h3 style="margin: 10px 0 5px;">${car.type}</h3>
+        <div style="font-size: 1.4rem; font-weight: 700; color: #334155; margin-bottom: 20px;">${car.plate}</div>
+
+        <div class="price-info">
+          <div class="price-row">
+            <span>Giá ngày thường:</span>
+            <strong>${formatMoney(car.daily)} ₫</strong>
+          </div>
+          <div class="price-row">
+            <span>Giá cuối tuần:</span>
+            <strong>${formatMoney(car.weekend)} ₫</strong>
+          </div>
+          <div class="price-row">
+            <span>Giá ngày lễ/Tết:</span>
+            <strong>${formatMoney(car.holiday)} ₫</strong>
+          </div>
+        </div>
+
+        <div style="margin: 20px 0;">
+          <strong>Trạng thái: </strong>
+          ${busy 
+            ? `<span class="status busy">Đang có lịch</span>` 
+            : `<span class="status available">Đang rảnh</span>`}
+        </div>
+
+        <div class="action-buttons-grid" style="margin-top: 30px;">
+          <button onclick="showCarSchedule(${car.id}); closeCarPopup();" class="btn btn-info" style="justify-content:center;">
+            <i class="fas fa-calendar-alt"></i> Xem lịch
+          </button>
+          <button onclick="editCar(${car.id}); closeCarPopup();" class="btn btn-edit" style="justify-content:center;">
+            <i class="fas fa-edit"></i> Sửa xe
+          </button>
+          <button onclick="deleteCar(${car.id}); closeCarPopup();" class="btn btn-danger" style="justify-content:center;">
+            <i class="fas fa-trash"></i> Xóa xe
+          </button>
+          <button onclick="closeCarPopup()" class="btn btn-secondary" style="justify-content:center;">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Tạo modal động
+  let popupModal = document.getElementById('carPopupModal');
+  if (!popupModal) {
+    popupModal = document.createElement('div');
+    popupModal.id = 'carPopupModal';
+    popupModal.className = 'modal';
+    document.body.appendChild(popupModal);
+  }
+
+  popupModal.innerHTML = popupHTML;
+  popupModal.style.display = 'flex';
+}
+
+function closeCarPopup() {
+  const modal = document.getElementById('carPopupModal');
+  if (modal) modal.style.display = 'none';
+}
+
 
 function populateRevenueFilters() {
   const years = new Set();
@@ -2011,6 +1935,7 @@ function switchTab(tab) {
   document.getElementById('tab2').style.display = tab===2 ? 'block' : 'none';
 }
 
+// ====================== MODAL FUNCTIONS ======================
 function showAddContractModal() {
   document.getElementById('contractModalTitle').textContent = "Thêm hợp đồng thuê xe";
   document.getElementById('contractSubmitBtn').textContent = "Lưu hợp đồng";
@@ -2127,7 +2052,7 @@ function deleteContract(id) {
   showSimpleConfirm("Hủy hợp đồng", "Bạn có chắc muốn hủy hợp đồng này?<br><strong>Hành động này không thể hoàn tác.</strong>", () => {
     contracts = contracts.filter(c => c.id !== id);
     renderAll();
-    saveCarDataToBin();
+    saveData();
     showToast("Hợp đồng đã bị hủy.");
   });
 }
@@ -2154,7 +2079,7 @@ function confirmReceive(id) {
     contract.status = "Đang thuê";
     contract.fullPaymentReceived = isPaidFull;
     renderAll();
-    saveCarDataToBin();
+    saveData();
     showToast(isPaidFull ? "Đã nhận xe và thu đủ tiền!" : `Đã nhận xe. Còn phải thu: ${formatMoney(remaining)} ₫`);
   });
 }
@@ -2167,7 +2092,7 @@ function confirmReturn(id) {
       contract.status = "Đã hoàn tất";
     }
     renderAll();
-    saveCarDataToBin();
+    saveData();
     showToast("Hợp đồng đã hoàn tất!");
   });
 }
@@ -2206,12 +2131,12 @@ function deleteCar(id) {
     () => {
       cars = cars.filter(c => c.id !== id);
       renderAll();
-      saveCarDataToBin();
+      saveData();
       showToast("Xe đã được xóa.");
     });
 }
 
-// Contract Form Submit
+// ====================== FORM SUBMIT ======================
 document.getElementById('contractForm').addEventListener('submit', e => {
   e.preventDefault();
   const carId = parseInt(document.getElementById('carSelect').value);
@@ -2289,10 +2214,10 @@ document.getElementById('contractForm').addEventListener('submit', e => {
 
   renderAll();
   closeModal();
-  saveCarDataToBin();
+  saveData();
 });
 
-// Car Form Submit
+// ====================== FORM XE SUBMIT (ĐÃ SỬA - HỖ TRỢ ĐỔI BIỂN SỐ) ======================
 document.getElementById('carForm').addEventListener('submit', e => {
   e.preventDefault();
 
@@ -2306,42 +2231,57 @@ document.getElementById('carForm').addEventListener('submit', e => {
   }
 
   if (carId) {
+    // === SỬA XE ===
     const car = cars.find(c => c.id === carId);
     if (!car) return;
 
     const oldPlate = car.plate;
 
+    // Kiểm tra biển số mới đã tồn tại chưa (trừ chính xe này)
     const existingCar = cars.find(c => c.plate === newPlate && c.id !== carId);
     if (existingCar) {
       alert(`Biển số ${newPlate} đã tồn tại trên xe khác!`);
       return;
     }
 
+    // Kiểm tra xe có hợp đồng đang xử lý không
     const activeContracts = contracts.filter(c => 
       c.plate === oldPlate && c.status !== "Đã hoàn tất"
     );
 
     if (activeContracts.length > 0) {
-      const confirmMsg = `Xe "${car.type} - ${oldPlate}" đang có ${activeContracts.length} hợp đồng đang xử lý.\n\nBạn có chắc muốn đổi biển số sang "${newPlate}"?\nTất cả hợp đồng sẽ được tự động cập nhật.`;
-      if (!confirm(confirmMsg)) return;
+      const confirmMsg = `Xe "${car.type} - ${oldPlate}" đang có ${activeContracts.length} hợp đồng đang xử lý.\n\n` +
+                        `Bạn có chắc muốn đổi biển số sang "${newPlate}"?\n` +
+                        `Tất cả hợp đồng sẽ được tự động cập nhật theo biển số mới.`;
+      
+      if (!confirm(confirmMsg)) {
+        return;
+      }
     }
 
+    // === THỰC HIỆN CẬP NHẬT & ĐỒNG BỘ ===
+    // 1. Cập nhật thông tin xe
     car.type = newType;
     car.plate = newPlate;
     car.daily = parseMoney(document.getElementById('dailyPrice').value);
     car.weekend = parseMoney(document.getElementById('weekendPrice').value);
     car.holiday = parseMoney(document.getElementById('holidayPrice').value);
 
+    // 2. Đồng bộ biển số và loại xe vào tất cả hợp đồng (kể cả đã hoàn tất)
+    let updatedCount = 0;
     contracts.forEach(contract => {
       if (contract.plate === oldPlate) {
         contract.plate = newPlate;
-        contract.carType = newType;
+        contract.carType = newType;        // đồng bộ luôn loại xe cho nhất quán
+        updatedCount++;
       }
     });
 
-    showToast(`Đã cập nhật xe và đồng bộ hợp đồng sang biển số mới: ${newPlate}`);
+    showToast(`Đã cập nhật xe và đồng bộ ${updatedCount} hợp đồng sang biển số mới: ${newPlate}`);
 
   } else {
+    // === THÊM XE MỚI ===
+    // Kiểm tra biển số trùng
     if (cars.some(c => c.plate === newPlate)) {
       alert(`Biển số ${newPlate} đã tồn tại!`);
       return;
@@ -2360,24 +2300,12 @@ document.getElementById('carForm').addEventListener('submit', e => {
 
   renderAll();
   closeCarModal();
-  saveCarDataToBin();
+  saveData();
 });
 
-function renderAll() {
-  renderActiveContracts();
-  renderCars();
-  renderCompletedContracts();
-}
-
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===tab));
-  document.getElementById('tab0').style.display = tab===0 ? 'block' : 'none';
-  document.getElementById('tab1').style.display = tab===1 ? 'block' : 'none';
-  document.getElementById('tab2').style.display = tab===2 ? 'block' : 'none';
-}
-
-async function initCarRent() {
-  await loadCarData();
+// ====================== KHỞI ĐỘNG ======================
+window.onload = async () => {
+  await loadData();
 
   let migrated = false;
   contracts.forEach(c => {
@@ -2397,7 +2325,7 @@ async function initCarRent() {
     if (c.customDailyPrice) delete c.customDailyPrice;
   });
 
-  if (migrated) await saveCarDataToBin();
+  if (migrated) await saveData();
 
   renderAll();
   populateRevenueFilters();
@@ -2425,11 +2353,28 @@ async function initCarRent() {
     if (e.target.classList.contains('fee-amount')) formatPriceInput(e);
   });
 
+  document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+    if (currentConfirmCallback) currentConfirmCallback(false);
+    closeConfirmModal();
+  });
+  document.getElementById('confirmOkBtn').addEventListener('click', () => {
+    if (currentConfirmCallback) currentConfirmCallback(true);
+    closeConfirmModal();
+  });
+  document.getElementById('simpleConfirmOkBtn').addEventListener('click', () => {
+    if (currentSimpleConfirmCallback) currentSimpleConfirmCallback();
+    closeSimpleConfirmModal();
+  });
+
   document.getElementById('phone').addEventListener('input', autoFillFromPhone);
   document.getElementById('customerName').addEventListener('input', autoFillFromName);
 
-  console.log("🚀 CarRent Pro với Auth System đã khởi động thành công!");
-}
+  document.getElementById('actionPopup').addEventListener('click', function(e) {
+    if (e.target === this) closeActionPopup();
+  });
+
+  console.log("🚀 CarRent v1.3.1 - Đã hỗ trợ nửa ngày đầu / nửa ngày cuối!");
+};
 
 function formatPriceInput(e) {
   let value = e.target.value.replace(/[^0-9]/g, '');
@@ -2439,24 +2384,9 @@ function formatPriceInput(e) {
     formatted += value[i];
   }
   e.target.value = formatted;
+  // Render xe theo kiểu mới
+  renderCars();  
 }
-
-// Auto login
-window.onload = async () => {
-  const savedUser = localStorage.getItem("currentUser");
-  if (savedUser) {
-    try {
-      const db = await getAuthData();
-      const user = db.users ? db.users.find(u => u.username === savedUser) : null;
-      if (user && user.plan && !isExpired(user.expiry)) {
-        currentUsername = savedUser;
-        showMainApp(user);
-        return;
-      }
-    } catch(e) {}
-  }
-  document.getElementById('authScreen').style.display = 'flex';
-};
 </script>
 </body>
 </html>
