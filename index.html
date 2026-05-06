@@ -685,7 +685,7 @@
               <th>Phụ phí</th>
               <th>Giảm giá</th>
               <th>Tổng doanh thu</th>
-              <th>Ghi chú lịch sử</th>
+              <th>Ghi chú</th>
               <th>Hành động</th>
             </tr>
           </thead>
@@ -727,8 +727,7 @@
         <input type="text" id="customerName" list="customerNameList" placeholder="Tên khách thuê" required>
 
         <label>Số điện thoại</label>
-        <input type="tel" id="phone" list="phoneList" placeholder="Số điện thoại" required>
-
+        <input type="tel" id="phone" list="phoneList" placeholder="Số điện thoại">
         <datalist id="customerNameList"></datalist>
         <datalist id="phoneList"></datalist>
 
@@ -971,6 +970,21 @@
     </div>
   </div>
 
+  <!-- Modal Chọn Khách khi trùng tên -->
+<div id="customerSelectModal" class="modal">
+  <div class="modal-content" style="max-width: 460px;">
+    <div class="modal-header">
+      <h2>Chọn khách hàng</h2>
+      <span class="close" onclick="closeCustomerSelectModal()">×</span>
+    </div>
+    <p style="margin: 15px 0; color: #475569;">Tìm thấy nhiều khách cùng tên. Vui lòng chọn:</p>
+    <div id="customerSelectList" style="max-height: 400px; overflow-y: auto;"></div>
+    <div style="margin-top: 20px; text-align: center;">
+      <button onclick="closeCustomerSelectModal()" class="btn btn-secondary" style="min-width: 120px;">Đóng</button>
+    </div>
+  </div>
+</div>
+
   <!-- Toast -->
   <div id="toast">
     <i class="fas fa-check-circle"></i>
@@ -978,7 +992,7 @@
   </div>
 
   <div class="version">
-    CarRent v1.3.1 (2026)
+    CarRent v1.3.2 (2026)
   </div>
 
 <script>
@@ -1078,16 +1092,27 @@ function autoFillFromPhone() {
   document.getElementById('customerName').value = customerHistory[phoneInput].name;
 }
 
+// Chỉ tự điền khi nhập tên (1 chiều)
+
+// Tự điền theo tên - Hỗ trợ nhiều khách trùng tên
 function autoFillFromName() {
   const nameInput = document.getElementById('customerName').value.trim();
   if (!nameInput) return;
 
-  // Tìm exact match (khớp chính xác tên)
+  const matches = [];
   for (const [phone, data] of Object.entries(customerHistory)) {
-    if (data.name === nameInput) {   // === thay vì includes
-      document.getElementById('phone').value = phone;
-      return;
+    if (data.name === nameInput) {
+      matches.push({ phone, name: data.name });
     }
+  }
+
+  if (matches.length === 0) return;
+  if (matches.length === 1) {
+    // Chỉ có 1 khách → tự điền
+    document.getElementById('phone').value = matches[0].phone;
+  } else {
+    // Nhiều khách trùng tên → hiển thị modal chọn
+    showCustomerSelectModal(matches, nameInput);
   }
 }
 
@@ -1304,6 +1329,43 @@ function saveHistoryNote() {
   }
   closeHistoryNoteModal();
 }
+
+// ====================== CHỌN KHÁCH KHI TRÙNG TÊN ======================
+let currentSelectCallback = null;
+
+function showCustomerSelectModal(matches, customerName) {
+  const container = document.getElementById('customerSelectList');
+  container.innerHTML = '';
+
+  matches.forEach(match => {
+    const div = document.createElement('div');
+    div.style.cssText = `
+      padding: 14px 16px; 
+      margin: 6px 0; 
+      border: 2px solid #e2e8f0; 
+      border-radius: 12px; 
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    div.innerHTML = `
+      <strong>${match.name}</strong><br>
+      <span style="color:#2563eb; font-weight:600;">📱 ${match.phone}</span>
+    `;
+    div.onclick = () => {
+      document.getElementById('phone').value = match.phone;
+      closeCustomerSelectModal();
+      showToast(`Đã chọn SĐT: ${match.phone}`);
+    };
+    container.appendChild(div);
+  });
+
+  document.getElementById('customerSelectModal').style.display = 'flex';
+}
+
+function closeCustomerSelectModal() {
+  document.getElementById('customerSelectModal').style.display = 'none';
+}
+
 
 function closeHistoryNoteModal() {
   document.getElementById('historyNoteModal').style.display = 'none';
@@ -1794,6 +1856,9 @@ function renderCompletedContracts() {
   if (currentRevenueMonth) filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
   if (currentRevenueCar) filtered = filtered.filter(c => c.plate === currentRevenueCar);
   if (currentRevenueType) filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+
+  // Sắp xếp theo ngày bắt đầu thuê tăng dần
+  filtered.sort((a, b) => new Date(a.rentDate) - new Date(b.rentDate));
 
   let titleText = "Tổng doanh thu từ tất cả hợp đồng hoàn tất";
   if (currentRevenueYear && currentRevenueMonth) titleText = `Doanh thu tháng ${currentRevenueMonth} / ${currentRevenueYear}`;
@@ -2366,14 +2431,19 @@ window.onload = async () => {
     closeSimpleConfirmModal();
   });
 
-  document.getElementById('phone').addEventListener('input', autoFillFromPhone);
+ // Tự điền theo tên (hỗ trợ trùng tên)
   document.getElementById('customerName').addEventListener('input', autoFillFromName);
+
+  // Đóng modal khi click nền
+  document.getElementById('customerSelectModal').addEventListener('click', function(e) {
+    if (e.target === this) closeCustomerSelectModal();
+  });
 
   document.getElementById('actionPopup').addEventListener('click', function(e) {
     if (e.target === this) closeActionPopup();
   });
 
-  console.log("🚀 CarRent v1.3.1 - Đã hỗ trợ nửa ngày đầu / nửa ngày cuối!");
+  console.log("🚀 CarRent v1.3.2 - Đã hỗ trợ nửa ngày đầu / nửa ngày cuối!");
 };
 
 function formatPriceInput(e) {
