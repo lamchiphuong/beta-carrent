@@ -26,7 +26,11 @@
   }">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- ==================== FIREBASE SDK ==================== -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --primary: #2563eb;
@@ -459,82 +463,21 @@
       #tab2 { display: block !important; box-shadow: none; }
       .table-container { overflow: visible; }
     }
-    /* ==================== CAR GRID - MOBILE FRIENDLY ==================== */
-.car-grid {
-  padding: 8px 0;
-}
+    .loading-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(248, 250, 252, 0.95);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      flex-direction: column;
+      gap: 20px;
+    }
 
-.car-card {
-  background: white;
-  border-radius: 16px;
-  padding: 16px 18px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-  border: 1px solid #e2e8f0;
-  transition: all 0.25s ease;
-  cursor: pointer;
-}
-
-.car-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(37,99,235,0.15);
-  border-color: var(--primary);
-}
-
-.car-card .car-icon {
-  font-size: 3.2rem;
-  color: var(--primary);
-  margin-bottom: 12px;
-  text-align: center;
-  display: block;
-}
-
-.car-card h3 {
-  margin: 0 0 8px 0;
-  font-size: 1.25rem;
-  color: #1e40af;
-}
-
-.car-card .plate {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #334155;
-  background: #f1f5f9;
-  padding: 6px 12px;
-  border-radius: 12px;
-  display: inline-block;
-  margin-bottom: 12px;
-}
-
-.car-card .status {
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 50px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.car-popup-content {
-  text-align: center;
-}
-
-.car-popup-content .price-info {
-  background: #f8fafc;
-  border-radius: 16px;
-  padding: 16px;
-  margin: 20px 0;
-  text-align: left;
-}
-
-.car-popup-content .price-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 0.95rem;
-}
-
-.car-popup-content .price-row:last-child {
-  margin-bottom: 0;
-}
+    .loading-overlay.show {
+      display: flex;
+    }
   </style>
 </head>
 <body>
@@ -544,11 +487,12 @@
       <p class="subtitle">Quản lý thuê xe thông minh</p>
     </header>
 
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab(0)">📋 Hợp đồng đang xử lý</div>
-      <div class="tab" onclick="switchTab(1)">🚗 Quản lý xe</div>
-      <div class="tab" onclick="switchTab(2)">📊 Lịch sử & Doanh thu</div>
-    </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0)">📋 Hợp đồng đang xử lý</div>
+    <div class="tab" onclick="switchTab(1)">🚗 Quản lý xe</div>
+    <div class="tab" onclick="switchTab(2)">📊 Lịch sử & Doanh thu</div>
+    <div class="tab" onclick="switchTab(3)" id="proTab">⭐ Bộ quản lý Pro</div>
+  </div>
 
     <!-- Tab 0 -->
     <div id="tab0" class="card">
@@ -593,20 +537,31 @@
     </div>
 
     <!-- Tab 1 -->
-<!-- Tab 1 - Quản lý xe (Phiên bản Mobile Friendly) -->
-<div id="tab1" class="card" style="display: none;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-    <h2><i class="fas fa-car-side"></i> Danh sách xe</h2>
-    <button class="btn btn-success" onclick="showAddCarModal()">
-      <i class="fas fa-plus"></i> Thêm xe mới
-    </button>
-  </div>
-
-  <!-- Grid xe cho mobile -->
-  <div id="carGrid" class="car-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-    <!-- JS sẽ render vào đây -->
-  </div>
-</div>
+    <div id="tab1" class="card" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2><i class="fas fa-car-side"></i> Danh sách xe</h2>
+        <button class="btn btn-success" onclick="showAddCarModal()">
+          <i class="fas fa-plus"></i> Thêm xe mới
+        </button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Loại xe</th>
+              <th>Biển số</th>
+              <th>Trạng thái xe</th>
+              <th>Giá ngày thường</th>
+              <th>Giá cuối tuần</th>
+              <th>Giá lễ/Tết</th>
+              <th>Lịch xe</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="carBody"></tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- Tab 2 -->
     <div id="tab2" class="card" style="display: none;">
@@ -660,6 +615,9 @@
         <button onclick="printRevenue()" class="btn btn-secondary" style="height: 48px;">
           <i class="fas fa-print"></i> In báo cáo
         </button>
+        <button onclick="exportRevenueToExcel()" class="btn btn-success" style="height: 48px;">
+          <i class="fas fa-file-excel"></i> Xuất Excel
+        </button>
       </div>
 
       <div style="background:#f0fdf4; border-radius:16px; padding:20px; margin-bottom:25px; display:flex; justify-content:space-between; align-items:center;">
@@ -685,7 +643,7 @@
               <th>Phụ phí</th>
               <th>Giảm giá</th>
               <th>Tổng doanh thu</th>
-              <th>Ghi chú</th>
+              <th>Ghi chú lịch sử</th>
               <th>Hành động</th>
             </tr>
           </thead>
@@ -693,7 +651,38 @@
         </table>
       </div>
     </div>
-  </div>
+
+    <!-- Tab 3: Bộ quản lý Pro -->
+    <div id="tab3" class="card" style="display: none;">
+      <h2><i class="fas fa-crown"></i> Bộ Quản Lý Pro</h2>
+      <p class="subtitle" style="margin-bottom:20px;">Công cụ nâng cao - Chỉ dành cho người dùng Pro</p>
+
+      <div id="proLockedScreen">
+        <div style="text-align:center; padding:60px 20px; background:#f8fafc; border-radius:20px;">
+          <i class="fas fa-lock" style="font-size:4rem; color:#94a3b8; margin-bottom:20px;"></i>
+          <h3>Bạn cần License Pro để truy cập</h3>
+          <p style="color:#64748b; max-width:400px; margin:15px auto;">
+            Nhập license key bạn đã mua để mở khóa bộ công cụ Pro
+          </p>
+          
+          <input type="text" id="licenseInput" placeholder="Nhập License Key (ví dụ: PRO-2026-...)" 
+                 style="width:100%; max-width:420px; padding:16px; font-size:1.1rem; margin:15px 0; border-radius:12px;">
+          
+          <button onclick="activateProLicense()" class="btn btn-primary" style="padding:14px 32px; font-size:1.1rem;">
+            <i class="fas fa-unlock"></i> Kích hoạt License
+          </button>
+          
+          <div id="licenseMessage" style="margin-top:15px; min-height:24px;"></div>
+        </div>
+      </div>
+
+      <div id="proContent" style="display:none;">
+        <iframe id="proIframe" 
+                src="https://lamchiphuong.github.io/carrent-toolkit/" 
+                style="width:100%; height:85vh; border:none; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.1);"
+                allowfullscreen></iframe>
+      </div>
+    </div>
 
   <!-- FAB -->
   <div class="fab" onclick="showAddContractModal()"><i class="fas fa-plus"></i></div>
@@ -728,6 +717,7 @@
 
         <label>Số điện thoại</label>
         <input type="tel" id="phone" list="phoneList" placeholder="Số điện thoại">
+
         <datalist id="customerNameList"></datalist>
         <datalist id="phoneList"></datalist>
 
@@ -871,6 +861,21 @@
     </div>
   </div>
 
+<!-- Modal Chọn Khách khi trùng tên -->
+<div id="customerSelectModal" class="modal">
+  <div class="modal-content" style="max-width: 460px;">
+    <div class="modal-header">
+      <h2>Chọn khách hàng</h2>
+      <span class="close" onclick="closeCustomerSelectModal()">×</span>
+    </div>
+    <p style="margin: 15px 0; color: #475569;">Tìm thấy nhiều khách cùng tên. Vui lòng chọn:</p>
+    <div id="customerSelectList" style="max-height: 400px; overflow-y: auto;"></div>
+    <div style="margin-top: 20px; text-align: center;">
+      <button onclick="closeCustomerSelectModal()" class="btn btn-secondary" style="min-width: 120px;">Đóng</button>
+    </div>
+  </div>
+</div>
+
   <!-- Car Modal -->
   <div id="carModal" class="modal">
     <div class="modal-content">
@@ -970,21 +975,6 @@
     </div>
   </div>
 
-  <!-- Modal Chọn Khách khi trùng tên -->
-<div id="customerSelectModal" class="modal">
-  <div class="modal-content" style="max-width: 460px;">
-    <div class="modal-header">
-      <h2>Chọn khách hàng</h2>
-      <span class="close" onclick="closeCustomerSelectModal()">×</span>
-    </div>
-    <p style="margin: 15px 0; color: #475569;">Tìm thấy nhiều khách cùng tên. Vui lòng chọn:</p>
-    <div id="customerSelectList" style="max-height: 400px; overflow-y: auto;"></div>
-    <div style="margin-top: 20px; text-align: center;">
-      <button onclick="closeCustomerSelectModal()" class="btn btn-secondary" style="min-width: 120px;">Đóng</button>
-    </div>
-  </div>
-</div>
-
   <!-- Toast -->
   <div id="toast">
     <i class="fas fa-check-circle"></i>
@@ -992,14 +982,29 @@
   </div>
 
   <div class="version">
-    CarRent v1.3.2 (2026)
+    CarRent v1.3.3 - 2026
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div style="text-align:center;">
+      <i class="fas fa-spinner fa-spin" style="font-size:48px; color:#2563eb; margin-bottom:20px;"></i>
+      <h3>Đang tải dữ liệu ...</h3>
+      <p style="color:#64748b; margin-top:8px;">Vui lòng chờ trong giây lát</p>
+    </div>
   </div>
 
 <script>
-// ==================== CẤU HÌNH ====================
-const MASTER_KEY = "$2a$10$w8HuZEOH5lKslhwqq1vyc.pW/hNhvuAzCkMse5cgH4R9cX.n27ISO";
-const BIN_ID = "69cbd91436566621a866f521";
+// ==================== FIREBASE CONFIG ====================
+const firebaseConfig = {
+  databaseURL: "https://carrent-2026-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const dataRef = db.ref('/');
+
+// ==================== BIẾN TOÀN CỤC ====================
 let cars = [], contracts = [];
 let holidays = ["2026-01-01", "2026-04-25","2026-04-26","2026-04-27", "2026-04-28","2026-04-29", "2026-04-30", "2026-05-01", "2026-05-02","2026-05-03","2026-09-02"];
 
@@ -1021,7 +1026,7 @@ let currentRevenueType = '';
 let currentContractType = 'normal';
 let currentActionContractId = null;
 
-// ====================== HELPER ======================
+// ==================== HELPER FUNCTIONS (giữ nguyên) ====================
 function formatMoney(num) {
   return Number(num || 0).toLocaleString('vi-VN').replace(/,/g, ' ');
 }
@@ -1038,11 +1043,21 @@ function formatDate(dateStr) {
 }
 
 function showToast(msg) {
-  const toast = document.getElementById('toast');
-  document.getElementById('toastMessage').innerHTML = msg;
+  const toast = document.getElementById('toast') || document.createElement('div');
+  if (!document.getElementById('toast')) {
+    toast.id = 'toast';
+    toast.style.cssText = `position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:14px 24px;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.3);z-index:3000;`;
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
   toast.style.display = 'flex';
   setTimeout(() => toast.style.display = 'none', 4000);
 }
+
+// ==================== FIREBASE: LOAD & SAVE ====================
+let isFirstLoad = true;
+
+// ====================== HELPER ======================
 
 let customerHistory = {};
 
@@ -1084,20 +1099,18 @@ function updateCustomerDatalists() {
   });
 }
 
-function autoFillFromPhone() {
-  const phoneInput = document.getElementById('phone').value.trim();
-  if (!phoneInput || !customerHistory[phoneInput]) return;
-  
-  // Chỉ điền khi khớp chính xác 100%
-  document.getElementById('customerName').value = customerHistory[phoneInput].name;
-}
-
-// Chỉ tự điền khi nhập tên (1 chiều)
 
 // Tự điền theo tên - Hỗ trợ nhiều khách trùng tên
+// ====================== TỰ ĐIỀN KHÁCH HÀNG ======================
+
 function autoFillFromName() {
   const nameInput = document.getElementById('customerName').value.trim();
-  if (!nameInput) return;
+  const phoneInput = document.getElementById('phone');
+
+  if (!nameInput) {
+    phoneInput.value = '';   // Xóa SĐT nếu tên trống
+    return;
+  }
 
   const matches = [];
   for (const [phone, data] of Object.entries(customerHistory)) {
@@ -1106,36 +1119,109 @@ function autoFillFromName() {
     }
   }
 
-  if (matches.length === 0) return;
+  // === KIỂM TRA XEM TÊN HIỆN TẠI CÓ KHỚP VỚI SĐT ĐANG CÓ KHÔNG ===
+  const currentPhone = phoneInput.value.trim();
+  if (currentPhone && customerHistory[currentPhone]) {
+    if (customerHistory[currentPhone].name !== nameInput) {
+      phoneInput.value = '';   // Tên đã thay đổi → xóa SĐT
+    }
+  }
+
+  // === Tự động điền nếu chỉ có 1 kết quả ===
   if (matches.length === 1) {
-    // Chỉ có 1 khách → tự điền
-    document.getElementById('phone').value = matches[0].phone;
-  } else {
-    // Nhiều khách trùng tên → hiển thị modal chọn
+    phoneInput.value = matches[0].phone;
+  } 
+  // === Nhiều kết quả → hiện modal chọn ===
+  else if (matches.length > 1) {
     showCustomerSelectModal(matches, nameInput);
   }
+  // Không có kết quả nào → đã xóa SĐT ở trên rồi
 }
 
-async function loadData() {
-  try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-      headers: { 'X-Master-Key': MASTER_KEY }
-    });
-    const json = await res.json();
-    const data = json.record || json;
-    cars = Array.isArray(data.cars) ? data.cars : [];
-    contracts = Array.isArray(data.contracts) ? data.contracts : [];
-  } catch (e) { console.error("Lỗi load:", e); }
+let timeout;
+function handleNameInput() {
+  clearTimeout(timeout);
+  timeout = setTimeout(autoFillFromName, 250);  // Tăng nhẹ delay để mượt hơn
+}
+
+function loadData() {
+  const loading = document.getElementById('loadingOverlay');
+  loading.classList.add('show');
+
+  console.log("Bắt đầu kết nối dữ liệu từ server...");
+
+  dataRef.on('value', (snapshot) => {
+    console.log("Nhận dữ liệu từ server thành công!");
+    try {
+      const data = snapshot.val() || { cars: [], contracts: [] };
+console.log("Số lượng xe:", cars.length, "| Số hợp đồng:", contracts.length);
+
+      cars = Array.isArray(data.cars) ? data.cars : [];
+      contracts = Array.isArray(data.contracts) ? data.contracts : [];
+
+      let migrated = false;
+      contracts.forEach(c => {
+        if (!c.rentHalf) { c.rentHalf = 'full'; migrated = true; }
+        if (!c.returnHalf) { c.returnHalf = 'full'; migrated = true; }
+        if (c.status === "Đã hoàn tất" && !c.frozenData) {
+          freezeContract(c);
+          migrated = true;
+        }
+      });
+
+      if (migrated) saveData();
+
+      renderAll();
+      populateRevenueFilters();
+
+      if (isFirstLoad) {
+        showToast("CarRent đã sẵn sàng!");
+        isFirstLoad = false;
+      }
+
+      loading.classList.remove('show');
+    } catch (err) {
+      console.error("❌ Lỗi xử lý dữ liệu:", err);
+      loading.classList.remove('show');
+      alert("Lỗi xử lý dữ liệu: " + err.message);
+    }
+  }, (error) => {
+    console.error("❌ Firebase Error:", error);
+    loading.classList.remove('show');
+    alert("Lỗi kết nối Firebase:\n" + error.message + "\n\nCode: " + error.code);
+  });
+
+  // Timeout fallback nếu không có phản hồi sau 8 giây
+  setTimeout(() => {
+    if (loading.classList.contains('show')) {
+      console.error("⏰ Timeout - Không nhận được dữ liệu từ server");
+      loading.classList.remove('show');
+      alert("Không thể kết nối server sau 8 giây.\n\n1. Kiểm tra Rules\n2. Kiểm tra tên project");
+    }
+  }, 8000);
+}
+
+
+// Hàm retry
+function retryLoad() {
+  loadData();
 }
 
 async function saveData() {
   try {
-    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY },
-      body: JSON.stringify({ cars, contracts })
-    });
-  } catch (e) { console.error("Lỗi save:", e); }
+    console.log("🔄 Đang lưu dữ liệu...");
+    await dataRef.set({ cars: cars, contracts: contracts });
+    console.log("✅ Lưu thành công!");
+    return true;
+  } catch (e) {
+    console.error("❌ Lỗi lưu:", e);
+    if (e.code === 'PERMISSION_DENIED') {
+      alert("❌ LỖI QUYỀN TRUY CẬP!\n\nVui lòng mở Rules trong Firebase Console:\n.read = true\n.write = true");
+    } else {
+      alert("Lỗi lưu dữ liệu: " + e.message);
+    }
+    return false;
+  }
 }
 
 function getCarById(id) { return cars.find(c => c.id === id); }
@@ -1186,7 +1272,8 @@ function calculateRentalTotal(contract) {
 }
 
 function calculateExtraTotal(c) {
-  return (c.extraFees || []).reduce((sum, f) => sum + (f.amount || 0), 0);
+  if (!c) return 0;
+  return Array.isArray(c.extraFees) ? c.extraFees.reduce((sum, f) => sum + (f.amount || 0), 0) : 0;
 }
 
 function calculateTotal(c) {
@@ -1203,6 +1290,7 @@ function calculateRemaining(c) {
 
 function freezeContract(contract) {
   if (contract.frozenData) return;
+
   contract.frozenData = {
     customer: contract.customer,
     phone: contract.phone,
@@ -1215,19 +1303,27 @@ function freezeContract(contract) {
     rentDayType: contract.rentDayType,
     rentHalf: contract.rentHalf || 'full',
     returnHalf: contract.returnHalf || 'full',
-    deposit: contract.deposit,
+    deposit: contract.deposit || 0,
     discount: contract.discount || 0,
-    extraFees: JSON.parse(JSON.stringify(contract.extraFees || [])),
+    extraFees: Array.isArray(contract.extraFees) ? JSON.parse(JSON.stringify(contract.extraFees)) : [],
     contractType: contract.contractType || 'normal',
-    customTotalPrice: contract.customTotalPrice,
+    // SỬA Ở ĐÂY: Không để undefined
+    customTotalPrice: contract.customTotalPrice || null,
     rentalAmount: calculateRentalTotal(contract),
     totalAmount: calculateTotal(contract)
   };
+
   if (contract.activeNote) contract.historyNote = contract.activeNote;
 }
 
 function getCompletedDisplay(con) {
-  if (con.frozenData) return con.frozenData;
+  if (con.frozenData) {
+    return {
+      ...con.frozenData,
+      extraFees: Array.isArray(con.frozenData.extraFees) ? con.frozenData.extraFees : []
+    };
+  }
+  
   return {
     customer: con.customer,
     phone: con.phone,
@@ -1242,11 +1338,12 @@ function getCompletedDisplay(con) {
     returnHalf: con.returnHalf || 'full',
     deposit: con.deposit,
     discount: con.discount || 0,
-    extraFees: con.extraFees || [],
+    extraFees: Array.isArray(con.extraFees) ? con.extraFees : [],
     contractType: con.contractType || 'normal',
     customTotalPrice: con.customTotalPrice,
     rentalAmount: calculateRentalTotal(con),
-    totalAmount: calculateTotal(con)
+    totalAmount: calculateTotal(con),
+    historyNote: con.historyNote
   };
 }
 
@@ -1300,7 +1397,7 @@ function saveActiveNote() {
     contract.activeNote = document.getElementById('noteText').value.trim();
     renderAll();
     saveData();
-    showToast("Ghi chú đang xử lý đã được lưu!");
+    showToast("Ghi chú đã được lưu!");
   }
   closeNoteModal();
 }
@@ -1325,14 +1422,25 @@ function saveHistoryNote() {
     contract.historyNote = document.getElementById('historyNoteText').value.trim();
     renderAll();
     saveData();
-    showToast("Ghi chú lịch sử đã được lưu!");
+    showToast("Ghi chú đã được lưu!");
   }
   closeHistoryNoteModal();
 }
 
-// ====================== CHỌN KHÁCH KHI TRÙNG TÊN ======================
-let currentSelectCallback = null;
+function closeHistoryNoteModal() {
+  document.getElementById('historyNoteModal').style.display = 'none';
+}
 
+
+// ====================== TỰ ĐIỀN KHÁCH HÀNG ======================
+function autoFillFromPhone() {
+  const phoneInput = document.getElementById('phone').value.trim();
+  if (!phoneInput || !customerHistory[phoneInput]) return;
+  
+  document.getElementById('customerName').value = customerHistory[phoneInput].name;
+}
+
+// ====================== CHỌN KHÁCH KHI TRÙNG TÊN ======================
 function showCustomerSelectModal(matches, customerName) {
   const container = document.getElementById('customerSelectList');
   container.innerHTML = '';
@@ -1366,10 +1474,6 @@ function closeCustomerSelectModal() {
   document.getElementById('customerSelectModal').style.display = 'none';
 }
 
-
-function closeHistoryNoteModal() {
-  document.getElementById('historyNoteModal').style.display = 'none';
-}
 
 // ====================== POP-UP HÀNH ĐỘNG ======================
 function showActionPopup(id) {
@@ -1688,119 +1792,52 @@ function renderActiveContracts() {
 }
 
 function renderCars() {
-  const container = document.getElementById('carGrid');
-  container.innerHTML = '';
-
+  const tbody = document.getElementById('carBody');
+  tbody.innerHTML = '';
+  
   cars.forEach(car => {
     const busy = contracts.some(c => c.plate === car.plate && c.status !== "Đã hoàn tất");
-    const statusHTML = busy 
-      ? `<span class="status busy">Đang có lịch</span>` 
-      : `<span class="status available">Đang rảnh</span>`;
+    const statusHTML = busy ? 
+      `<span class="status busy">Đang có lịch</span>` : 
+      `<span class="status available">Đang rảnh</span>`;
 
-    const card = document.createElement('div');
-    card.className = 'car-card';
-    card.onclick = () => showCarPopup(car.id);
+    const tr = document.createElement('tr');
+    tr.style.cursor = 'pointer';                    // Thêm con trỏ tay
+    tr.onclick = (e) => {
+      // Nếu click vào button thì không mở lịch (ngăn event bubble)
+      if (e.target.closest('button')) return;
+      showCarSchedule(car.id);
+    };
 
-    card.innerHTML = `
-      <h3>${car.type}</h3>
-      <div class="plate">${car.plate}</div>
-      ${statusHTML}
+    tr.innerHTML = `
+      <td>${car.type}</td>
+      <td><strong>${car.plate}</strong></td>
+      <td>${statusHTML}</td>
+      <td>${formatMoney(car.daily)} ₫</td>
+      <td>${formatMoney(car.weekend)} ₫</td>
+      <td>${formatMoney(car.holiday)} ₫</td>
+      <td>
+        <button onclick="showCarSchedule(${car.id}); event.stopImmediatePropagation();" 
+                class="btn btn-info" style="padding:8px 16px;font-size:0.9rem;">
+          📅 Xem lịch
+        </button>
+      </td>
+      <td style="display:flex; gap:6px;">
+        <button onclick="editCar(${car.id}); event.stopImmediatePropagation();" 
+                class="btn btn-edit" style="padding:8px 12px;">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button onclick="deleteCar(${car.id}); event.stopImmediatePropagation();" 
+                class="btn btn-danger" style="padding:8px 12px;">
+          <i class="fas fa-trash"></i>
+        </button>
+      </td>
     `;
-
-    container.appendChild(card);
+    tbody.appendChild(tr);
   });
-
-  // Nếu không có xe nào
-  if (cars.length === 0) {
-    container.innerHTML = `
-      <div style="text-align:center; padding:40px 20px; color:#64748b;">
-        <i class="fas fa-car" style="font-size:4rem; opacity:0.3; margin-bottom:15px;"></i>
-        <p>Chưa có xe nào. Hãy thêm xe mới!</p>
-      </div>
-    `;
-  }
 }
-
-// ====================== CAR POPUP (Mobile Friendly) ======================
-function showCarPopup(carId) {
-  const car = cars.find(c => c.id === carId);
-  if (!car) return;
-
-  const busy = contracts.some(c => c.plate === car.plate && c.status !== "Đã hoàn tất");
-
-  const popupHTML = `
-    <div class="modal-content" style="max-width: 520px;">
-      <div class="modal-header">
-        <h2>Thông tin xe</h2>
-        <span class="close" onclick="closeCarPopup()">×</span>
-      </div>
-      <div class="car-popup-content">
-        <div style="font-size: 4rem; color: var(--primary); margin: 20px 0;">
-          <i class="fas fa-car"></i>
-        </div>
-        <h3 style="margin: 10px 0 5px;">${car.type}</h3>
-        <div style="font-size: 1.4rem; font-weight: 700; color: #334155; margin-bottom: 20px;">${car.plate}</div>
-
-        <div class="price-info">
-          <div class="price-row">
-            <span>Giá ngày thường:</span>
-            <strong>${formatMoney(car.daily)} ₫</strong>
-          </div>
-          <div class="price-row">
-            <span>Giá cuối tuần:</span>
-            <strong>${formatMoney(car.weekend)} ₫</strong>
-          </div>
-          <div class="price-row">
-            <span>Giá ngày lễ/Tết:</span>
-            <strong>${formatMoney(car.holiday)} ₫</strong>
-          </div>
-        </div>
-
-        <div style="margin: 20px 0;">
-          <strong>Trạng thái: </strong>
-          ${busy 
-            ? `<span class="status busy">Đang có lịch</span>` 
-            : `<span class="status available">Đang rảnh</span>`}
-        </div>
-
-        <div class="action-buttons-grid" style="margin-top: 30px;">
-          <button onclick="showCarSchedule(${car.id}); closeCarPopup();" class="btn btn-info" style="justify-content:center;">
-            <i class="fas fa-calendar-alt"></i> Xem lịch
-          </button>
-          <button onclick="editCar(${car.id}); closeCarPopup();" class="btn btn-edit" style="justify-content:center;">
-            <i class="fas fa-edit"></i> Sửa xe
-          </button>
-          <button onclick="deleteCar(${car.id}); closeCarPopup();" class="btn btn-danger" style="justify-content:center;">
-            <i class="fas fa-trash"></i> Xóa xe
-          </button>
-          <button onclick="closeCarPopup()" class="btn btn-secondary" style="justify-content:center;">
-            Đóng
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Tạo modal động
-  let popupModal = document.getElementById('carPopupModal');
-  if (!popupModal) {
-    popupModal = document.createElement('div');
-    popupModal.id = 'carPopupModal';
-    popupModal.className = 'modal';
-    document.body.appendChild(popupModal);
-  }
-
-  popupModal.innerHTML = popupHTML;
-  popupModal.style.display = 'flex';
-}
-
-function closeCarPopup() {
-  const modal = document.getElementById('carPopupModal');
-  if (modal) modal.style.display = 'none';
-}
-
-
 function populateRevenueFilters() {
+  // Populate Năm
   const years = new Set();
   contracts.forEach(c => {
     if (c.status === "Đã hoàn tất" && c.rentDate) {
@@ -1812,15 +1849,12 @@ function populateRevenueFilters() {
   yearSel.innerHTML = '<option value="">Tất cả năm</option>';
   Array.from(years).sort((a,b)=>b-a).forEach(y => {
     const opt = document.createElement('option');
-    opt.value = y; opt.textContent = y; yearSel.appendChild(opt);
+    opt.value = y; 
+    opt.textContent = y; 
+    yearSel.appendChild(opt);
   });
 
-  const currY = new Date().getFullYear();
-  const currM = (new Date().getMonth() + 1).toString();
-  if (years.has(currY)) yearSel.value = currY;
-  document.getElementById('revenueMonthFilter').value = currM;
-  currentRevenueMonth = currM;
-
+  // Populate Xe (phần này bị mất trước đó)
   const carSel = document.getElementById('revenueCarFilter');
   carSel.innerHTML = '<option value="">Tất cả xe</option>';
   cars.forEach(car => {
@@ -1830,9 +1864,22 @@ function populateRevenueFilters() {
     carSel.appendChild(opt);
   });
 
+  const currY = new Date().getFullYear().toString();
+  const currM = (new Date().getMonth() + 1).toString();
+
+  // Mặc định tháng hiện tại
+  yearSel.value = currY;
+  document.getElementById('revenueMonthFilter').value = currM;
+
+  // Đồng bộ biến
+  currentRevenueYear = currY;
+  currentRevenueMonth = currM;
+  // Giữ nguyên nếu người dùng đã chọn xe hoặc loại trước đó
+  // currentRevenueCar = '';
+  // currentRevenueType = '';
+
   renderCompletedContracts();
 }
-
 function filterCompletedContracts() {
   currentRevenueYear = document.getElementById('revenueYearFilter').value;
   currentRevenueMonth = document.getElementById('revenueMonthFilter').value;
@@ -1857,20 +1904,36 @@ function renderCompletedContracts() {
 
   let filtered = contracts.filter(c => c.status === "Đã hoàn tất");
 
-  if (currentRevenueYear) filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
-  if (currentRevenueMonth) filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
-  if (currentRevenueCar) filtered = filtered.filter(c => c.plate === currentRevenueCar);
-  if (currentRevenueType) filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+  // === BỘ LỌC ĐẦY ĐỦ ===
+  if (currentRevenueYear) {
+    filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
+  }
+  if (currentRevenueMonth) {
+    filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
+  }
+  if (currentRevenueCar) {
+    filtered = filtered.filter(c => c.plate === currentRevenueCar);
+  }
+  if (currentRevenueType) {
+    filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+  }
 
-  // Sắp xếp theo ngày bắt đầu thuê tăng dần
+  // Sắp xếp theo ngày nhận xe
   filtered.sort((a, b) => new Date(a.rentDate) - new Date(b.rentDate));
 
-  let titleText = "Tổng doanh thu từ tất cả hợp đồng hoàn tất";
-  if (currentRevenueYear && currentRevenueMonth) titleText = `Doanh thu tháng ${currentRevenueMonth} / ${currentRevenueYear}`;
+  // Tiêu đề động
+  let titleText = "Tổng doanh thu từ tất cả hợp đồng đã hoàn tất";
+  if (currentRevenueYear && currentRevenueMonth) {
+    titleText = `Doanh thu tháng ${currentRevenueMonth} / ${currentRevenueYear}`;
+  }
   if (currentRevenueCar) {
     const car = cars.find(c => c.plate === currentRevenueCar);
     if (car) titleText += ` (${car.type} - ${car.plate})`;
   }
+  if (currentRevenueType) {
+    titleText += currentRevenueType === 'app' ? " (Đặt qua app)" : " (Thuê thường)";
+  }
+
   document.getElementById('revenueTitle').textContent = titleText;
 
   filtered.forEach(contract => {
@@ -1894,7 +1957,7 @@ function renderCompletedContracts() {
       <td>${formatDate(d.returnDate)} ${d.returnTime || ''}${returnHalfText}</td>
       <td>${calculateDays(d.rentDate, d.returnDate)}</td>
       <td style="text-align:right;">${formatMoney(d.rentalAmount)} ₫</td>
-      <td style="text-align:right;">${formatMoney(d.extraFees.reduce((s,f)=>s+(f.amount||0),0))} ₫</td>
+      <td style="text-align:right;">${formatMoney(Array.isArray(d.extraFees) ? d.extraFees.reduce((s,f)=>s+(f.amount||0),0) : 0)} ₫</td>
       <td style="text-align:right;">${formatMoney(d.discount)} ₫</td>
       <td style="color:#16a34a;font-weight:700;text-align:right;">${formatMoney(d.totalAmount)} ₫</td>
       <td>${noteShort}</td>
@@ -1918,6 +1981,8 @@ function printRevenue() {
     alert("Không có dữ liệu để in theo bộ lọc hiện tại!");
     return;
   }
+
+  filtered.sort((a, b) => new Date(a.rentDate) - new Date(b.rentDate));
 
   const printWin = window.open('', '_blank');
   let html = `
@@ -1963,6 +2028,7 @@ function printRevenue() {
     const d = getCompletedDisplay(con);
     const rentHalfText = (d.rentHalf || 'full') === 'half' ? ' (½ ngày đầu)' : '';
     const returnHalfText = (d.returnHalf || 'full') === 'half' ? ' (½ ngày cuối)' : '';
+    
     html += `
       <tr>
         <td>${d.customer || ''}</td>
@@ -1999,10 +2065,16 @@ function renderAll() {
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===tab));
-  document.getElementById('tab0').style.display = tab===0 ? 'block' : 'none';
-  document.getElementById('tab1').style.display = tab===1 ? 'block' : 'none';
-  document.getElementById('tab2').style.display = tab===2 ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === tab));
+  
+  document.getElementById('tab0').style.display = tab === 0 ? 'block' : 'none';
+  document.getElementById('tab1').style.display = tab === 1 ? 'block' : 'none';
+  document.getElementById('tab2').style.display = tab === 2 ? 'block' : 'none';
+  document.getElementById('tab3').style.display = tab === 3 ? 'block' : 'none';
+
+  if (tab === 3) {
+    checkProAccess();
+  }
 }
 
 // ====================== MODAL FUNCTIONS ======================
@@ -2206,11 +2278,13 @@ function deleteCar(id) {
     });
 }
 
-// ====================== FORM SUBMIT ======================
+// ====================== FORM CONTRACT SUBMIT ======================
 document.getElementById('contractForm').addEventListener('submit', e => {
   e.preventDefault();
+
   const carId = parseInt(document.getElementById('carSelect').value);
   const contractId = document.getElementById('contractId').value ? parseInt(document.getElementById('contractId').value) : null;
+  
   const car = getCarById(carId);
   if (!car) return alert("Vui lòng chọn xe!");
 
@@ -2224,20 +2298,40 @@ document.getElementById('contractForm').addEventListener('submit', e => {
   const discount = parseMoney(document.getElementById('discount').value);
   const customTotalPrice = parseMoney(document.getElementById('customTotalPrice').value);
 
-  if (!contractId && isDateOverlap(rent, ret, car.plate)) 
-    return alert("Xe đã có lịch trong khoảng thời gian này!");
+  // ====================== KIỂM TRA TRÙNG LỊCH ======================
+if (isDateOverlap(rent, ret, car.plate, contractId)) {
+  const conflicting = contracts.find(c => 
+    c.plate === car.plate && 
+    c.id !== contractId && 
+    c.status !== "Đã hoàn tất" &&
+    new Date(rent) <= new Date(c.returnDate) && 
+    new Date(ret) >= new Date(c.rentDate)
+  );
+  
+  alert(`❌ Xe ${car.plate} đã có lịch:\n\n` +
+        `${conflicting.customer} - ${formatDate(conflicting.rentDate)} đến ${formatDate(conflicting.returnDate)}`);
+  return;
+}
 
+  // ====================== XỬ LÝ PHỤ PHÍ ======================
   const extraFees = [];
   document.querySelectorAll('#extraFeesList .extra-fee-row').forEach(row => {
     const amt = parseMoney(row.querySelector('.fee-amount').value);
-    if (amt > 0) extraFees.push({ type: row.querySelector('.fee-type').value, amount: amt });
+    if (amt > 0) {
+      extraFees.push({ 
+        type: row.querySelector('.fee-type').value, 
+        amount: amt 
+      });
+    }
   });
 
+  // ====================== CẬP NHẬT HOẶC THÊM MỚI ======================
   if (contractId) {
+    // === SỬA HỢP ĐỒNG ===
     const contract = contracts.find(c => c.id === contractId);
     if (contract) {
-      contract.customer = document.getElementById('customerName').value;
-      contract.phone = document.getElementById('phone').value;
+      contract.customer = document.getElementById('customerName').value.trim();
+      contract.phone = document.getElementById('phone').value.trim();
       contract.carType = car.type;
       contract.plate = car.plate;
       contract.rentDate = rent;
@@ -2257,10 +2351,11 @@ document.getElementById('contractForm').addEventListener('submit', e => {
     }
     showToast('Hợp đồng đã được cập nhật!');
   } else {
+    // === THÊM HỢP ĐỒNG MỚI ===
     contracts.push({
       id: Date.now(),
-      customer: document.getElementById('customerName').value,
-      phone: document.getElementById('phone').value,
+      customer: document.getElementById('customerName').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
       carType: car.type,
       plate: car.plate,
       rentDate: rent,
@@ -2285,7 +2380,7 @@ document.getElementById('contractForm').addEventListener('submit', e => {
   renderAll();
   closeModal();
   saveData();
-});
+});   // ← THÊM DẤU } NÀY ĐỂ ĐÓNG contractForm listener
 
 // ====================== FORM XE SUBMIT (ĐÃ SỬA - HỖ TRỢ ĐỔI BIỂN SỐ) ======================
 document.getElementById('carForm').addEventListener('submit', e => {
@@ -2370,13 +2465,25 @@ document.getElementById('carForm').addEventListener('submit', e => {
 
   renderAll();
   closeCarModal();
-  saveData();
+  saveData();   // ← thay saveData(); thành cái này
 });
 
 // ====================== KHỞI ĐỘNG ======================
 window.onload = async () => {
   await loadData();
-
+      // === MIGRATION: Sửa dữ liệu cũ có undefined ===
+      contracts.forEach(c => {
+        if (c.frozenData) {
+          if (typeof c.frozenData.customTotalPrice === 'undefined') {
+            c.frozenData.customTotalPrice = null;
+          }
+          if (!Array.isArray(c.frozenData.extraFees)) {
+            c.frozenData.extraFees = [];
+          }
+        }
+        if (!Array.isArray(c.extraFees)) c.extraFees = [];
+      });
+      
   let migrated = false;
   contracts.forEach(c => {
     if (c.contractType === 'app' && c.customDailyPrice && !c.customTotalPrice) {
@@ -2436,8 +2543,8 @@ window.onload = async () => {
     closeSimpleConfirmModal();
   });
 
- // Tự điền theo tên (hỗ trợ trùng tên)
-  document.getElementById('customerName').addEventListener('input', autoFillFromName);
+// Tự điền khách hàng
+  document.getElementById('customerName').addEventListener('input', handleNameInput);
 
   // Đóng modal khi click nền
   document.getElementById('customerSelectModal').addEventListener('click', function(e) {
@@ -2447,8 +2554,12 @@ window.onload = async () => {
   document.getElementById('actionPopup').addEventListener('click', function(e) {
     if (e.target === this) closeActionPopup();
   });
+  // Kiểm tra license khi load
+if (document.getElementById('tab3').style.display !== 'none') {
+  checkProAccess();
+}
 
-  console.log("🚀 CarRent v1.3.2 - Đã hỗ trợ nửa ngày đầu / nửa ngày cuối!");
+  console.log("🚀 CarRent v1.3.3");
 };
 
 function formatPriceInput(e) {
@@ -2459,8 +2570,124 @@ function formatPriceInput(e) {
     formatted += value[i];
   }
   e.target.value = formatted;
-  // Render xe theo kiểu mới
-  renderCars();  
+}
+function exportRevenueToExcel() {
+  let filtered = contracts.filter(c => c.status === "Đã hoàn tất");
+
+  if (currentRevenueYear) filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
+  if (currentRevenueMonth) filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
+  if (currentRevenueCar) filtered = filtered.filter(c => c.plate === currentRevenueCar);
+  if (currentRevenueType) filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+
+  if (filtered.length === 0) {
+    alert("Không có dữ liệu để xuất Excel!");
+    return;
+  }
+
+  filtered.sort((a, b) => new Date(a.rentDate) - new Date(b.rentDate));
+
+  const data = [
+    ["STT", "Khách hàng", "SĐT", "Loại xe", "Biển số", "Loại hợp đồng", 
+     "Ngày nhận xe", "Ngày trả xe", "Số ngày", "Tiền thuê xe", "Phụ phí", 
+     "Giảm giá", "Tổng doanh thu", "Ghi chú"]
+  ];
+
+  let totalRevenue = 0;
+
+  filtered.forEach((con, index) => {
+    const d = getCompletedDisplay(con);
+    const rental = d.rentalAmount || calculateRentalTotal(con);
+    const extra = d.extraFees ? d.extraFees.reduce((s, f) => s + (f.amount || 0), 0) : 0;
+    const discount = d.discount || 0;
+    const total = d.totalAmount || (rental + extra - discount);
+    
+    totalRevenue += total;
+
+    data.push([
+      index + 1,
+      d.customer || '',
+      d.phone || '',
+      d.carType || '',
+      d.plate || '',
+      d.contractType === 'app' ? 'Đặt qua app' : 'Thuê thường',
+      formatDate(d.rentDate) + (d.rentTime ? ' ' + d.rentTime : ''),
+      formatDate(d.returnDate) + (d.returnTime ? ' ' + d.returnTime : ''),
+      calculateDays(d.rentDate, d.returnDate),
+      rental, extra, discount, total,
+      d.historyNote || con.historyNote || ''
+    ]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+
+  ws['!cols'] = [
+    {wch:5}, {wch:22}, {wch:12}, {wch:22}, {wch:12},
+    {wch:15}, {wch:18}, {wch:18}, {wch:8}, {wch:15},
+    {wch:12}, {wch:12}, {wch:16}, {wch:35}
+  ];
+
+  let sheetName = currentRevenueMonth && currentRevenueYear 
+    ? `Tháng ${currentRevenueMonth} ${currentRevenueYear}` 
+    : currentRevenueYear ? `Năm ${currentRevenueYear}` : "Tất cả";
+
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  let fileName = "Doanh thu";
+  if (currentRevenueMonth && currentRevenueYear) {
+    fileName = `Doanh thu _ Tháng ${currentRevenueMonth} _ ${currentRevenueYear}`;
+  } else if (currentRevenueYear) {
+    fileName = `Doanh thu _ Năm ${currentRevenueYear}`;
+  } else {
+    fileName = "Doanh thu _ Tat_ca";
+  }
+  fileName += ".xlsx";
+
+  XLSX.writeFile(wb, fileName);
+  showToast(`Đã xuất file: <strong>${fileName}</strong>`);
+}
+
+// ==================== PRO LICENSE ====================
+const PRO_LICENSE_KEY = "PRO-2026-CARRENT-PHƯƠNG123"; // ← Bạn có thể thay key này
+
+function isProUnlocked() {
+  return localStorage.getItem('proLicense') === 'unlocked';
+}
+
+function activateProLicense() {
+  const input = document.getElementById('licenseInput').value.trim().toUpperCase();
+  const messageEl = document.getElementById('licenseMessage');
+
+  if (input === PRO_LICENSE_KEY) {
+    localStorage.setItem('proLicense', 'unlocked');
+    
+    // Lưu luôn vào Firebase để đồng bộ thiết bị
+    db.ref('/proLicense').set({
+      status: 'unlocked',
+      activatedAt: new Date().toISOString()
+    });
+
+    messageEl.innerHTML = `<span style="color:#16a34a;">✅ Kích hoạt thành công! Đang tải...</span>`;
+    setTimeout(() => {
+      document.getElementById('proLockedScreen').style.display = 'none';
+      document.getElementById('proContent').style.display = 'block';
+    }, 800);
+  } else {
+    messageEl.innerHTML = `<span style="color:#dc2626;">❌ License không hợp lệ. Vui lòng liên hệ admin.</span>`;
+  }
+}
+
+function checkProAccess() {
+  const locked = document.getElementById('proLockedScreen');
+  const content = document.getElementById('proContent');
+
+  if (isProUnlocked()) {
+    locked.style.display = 'none';
+    content.style.display = 'block';
+  } else {
+    locked.style.display = 'block';
+    content.style.display = 'none';
+  }
 }
 </script>
 </body>
