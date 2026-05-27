@@ -2243,23 +2243,27 @@ function switchTab(tab) {
         t.classList.toggle('active', i === tab);
     });
 
-    // Ẩn tất cả các tab chính
+    // Ẩn tất cả tab chính
     document.getElementById('tab0').style.display = 'none';
     document.getElementById('tab1').style.display = 'none';
     document.getElementById('tab2').style.display = 'none';
     document.getElementById('tab3').style.display = 'none';
 
     if (tab === 3) {
+        // === VÀO TAB PRO ===
         document.body.classList.add('pro-mode');
+        document.getElementById('tab3').style.display = 'block';           // ← Quan trọng
         document.getElementById('proContent').style.display = 'block';
-        document.getElementById('proBackBtn').style.display = 'flex';   // ← THÊM DÒNG NÀY
-        checkProAccess();
-    } else {
+        document.getElementById('proBackBtn').style.display = 'flex';
+        
+        checkProAccess();   // Quyết định hiện Locked hay Full Pro
+    } 
+    else {
+        // === TAB THƯỜNG ===
         document.body.classList.remove('pro-mode');
         document.getElementById('proContent').style.display = 'none';
-        document.getElementById('proBackBtn').style.display = 'none';   // ← THÊM DÒNG NÀY
+        document.getElementById('proBackBtn').style.display = 'none';
         
-        // Hiển thị tab bình thường
         if (tab === 0) document.getElementById('tab0').style.display = 'block';
         else if (tab === 1) document.getElementById('tab1').style.display = 'block';
         else if (tab === 2) document.getElementById('tab2').style.display = 'block';
@@ -2872,17 +2876,18 @@ function activateProLicense() {
 }
 
 function checkProAccess() {
-  const locked = document.getElementById('proLockedScreen');
-  const content = document.getElementById('proContent');
+    const lockedScreen = document.getElementById('proLockedScreen');
+    const proContent = document.getElementById('proContent');
 
-  if (isProUnlocked()) {
-    locked.style.display = 'none';
-    content.style.display = 'block';
-  } else {
-    locked.style.display = 'block';
-    content.style.display = 'none';
-  }
+    if (isProUnlocked()) {
+        lockedScreen.style.display = 'none';
+        proContent.style.display = 'block';
+    } else {
+        lockedScreen.style.display = 'flex';      // ← Sửa thành flex
+        proContent.style.display = 'none';
+    }
 }
+
 </script>
 </body>
 </html>
