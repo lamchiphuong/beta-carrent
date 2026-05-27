@@ -478,6 +478,92 @@
     .loading-overlay.show {
       display: flex;
     }
+
+        /* ==================== TAB PRO - FULL SCREEN ==================== */
+    #tab3 {
+        display: none;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: #f8fafc;
+        min-height: 100vh;
+        max-width: 100%;
+        box-shadow: none;
+    }
+
+    #proLockedScreen {
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #proContent {
+        display: none;
+        height: calc(100vh - 55px); /* Full chiều cao trừ tabs + header */
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: white;
+    }
+
+    #proIframe {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Tối ưu khi vào chế độ Pro */
+    body.pro-mode {
+        padding: 5px 0 0 0 !important;
+        background: #f8fafc;
+    }
+
+    body.pro-mode header,
+    body.pro-mode .tabs,
+    body.pro-mode .fab,
+    body.pro-mode .action-buttons,
+    body.pro-mode .version {
+        display: none !important;
+    }
+
+    /* Nút quay về Pro */
+    #proBackBtn {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 10000;
+        background: white;
+        color: #2563eb;
+        border: 2px solid #2563eb;
+        padding: 10px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    #proBackBtn:hover {
+        background: #2563eb;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 600px) {
+        #proBackBtn {
+            top: 15px;
+            left: 15px;
+            padding: 9px 14px;
+            font-size: 0.95rem;
+        }
+    }
+
   </style>
 </head>
 <body>
@@ -652,37 +738,37 @@
       </div>
     </div>
 
-    <!-- Tab 3: Bộ quản lý Pro -->
-    <div id="tab3" class="card" style="display: none;">
-      <h2><i class="fas fa-crown"></i> Bộ Quản Lý Pro</h2>
-      <p class="subtitle" style="margin-bottom:20px;">Công cụ nâng cao - Chỉ dành cho người dùng Pro</p>
-
-      <div id="proLockedScreen">
-        <div style="text-align:center; padding:60px 20px; background:#f8fafc; border-radius:20px;">
-          <i class="fas fa-lock" style="font-size:4rem; color:#94a3b8; margin-bottom:20px;"></i>
-          <h3>Bạn cần License Pro để truy cập</h3>
-          <p style="color:#64748b; max-width:400px; margin:15px auto;">
-            Nhập license key bạn đã mua để mở khóa bộ công cụ Pro
-          </p>
-          
-          <input type="text" id="licenseInput" placeholder="Nhập License Key (ví dụ: PRO-2026-...)" 
-                 style="width:100%; max-width:420px; padding:16px; font-size:1.1rem; margin:15px 0; border-radius:12px;">
-          
-          <button onclick="activateProLicense()" class="btn btn-primary" style="padding:14px 32px; font-size:1.1rem;">
-            <i class="fas fa-unlock"></i> Kích hoạt License
-          </button>
-          
-          <div id="licenseMessage" style="margin-top:15px; min-height:24px;"></div>
+    <!-- Tab 3: Bộ quản lý Pro - FULL SCREEN -->
+    <div id="tab3" style="display: none;">
+        <div id="proLockedScreen">
+            <div style="text-align:center; padding:40px 20px; max-width:460px; width:100%;">
+                <i class="fas fa-lock" style="font-size:4.5rem; color:#94a3b8; margin-bottom:25px;"></i>
+                <h3>Bạn cần License Pro để truy cập</h3>
+                <p style="color:#64748b; margin:20px auto;">
+                    Nhập license key bạn đã mua để mở khóa bộ công cụ Pro
+                </p>
+                
+                <input type="text" id="licenseInput" placeholder="Nhập License Key (ví dụ: PRO-2026-...)" 
+                       style="width:100%; padding:16px; font-size:1.1rem; margin:15px 0; border-radius:12px;">
+                
+                <button onclick="activateProLicense()" class="btn btn-primary" style="padding:14px 32px; font-size:1.1rem; width:100%;">
+                    <i class="fas fa-unlock"></i> Kích hoạt License
+                </button>
+                
+                <div id="licenseMessage" style="margin-top:20px; min-height:24px;"></div>
+            </div>
         </div>
-      </div>
 
-      <div id="proContent" style="display:none;">
-        <iframe id="proIframe" 
-                src="https://lamchiphuong.github.io/carrent-toolkit/" 
-                style="width:100%; height:85vh; border:none; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.1);"
-                allowfullscreen></iframe>
+      <div id="proContent">
+          <!-- Nút quay về -->
+          <div id="proBackBtn" onclick="goBackToHome()">
+              <i class="fas fa-arrow-left"></i> Quay về Quản lý Hợp đồng
+          </div>
+
+          <iframe id="proIframe" 
+                  src="https://lamchiphuong.github.io/carrent-toolkit/" 
+                  allowfullscreen></iframe>
       </div>
-    </div>
 
   <!-- FAB -->
   <div class="fab" onclick="showAddContractModal()"><i class="fas fa-plus"></i></div>
@@ -2065,16 +2151,31 @@ function renderAll() {
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === tab));
-  
-  document.getElementById('tab0').style.display = tab === 0 ? 'block' : 'none';
-  document.getElementById('tab1').style.display = tab === 1 ? 'block' : 'none';
-  document.getElementById('tab2').style.display = tab === 2 ? 'block' : 'none';
-  document.getElementById('tab3').style.display = tab === 3 ? 'block' : 'none';
+    document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', i === tab);
+    });
 
-  if (tab === 3) {
-    checkProAccess();
-  }
+    document.getElementById('tab0').style.display = tab === 0 ? 'block' : 'none';
+    document.getElementById('tab1').style.display = tab === 1 ? 'block' : 'none';
+    document.getElementById('tab2').style.display = tab === 2 ? 'block' : 'none';
+    document.getElementById('tab3').style.display = tab === 3 ? 'block' : 'none';
+
+    const backBtn = document.getElementById('proBackBtn');
+    if (backBtn) {
+        backBtn.style.display = tab === 3 ? 'flex' : 'none';
+    }
+
+    if (tab === 3) {
+        document.body.classList.add('pro-mode');
+        checkProAccess();
+    } else {
+        document.body.classList.remove('pro-mode');
+    }
+}
+
+function goBackToHome() {
+    switchTab(0);           // Quay về tab Hợp đồng
+    document.body.classList.remove('pro-mode');
 }
 
 // ====================== MODAL FUNCTIONS ======================
@@ -2555,7 +2656,7 @@ window.onload = async () => {
     if (e.target === this) closeActionPopup();
   });
   // Kiểm tra license khi load
-if (document.getElementById('tab3').style.display !== 'none') {
+if (document.getElementById('tab3').style.display === 'block') {
   checkProAccess();
 }
 
@@ -2661,7 +2762,6 @@ function activateProLicense() {
   if (input === PRO_LICENSE_KEY) {
     localStorage.setItem('proLicense', 'unlocked');
     
-    // Lưu luôn vào Firebase để đồng bộ thiết bị
     db.ref('/proLicense').set({
       status: 'unlocked',
       activatedAt: new Date().toISOString()
@@ -2674,9 +2774,8 @@ function activateProLicense() {
     }, 800);
   } else {
     messageEl.innerHTML = `<span style="color:#dc2626;">❌ License không hợp lệ. Vui lòng liên hệ admin.</span>`;
-  }
+  }  // ← ĐÃ SỬA
 }
-
 function checkProAccess() {
   const locked = document.getElementById('proLockedScreen');
   const content = document.getElementById('proContent');
