@@ -5,44 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CarRent - Quản Lý Thuê Xe</title>
   
-<!-- Icon cơ bản -->
-<link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+<!-- ==================== PWA ICONS & MANIFEST ==================== -->
 
-<!-- iOS Apple Touch Icons -->
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
-<link rel="apple-touch-icon" sizes="120x120" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
-<link rel="apple-touch-icon" sizes="152x152" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+<!-- Favicon cơ bản -->
+<link rel="icon" type="image/png" sizes="32x32" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+<link rel="icon" type="image/png" sizes="512x512" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
+
+<!-- Apple (iOS) -->
 <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
-<link rel="apple-touch-icon" sizes="512x512" href="https://cdn-icons-png.flaticon.com/512/19006/19006139.png">
-
-<!-- Web App Manifest (Quan trọng cho Android) -->
-<link rel="manifest" href="/manifest.json">
-
-<!-- PWA Meta Tags -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CarRent">
 
-<!-- Hỗ trợ Android Chrome -->
-<meta name="theme-color" content="#000000">
+<!-- Android Chrome -->
+<meta name="theme-color" content="#2563eb">
 <meta name="mobile-web-app-capable" content="yes">
 
-
-  <link rel="manifest" href="data:application/manifest+json,{
-    &quot;name&quot;:&quot;CarRent - Quản Lý Thuê Xe&quot;,
-    &quot;short_name&quot;:&quot;CarRent&quot;,
-    &quot;description&quot;:&quot;Quản lý thuê xe thông minh&quot;,
-    &quot;start_url&quot;:&quot;.&quot;,
-    &quot;display&quot;:&quot;standalone&quot;,
-    &quot;background_color&quot;:&quot;#f8fafc&quot;,
-    &quot;theme_color&quot;:&quot;#2563eb&quot;,
-    &quot;icons&quot;:[{
-      &quot;src&quot;:&quot;https://cdn-icons-png.flaticon.com/512/19006/19006139.png&quot;,
-      &quot;sizes&quot;:&quot;512x512&quot;,
-      &quot;type&quot;:&quot;image/png&quot;,
-      &quot;purpose&quot;:&quot;any maskable&quot;
-    }]
-  }">
+<!-- Manifest (phiên bản sạch hơn) -->
+<link rel="manifest" href="data:application/manifest+json,{
+  &quot;name&quot;:&quot;CarRent - Quản Lý Thuê Xe&quot;,
+  &quot;short_name&quot;:&quot;CarRent&quot;,
+  &quot;description&quot;:&quot;Quản lý thuê xe thông minh&quot;,
+  &quot;start_url&quot;:&quot;.&quot;,
+  &quot;display&quot;:&quot;standalone&quot;,
+  &quot;background_color&quot;:&quot;#f8fafc&quot;,
+  &quot;theme_color&quot;:&quot;#2563eb&quot;,
+  &quot;icons&quot;: [
+    {
+      &quot;src&quot;: &quot;https://cdn-icons-png.flaticon.com/512/19006/19006139.png&quot;,
+      &quot;sizes&quot;: &quot;192x192&quot;,
+      &quot;type&quot;: &quot;image/png&quot;
+    },
+    {
+      &quot;src&quot;: &quot;https://cdn-icons-png.flaticon.com/512/19006/19006139.png&quot;,
+      &quot;sizes&quot;: &quot;512x512&quot;,
+      &quot;type&quot;: &quot;image/png&quot;,
+      &quot;purpose&quot;: &quot;any maskable&quot;
+    }
+  ]
+}">
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1340,7 +1342,7 @@ console.log("Số lượng xe:", cars.length, "| Số hợp đồng:", contracts
     if (loading.classList.contains('show')) {
       console.error("⏰ Timeout - Không nhận được dữ liệu từ server");
       loading.classList.remove('show');
-      alert("Không thể kết nối server sau 8 giây.\n\n1. Kiểm tra Rules\n2. Kiểm tra tên project");
+      alert("Không thể kết nối server.\n\nChúng tôi đang nỗ lực sửa chữa lỗi. Vui lòng chờ ...");
     }
   }, 8000);
 }
