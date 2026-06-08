@@ -92,7 +92,7 @@
     tr.waiting-today { background: #dbeafe !important; }
     tr.due-today     { background: #fef3c7 !important; }
     tr.overdue       { background: #fee2e2 !important; }
-
+    tr.dang-thue-normal { background: #d1fae5 !important; }
     tr:hover { background: #f1f5f9 !important; cursor: pointer; }
 
     .status {
@@ -1089,7 +1089,7 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.3.4 - 2026
+    CarRent v1.3.5 - 2026
   </div>
 
   <!-- Loading Overlay -->
@@ -1917,13 +1917,18 @@ function renderActiveContracts() {
       });
       let rowClass = '';
 
-      // === ĐỔI MÀU XANH DƯƠNG cho tất cả hợp đồng "Chưa nhận xe" đã đến hoặc quá ngày nhận ===
+      // === XỬ LÝ MÀU NỀN THEO TRẠNG THÁI ===
       if (contract.status === "Chưa nhận xe" && isReceivePastOrToday(contract)) {
         rowClass = 'waiting-today';
       } 
       else if (contract.status === "Đang thuê") {
-        if (isOverdue(contract)) rowClass = 'overdue';
-        else if (isReturnToday(contract)) rowClass = 'due-today';
+        if (isOverdue(contract)) {
+          rowClass = 'overdue';
+        } else if (isReturnToday(contract)) {
+          rowClass = 'due-today';
+        } else {
+          rowClass = 'dang-thue-normal';     // ← Màu xanh lá nhạt
+        }
       }
       tr.className = rowClass;
 
@@ -2755,7 +2760,7 @@ if (document.getElementById('tab3').style.display === 'block') {
   checkProAccess();
 }
 
-  console.log("🚀 CarRent v1.3.4");
+  console.log("🚀 CarRent v1.3.5");
 };
 
 function formatPriceInput(e) {
