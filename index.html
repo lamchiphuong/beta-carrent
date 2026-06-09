@@ -89,10 +89,10 @@
       font-weight: 600;
     }
 
-    tr.waiting-today { background: #dbeafe !important; }
+    tr.waiting-today { background: #d1fae5 !important; }
     tr.due-today     { background: #fef3c7 !important; }
     tr.overdue       { background: #fee2e2 !important; }
-    tr.dang-thue-normal { background: #d1fae5 !important; }
+    tr.dang-thue-normal { background: #dbeafe !important; }
     tr:hover { background: #f1f5f9 !important; cursor: pointer; }
 
     .status {
@@ -1925,7 +1925,7 @@ function renderActiveContracts() {
         if (isOverdue(contract)) {
           rowClass = 'overdue';
         } else if (isReturnToday(contract)) {
-          rowClass = 'due-today';
+          rowClass = 'dang-thue-normal';
         } else {
           rowClass = 'dang-thue-normal';     // ← Màu xanh lá nhạt
         }
