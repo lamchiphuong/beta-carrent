@@ -620,8 +620,7 @@ body.pro-mode #actionPopup {
             <tr>
               <th>Khách hàng</th>
               <th>SĐT</th>
-              <th>Loại xe</th>
-              <th>Biển số</th>
+              <th>Loại xe/Biển số</th>
               <th>Loại</th>
               <th>Ngày thuê</th>
               <th>Ngày trả</th>
@@ -1089,7 +1088,7 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.3.5 - 2026
+    CarRent v1.3.6 - 2026
   </div>
 
   <!-- Loading Overlay -->
@@ -1844,7 +1843,6 @@ function isOverdue(contract) {
   return retDate.getTime() < today.getTime() && contract.status === "Đang thuê";
 }
 
-// ====================== RENDER ======================
 // ====================== RENDER HỢP ĐỒNG ĐANG XỬ LÝ ======================
 function renderActiveContracts() {
   const tbody = document.getElementById('activeContractBody');
@@ -1935,8 +1933,10 @@ function renderActiveContracts() {
       tr.innerHTML = `
         <td><strong>${contract.customer || ''}</strong></td>
         <td>${contract.phone || ''}</td>
-        <td>${contract.carType || ''}</td>
-        <td><strong>${contract.plate || ''}</strong></td>
+        <td>
+          ${contract.carType || ''}<br>
+          <span style="color:#1e40af;font-weight:600;">${contract.plate || ''}</span>
+        </td>
         <td>${typeLabel}</td>
         <td>${formatDate(contract.rentDate)}<br>${rentNote}</td>
         <td>${formatDate(contract.returnDate)}<br>${returnNote}</td>
@@ -2760,7 +2760,7 @@ if (document.getElementById('tab3').style.display === 'block') {
   checkProAccess();
 }
 
-  console.log("🚀 CarRent v1.3.5");
+  console.log("🚀 CarRent v1.3.6");
 };
 
 function formatPriceInput(e) {
