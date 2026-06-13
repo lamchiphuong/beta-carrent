@@ -1108,14 +1108,14 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.4.0 - 2026 (lamchiphuong.work@gmail.com)
+    CarRent v1.4.0 - 2026 
   </div>
 
   <!-- Loading Overlay -->
   <div id="loadingOverlay" class="loading-overlay">
     <div style="text-align:center;">
       <i class="fas fa-spinner fa-spin" style="font-size:48px; color:#2563eb; margin-bottom:20px;"></i>
-      <h3>Đang tải dữ liệu ...</h3>
+      <h3>CarRent đang tải dữ liệu ...</h3>
       <p style="color:#64748b; margin-top:8px;">Vui lòng chờ trong giây lát</p>
     </div>
   </div>
@@ -1618,7 +1618,7 @@ function showActionPopup(id) {
         ${contract.rentDayType === "homtruoc" ? '(tối hôm trước)' : ''}${rentHalfText}<br>
         <strong>Trả:</strong> ${formatDate(contract.returnDate)} ${contract.returnTime || ''}${returnHalfText}<br>
         <strong>Tổng tiền:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(calculateTotal(contract))} ₫</span><br>
-        <strong>Cọc:</strong> ${formatMoney(contract.deposit || 0)} ₫ | 
+        <strong>Đã thanh toán:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(contract.fullPaymentReceived ? calculateTotal(contract) : (contract.deposit || 0))} ₫</span><br>
         <strong>Còn lại:</strong> <span style="color:${calculateRemaining(contract) === 0 ? '#16a34a' : '#ea580c'};">${formatMoney(calculateRemaining(contract))} ₫</span>
     `;
     document.getElementById('popupContractInfo').innerHTML = infoHTML;
@@ -2919,7 +2919,17 @@ function viewContract(id) {
   const rental = calculateRentalTotal(contract);
   const extra = calculateExtraTotal(contract);
   const discount = contract.discount || 0;
+  const deposit = contract.deposit || 0;
   const remaining = calculateRemaining(contract);
+
+  // === LOGIC HIỂN THỊ TIỀN ĐÃ THANH TOÁN ===
+  let paidAmount = deposit;
+  let paidLabel = "Số tiền đã thanh toán (cọc)";
+
+  if (contract.fullPaymentReceived || contract.status === "Đã hoàn tất") {
+    paidAmount = total;
+    paidLabel = "Số tiền đã thanh toán <strong style='color:#16a34a'>(ĐÃ THU ĐỦ)</strong>";
+  }
 
   let extraHTML = '<strong>Phụ phí:</strong> ';
   if (Array.isArray(contract.extraFees) && contract.extraFees.length > 0) {
@@ -2947,7 +2957,7 @@ function viewContract(id) {
       ${extraHTML}
       <strong>Giảm giá:</strong> <span style="color:#16a34a;">-${formatMoney(discount)} ₫</span><br>
       <strong><span style="color:#1e40af;">TỔNG TIỀN:</span></strong> <span style="color:#16a34a; font-weight:700; font-size:1.1em;">${formatMoney(total)} ₫</span><br>
-      <strong>Số tiền đã thanh toán (cọc):</strong> ${formatMoney(contract.deposit || 0)} ₫<br>
+      <strong>${paidLabel}:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(paidAmount)} ₫</span><br>
       <strong>Còn lại phải thu:</strong> <span style="color:${remaining === 0 ? '#16a34a' : '#ea580c'}; font-weight:700;">${formatMoney(remaining)} ₫</span>
     </div>
   `;
