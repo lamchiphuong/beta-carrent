@@ -1108,7 +1108,7 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.4.0 - 2026
+    CarRent v1.4.0 - 2026 (lamchiphuong.work@gmail.com)
   </div>
 
   <!-- Loading Overlay -->
@@ -2942,9 +2942,9 @@ function viewContract(id) {
       <strong>Trả xe:</strong> ${formatDate(contract.returnDate)} ${contract.returnTime || ''}<br>
       ${halfNote}
       <strong>Loại xe / Biển số:</strong> ${contract.carType} - ${contract.plate}<br>
-      ${extraHTML}
+      
       <strong>Tiền thuê xe:</strong> ${formatMoney(rental)} ₫<br>
-      <strong>Phụ phí:</strong> ${formatMoney(extra)} ₫<br>
+      ${extraHTML}
       <strong>Giảm giá:</strong> <span style="color:#16a34a;">-${formatMoney(discount)} ₫</span><br>
       <strong><span style="color:#1e40af;">TỔNG TIỀN:</span></strong> <span style="color:#16a34a; font-weight:700; font-size:1.1em;">${formatMoney(total)} ₫</span><br>
       <strong>Số tiền đã thanh toán (cọc):</strong> ${formatMoney(contract.deposit || 0)} ₫<br>
