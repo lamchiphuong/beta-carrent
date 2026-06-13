@@ -912,9 +912,14 @@ body.pro-mode #actionPopup {
         <h2 id="popupContractTitle" class="action-popup-title"></h2>
         <div id="popupContractInfo" class="action-popup-info"></div>
       </div>
+      
       <div class="action-buttons-grid">
         <button onclick="editFromPopup()" class="btn btn-edit" style="width:100%; justify-content:center;">
           <i class="fas fa-edit"></i> Sửa hợp đồng
+        </button>
+        <!-- NÚT MỚI -->
+        <button onclick="viewContractFromPopup()" class="btn btn-info" style="width:100%; justify-content:center;">
+          <i class="fas fa-file-contract"></i> Xem hợp đồng
         </button>
         <button onclick="openActiveNoteFromPopup()" class="btn btn-note" style="width:100%; justify-content:center;">
           <i class="fas fa-sticky-note"></i> Ghi chú
@@ -932,8 +937,9 @@ body.pro-mode #actionPopup {
           Đóng
         </button>
       </div>
-    </div>
-  </div>
+    </div>   <!-- ← Đóng action-popup-content -->
+  </div>     <!-- ← Đóng actionPopup -->
+
 
   <!-- Note Modal -->
   <div id="noteModal" class="modal">
@@ -1077,6 +1083,20 @@ body.pro-mode #actionPopup {
       <div id="detailContent" style="padding: 10px 0; max-height: 60vh; overflow-y:auto;"></div>
       <div style="margin-top: 20px; text-align: center;">
         <button onclick="closeContractDetailModal()" class="btn btn-secondary" style="min-width: 160px;">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Contract Modal - Xem hợp đồng -->
+  <div id="viewContractModal" class="modal">
+    <div class="modal-content" style="max-width: 580px;">
+      <div class="modal-header">
+        <h2 id="viewContractTitle">📄 Hợp đồng thuê xe</h2>
+        <span class="close" onclick="closeViewContractModal()">×</span>
+      </div>
+      <div id="viewContractContent" style="padding: 15px 5px; line-height: 1.75; font-size: 1.03rem; color: #1e2937;"></div>
+      <div style="margin-top: 25px; text-align: center;">
+        <button onclick="closeViewContractModal()" class="btn btn-secondary" style="min-width: 160px;">Đóng</button>
       </div>
     </div>
   </div>
@@ -2888,6 +2908,60 @@ function checkProAccess() {
         lockedScreen.style.display = 'flex';      // ← Sửa thành flex
         proContent.style.display = 'none';
     }
+}
+
+// ====================== XEM HỢP ĐỒNG ======================
+function viewContract(id) {
+  const contract = contracts.find(c => c.id === id);
+  if (!contract) return;
+
+  const total = calculateTotal(contract);
+  const rental = calculateRentalTotal(contract);
+  const extra = calculateExtraTotal(contract);
+  const remaining = calculateRemaining(contract);
+
+  let extraHTML = '<strong>Phụ phí:</strong> ';
+  if (Array.isArray(contract.extraFees) && contract.extraFees.length > 0) {
+    contract.extraFees.forEach(f => {
+      extraHTML += `• ${f.type}: ${formatMoney(f.amount)} ₫<br>`;
+    });
+  } else {
+    extraHTML += 'Không có<br>';
+  }
+
+  const halfNote = (contract.rentHalf === 'half' || contract.returnHalf === 'half') 
+    ? '<small style="color:#d97706;">(Có áp dụng nửa ngày)</small>' : '';
+
+  let html = `
+    <div style="background:#f8fafc; padding:20px; border-radius:16px; margin:10px 0;">
+      <strong>Tên khách thuê:</strong> ${contract.customer || '—'}<br>
+      <strong>Số điện thoại:</strong> ${contract.phone || '—'}<br>
+      <strong>Nhận xe:</strong> ${formatDate(contract.rentDate)} ${contract.rentTime || ''} 
+      ${contract.rentDayType === "homtruoc" ? '- (tối hôm trước)' : ''}<br>
+      <strong>Trả xe:</strong> ${formatDate(contract.returnDate)} ${contract.returnTime || ''}<br>
+      ${halfNote}
+      <strong>Loại xe / Biển số:</strong> ${contract.carType} - ${contract.plate}<br>
+      ${extraHTML}
+      <strong>Tổng tiền thuê xe:</strong> <span style="color:#16a34a; font-weight:700;">${formatMoney(total)} ₫</span><br>
+      <strong>Số tiền đã thanh toán (cọc):</strong> ${formatMoney(contract.deposit || 0)} ₫<br>
+      <strong>Còn lại phải thu:</strong> <span style="color:${remaining === 0 ? '#16a34a' : '#ea580c'}; font-weight:700;">${formatMoney(remaining)} ₫</span>
+    </div>
+  `;
+
+  document.getElementById('viewContractContent').innerHTML = html;
+  document.getElementById('viewContractModal').style.display = 'flex';
+}
+
+function closeViewContractModal() {
+  document.getElementById('viewContractModal').style.display = 'none';
+}
+
+function viewContractFromPopup() {
+  const id = currentActionContractId;
+  if (id) {
+    closeActionPopup();
+    viewContract(id);
+  }
 }
 
 </script>
