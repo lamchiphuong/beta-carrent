@@ -2922,6 +2922,16 @@ function viewContract(id) {
   const deposit = contract.deposit || 0;
   const remaining = calculateRemaining(contract);
 
+  // === TÍNH NGÀY NHẬN XE THỰC TẾ ===
+  let displayReceiveDate = formatDate(contract.rentDate);
+  let receiveNote = '';
+  
+  if (contract.rentDayType === "homtruoc") {
+    const realDate = new Date(contract.rentDate);
+    realDate.setDate(realDate.getDate() - 1);
+    displayReceiveDate = formatDate(realDate.toISOString().split('T')[0]);
+  }
+
   // === LOGIC HIỂN THỊ TIỀN ĐÃ THANH TOÁN ===
   let paidAmount = deposit;
   let paidLabel = "Số tiền đã thanh toán (cọc)";
@@ -2947,8 +2957,7 @@ function viewContract(id) {
     <div style="background:#f8fafc; padding:20px; border-radius:16px; margin:10px 0; line-height:1.8;">
       <strong>Tên khách thuê:</strong> ${contract.customer || '—'}<br>
       <strong>Số điện thoại:</strong> ${contract.phone || '—'}<br>
-      <strong>Nhận xe:</strong> ${formatDate(contract.rentDate)} ${contract.rentTime || ''} 
-      ${contract.rentDayType === "homtruoc" ? '- (tối hôm trước)' : ''}<br>
+      <strong>Nhận xe:</strong> ${displayReceiveDate} ${contract.rentTime || ''}${receiveNote}<br>
       <strong>Trả xe:</strong> ${formatDate(contract.returnDate)} ${contract.returnTime || ''}<br>
       ${halfNote}
       <strong>Loại xe / Biển số:</strong> ${contract.carType} - ${contract.plate}<br>
