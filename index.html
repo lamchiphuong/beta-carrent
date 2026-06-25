@@ -1108,7 +1108,7 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.4.0 - 2026 
+    CarRent v1.4.1 - 2026 
   </div>
 
   <!-- Loading Overlay -->
@@ -2032,7 +2032,7 @@ function renderCars() {
   });
 }
 function populateRevenueFilters() {
-  // Populate Năm
+  // Years
   const years = new Set();
   contracts.forEach(c => {
     if (c.status === "Đã hoàn tất" && c.rentDate) {
@@ -2044,14 +2044,15 @@ function populateRevenueFilters() {
   yearSel.innerHTML = '<option value="">Tất cả năm</option>';
   Array.from(years).sort((a,b)=>b-a).forEach(y => {
     const opt = document.createElement('option');
-    opt.value = y; 
-    opt.textContent = y; 
+    opt.value = y; opt.textContent = y;
     yearSel.appendChild(opt);
   });
 
-  // Populate Xe (phần này bị mất trước đó)
+  // === XE - TÁCH LỊCH SỬ ===
   const carSel = document.getElementById('revenueCarFilter');
   carSel.innerHTML = '<option value="">Tất cả xe</option>';
+
+  // Xe hiện tại
   cars.forEach(car => {
     const opt = document.createElement('option');
     opt.value = car.plate;
@@ -2059,19 +2060,36 @@ function populateRevenueFilters() {
     carSel.appendChild(opt);
   });
 
+  // Xe lịch sử (từ frozenData)
+  const historyCars = new Map(); // plate -> display name
+  contracts.forEach(c => {
+    if (c.status === "Đã hoàn tất" && c.frozenData) {
+      const fd = c.frozenData;
+      const key = fd.plate;
+      if (!historyCars.has(key)) {
+        historyCars.set(key, `${fd.carType} - ${fd.plate} (Xe đã xoá)`);
+      }
+    }
+  });
+
+  historyCars.forEach((display, plate) => {
+    // Tránh trùng với xe hiện tại
+    if (!cars.some(car => car.plate === plate)) {
+      const opt = document.createElement('option');
+      opt.value = plate;
+      opt.textContent = display;
+      carSel.appendChild(opt);
+    }
+  });
+
+  // Default filters
   const currY = new Date().getFullYear().toString();
   const currM = (new Date().getMonth() + 1).toString();
-
-  // Mặc định tháng hiện tại
   yearSel.value = currY;
   document.getElementById('revenueMonthFilter').value = currM;
 
-  // Đồng bộ biến
   currentRevenueYear = currY;
   currentRevenueMonth = currM;
-  // Giữ nguyên nếu người dùng đã chọn xe hoặc loại trước đó
-  // currentRevenueCar = '';
-  // currentRevenueType = '';
 
   renderCompletedContracts();
 }
@@ -2099,7 +2117,6 @@ function renderCompletedContracts() {
 
   let filtered = contracts.filter(c => c.status === "Đã hoàn tất");
 
-  // === BỘ LỌC ĐẦY ĐỦ ===
   if (currentRevenueYear) {
     filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
   }
@@ -2107,39 +2124,35 @@ function renderCompletedContracts() {
     filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
   }
   if (currentRevenueCar) {
-    filtered = filtered.filter(c => c.plate === currentRevenueCar);
+    filtered = filtered.filter(c => {
+      const d = getCompletedDisplay(c);
+      return d.plate === currentRevenueCar;
+    });
   }
   if (currentRevenueType) {
     filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
   }
 
-  // Sắp xếp theo ngày nhận xe
   filtered.sort((a, b) => new Date(a.rentDate) - new Date(b.rentDate));
 
-  // Tiêu đề động
+  // Tiêu đề
   let titleText = "Tổng doanh thu từ tất cả hợp đồng đã hoàn tất";
-  if (currentRevenueYear && currentRevenueMonth) {
-    titleText = `Doanh thu tháng ${currentRevenueMonth} / ${currentRevenueYear}`;
-  }
+  if (currentRevenueYear && currentRevenueMonth) titleText = `Doanh thu tháng ${currentRevenueMonth}/${currentRevenueYear}`;
   if (currentRevenueCar) {
-    const car = cars.find(c => c.plate === currentRevenueCar);
-    if (car) titleText += ` (${car.type} - ${car.plate})`;
+    const d = filtered[0] ? getCompletedDisplay(filtered[0]) : null;
+    if (d) titleText += ` (${d.carType} - ${d.plate})`;
   }
   if (currentRevenueType) {
     titleText += currentRevenueType === 'app' ? " (Đặt qua app)" : " (Thuê thường)";
   }
-
   document.getElementById('revenueTitle').textContent = titleText;
 
   filtered.forEach(contract => {
-    const d = getCompletedDisplay(contract);
-    totalRevenue += d.totalAmount;
+    const d = getCompletedDisplay(contract);  // Luôn dùng frozenData nếu có
+    totalRevenue += d.totalAmount || 0;
 
     const typeLabel = d.contractType === 'app' ? 'Đặt qua app' : 'Thuê thường';
     const noteShort = contract.historyNote ? (contract.historyNote.length > 40 ? contract.historyNote.substring(0,40) + '...' : contract.historyNote) : '<small style="color:#94a3b8;">—</small>';
-
-    const rentHalfText = (d.rentHalf || 'full') === 'half' ? ' (½ ngày đầu)' : '';
-    const returnHalfText = (d.returnHalf || 'full') === 'half' ? ' (½ ngày cuối)' : '';
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -2148,8 +2161,8 @@ function renderCompletedContracts() {
       <td>${d.carType || ''}</td>
       <td><strong>${d.plate || ''}</strong></td>
       <td>${typeLabel}</td>
-      <td>${formatDate(d.rentDate)} ${d.rentTime || ''}${rentHalfText}</td>
-      <td>${formatDate(d.returnDate)} ${d.returnTime || ''}${returnHalfText}</td>
+      <td>${formatDate(d.rentDate)} ${d.rentTime || ''}</td>
+      <td>${formatDate(d.returnDate)} ${d.returnTime || ''}</td>
       <td>${calculateDays(d.rentDate, d.returnDate)}</td>
       <td style="text-align:right;">${formatMoney(d.rentalAmount)} ₫</td>
       <td style="text-align:right;">${formatMoney(Array.isArray(d.extraFees) ? d.extraFees.reduce((s,f)=>s+(f.amount||0),0) : 0)} ₫</td>
@@ -2167,10 +2180,23 @@ function renderCompletedContracts() {
 function printRevenue() {
   let filtered = contracts.filter(c => c.status === "Đã hoàn tất");
 
-  if (currentRevenueYear) filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
-  if (currentRevenueMonth) filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
-  if (currentRevenueCar) filtered = filtered.filter(c => c.plate === currentRevenueCar);
-  if (currentRevenueType) filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+  if (currentRevenueYear) {
+    filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
+  }
+  if (currentRevenueMonth) {
+    filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
+  }
+  if (currentRevenueType) {
+    filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+  }
+
+  // Hỗ trợ xe đã xóa / đổi biển số
+  if (currentRevenueCar) {
+    filtered = filtered.filter(c => {
+      const d = getCompletedDisplay(c);
+      return d.plate === currentRevenueCar;
+    });
+  }
 
   if (filtered.length === 0) {
     alert("Không có dữ liệu để in theo bộ lọc hiện tại!");
@@ -2235,7 +2261,7 @@ function printRevenue() {
         <td>${formatDate(d.returnDate)} ${d.returnTime || ''}${returnHalfText}</td>
         <td style="text-align:center;">${calculateDays(d.rentDate, d.returnDate)}</td>
         <td style="text-align:right;">${formatMoney(d.rentalAmount)} ₫</td>
-        <td style="text-align:right;">${formatMoney(d.extraFees.reduce((s,f)=>s+(f.amount||0),0))} ₫</td>
+        <td style="text-align:right;">${formatMoney(Array.isArray(d.extraFees) ? d.extraFees.reduce((s,f)=>s+(f.amount||0),0) : 0)} ₫</td>
         <td style="text-align:right;">${formatMoney(d.discount)} ₫</td>
         <td style="font-weight:bold;color:#16a34a;text-align:right;">${formatMoney(d.totalAmount)} ₫</td>
       </tr>`;
@@ -2616,55 +2642,49 @@ document.getElementById('carForm').addEventListener('submit', e => {
     return;
   }
 
-  if (carId) {
+
+if (carId) {
     // === SỬA XE ===
     const car = cars.find(c => c.id === carId);
     if (!car) return;
 
     const oldPlate = car.plate;
+    const oldType = car.type;
 
-    // Kiểm tra biển số mới đã tồn tại chưa (trừ chính xe này)
+    // Kiểm tra biển số mới
     const existingCar = cars.find(c => c.plate === newPlate && c.id !== carId);
     if (existingCar) {
       alert(`Biển số ${newPlate} đã tồn tại trên xe khác!`);
       return;
     }
 
-    // Kiểm tra xe có hợp đồng đang xử lý không
     const activeContracts = contracts.filter(c => 
       c.plate === oldPlate && c.status !== "Đã hoàn tất"
     );
 
     if (activeContracts.length > 0) {
-      const confirmMsg = `Xe "${car.type} - ${oldPlate}" đang có ${activeContracts.length} hợp đồng đang xử lý.\n\n` +
-                        `Bạn có chắc muốn đổi biển số sang "${newPlate}"?\n` +
-                        `Tất cả hợp đồng sẽ được tự động cập nhật theo biển số mới.`;
-      
-      if (!confirm(confirmMsg)) {
-        return;
-      }
+      const confirmMsg = `Xe "${oldType} - ${oldPlate}" đang có ${activeContracts.length} hợp đồng đang xử lý.\n\nBạn có chắc muốn đổi?`;
+      if (!confirm(confirmMsg)) return;
     }
 
-    // === THỰC HIỆN CẬP NHẬT & ĐỒNG BỘ ===
-    // 1. Cập nhật thông tin xe
+    // Cập nhật xe hiện tại
     car.type = newType;
     car.plate = newPlate;
     car.daily = parseMoney(document.getElementById('dailyPrice').value);
     car.weekend = parseMoney(document.getElementById('weekendPrice').value);
     car.holiday = parseMoney(document.getElementById('holidayPrice').value);
 
-    // 2. Đồng bộ biển số và loại xe vào tất cả hợp đồng (kể cả đã hoàn tất)
+    // CHỈ ĐỒNG BỘ HỢP ĐỒNG ĐANG XỬ LÝ (không động vào completed)
     let updatedCount = 0;
     contracts.forEach(contract => {
-      if (contract.plate === oldPlate) {
+      if (contract.plate === oldPlate && contract.status !== "Đã hoàn tất") {
         contract.plate = newPlate;
-        contract.carType = newType;        // đồng bộ luôn loại xe cho nhất quán
+        contract.carType = newType;
         updatedCount++;
       }
     });
 
-    showToast(`Đã cập nhật xe và đồng bộ ${updatedCount} hợp đồng sang biển số mới: ${newPlate}`);
-
+    showToast(`Đã cập nhật xe. Đồng bộ ${updatedCount} hợp đồng đang xử lý.`);
   } else {
     // === THÊM XE MỚI ===
     // Kiểm tra biển số trùng
@@ -2780,7 +2800,7 @@ if (document.getElementById('tab3').style.display === 'block') {
   checkProAccess();
 }
 
-  console.log("🚀 CarRent v1.4.0");
+  console.log("🚀 CarRent v1.4.1");
 };
 
 function formatPriceInput(e) {
@@ -2795,10 +2815,23 @@ function formatPriceInput(e) {
 function exportRevenueToExcel() {
   let filtered = contracts.filter(c => c.status === "Đã hoàn tất");
 
-  if (currentRevenueYear) filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
-  if (currentRevenueMonth) filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
-  if (currentRevenueCar) filtered = filtered.filter(c => c.plate === currentRevenueCar);
-  if (currentRevenueType) filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+  if (currentRevenueYear) {
+    filtered = filtered.filter(c => new Date(c.rentDate).getFullYear().toString() === currentRevenueYear);
+  }
+  if (currentRevenueMonth) {
+    filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1).toString() === currentRevenueMonth);
+  }
+  if (currentRevenueType) {
+    filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+  }
+
+  // Hỗ trợ xe đã xóa / đổi biển số
+  if (currentRevenueCar) {
+    filtered = filtered.filter(c => {
+      const d = getCompletedDisplay(c);
+      return d.plate === currentRevenueCar;
+    });
+  }
 
   if (filtered.length === 0) {
     alert("Không có dữ liệu để xuất Excel!");
@@ -2818,7 +2851,7 @@ function exportRevenueToExcel() {
   filtered.forEach((con, index) => {
     const d = getCompletedDisplay(con);
     const rental = d.rentalAmount || calculateRentalTotal(con);
-    const extra = d.extraFees ? d.extraFees.reduce((s, f) => s + (f.amount || 0), 0) : 0;
+    const extra = Array.isArray(d.extraFees) ? d.extraFees.reduce((s, f) => s + (f.amount || 0), 0) : 0;
     const discount = d.discount || 0;
     const total = d.totalAmount || (rental + extra - discount);
     
@@ -2834,7 +2867,10 @@ function exportRevenueToExcel() {
       formatDate(d.rentDate) + (d.rentTime ? ' ' + d.rentTime : ''),
       formatDate(d.returnDate) + (d.returnTime ? ' ' + d.returnTime : ''),
       calculateDays(d.rentDate, d.returnDate),
-      rental, extra, discount, total,
+      rental,
+      extra,
+      discount,
+      total,
       d.historyNote || con.historyNote || ''
     ]);
   });
@@ -2856,11 +2892,11 @@ function exportRevenueToExcel() {
 
   let fileName = "Doanh thu";
   if (currentRevenueMonth && currentRevenueYear) {
-    fileName = `Doanh thu _ Tháng ${currentRevenueMonth} _ ${currentRevenueYear}`;
+    fileName = `Doanh thu_Tháng_${currentRevenueMonth}_${currentRevenueYear}`;
   } else if (currentRevenueYear) {
-    fileName = `Doanh thu _ Năm ${currentRevenueYear}`;
+    fileName = `Doanh thu_Năm_${currentRevenueYear}`;
   } else {
-    fileName = "Doanh thu _ Tat_ca";
+    fileName = "Doanh thu_Tat_ca";
   }
   fileName += ".xlsx";
 
