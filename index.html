@@ -30,6 +30,7 @@
       min-height: 100vh;
       padding: 15px;
       padding-bottom: 130px;
+      font-size: 0.95rem; /* Giảm nhẹ font base */
     }
 
     .container { max-width: 1400px; margin: 0 auto; }
@@ -753,28 +754,142 @@ body.pro-mode #actionPopup {
     </div>
 
     <!-- Tab 3: Bộ quản lý Pro - FULL SCREEN -->
-    <div id="tab3" style="display: none;">
+    <div id="tab3" style="display:none;">
         <div id="proLockedScreen">
-            <div style="text-align:center; padding:40px 20px; max-width:460px; width:100%;">
-                <i class="fas fa-lock" style="font-size:4.5rem; color:#94a3b8; margin-bottom:25px;"></i>
-                <h3>Bạn cần License Pro để truy cập</h3>
+            <div style="text-align:center; padding:40px 20px; max-width:500px; width:100%; margin:auto;">
+
+                <!-- Icon -->
+                <i class="fas fa-lock"
+                   style="font-size:4.5rem; color:#94a3b8; margin-bottom:25px;"></i>
+
+                <!-- Tiêu đề -->
+                <h3 style="margin-bottom:10px;">
+                    Bạn cần License Pro để truy cập
+                </h3>
+
                 <p style="color:#64748b; margin:20px auto;">
-                    Nhập license key bạn đã mua để mở khóa bộ công cụ Pro
+                    Nhập License Key bạn đã mua để mở khóa toàn bộ Bộ quản lý Pro.
                 </p>
-                
-                <input type="text" id="licenseInput" placeholder="Nhập License Key (ví dụ: PRO-2026-...)" 
-                       style="width:100%; padding:16px; font-size:1.1rem; margin:15px 0; border-radius:12px;">
-                
-                <div style="display: flex; gap: 12px; margin-top: 20px;">
-                    <button onclick="goBackToHome()" class="btn btn-secondary" style="flex:1; padding:14px;">
-                        <i class="fas fa-arrow-left"></i> Huỷ
+
+                <!-- Ô nhập License -->
+                <input
+                    type="text"
+                    id="licenseInput"
+                    placeholder="Nhập License Key (VD: PRO-2026-XXXXXX)"
+                    style="
+                        width:100%;
+                        padding:16px;
+                        font-size:1.05rem;
+                        border:1px solid #cbd5e1;
+                        border-radius:12px;
+                        box-sizing:border-box;
+                        margin-top:15px;
+                    "
+                >
+
+                <!-- Nút -->
+                <div style="display:flex; gap:12px; margin-top:20px;">
+
+                    <button
+                        onclick="goBackToHome()"
+                        class="btn btn-secondary"
+                        style="flex:1; padding:14px;"
+                    >
+                        <i class="fas fa-arrow-left"></i>
+                        Huỷ
                     </button>
-                    <button onclick="activateProLicense()" class="btn btn-primary" style="flex:1; padding:14px;">
-                        <i class="fas fa-unlock"></i> Kích hoạt License
+
+                    <button
+                        onclick="activateProLicense()"
+                        class="btn btn-primary"
+                        style="flex:1; padding:14px;"
+                    >
+                        <i class="fas fa-unlock"></i>
+                        Kích hoạt License
                     </button>
+
                 </div>
-                
-                <div id="licenseMessage" style="margin-top:20px; min-height:24px;"></div>
+
+                <!-- Thông báo -->
+                <div id="licenseMessage"
+                     style="margin-top:20px; min-height:24px;">
+                </div>
+
+                <!-- Khung giới thiệu PRO -->
+                <div style="
+                    background:linear-gradient(135deg,#eff6ff,#f8fafc);
+                    border:1px solid #bfdbfe;
+                    border-radius:16px;
+                    padding:22px;
+                    margin-top:30px;
+                    text-align:left;
+                    box-shadow:0 8px 20px rgba(0,0,0,.08);
+                ">
+
+                    <div style="display:flex; align-items:center; margin-bottom:18px;">
+                        <i class="fas fa-crown"
+                           style="font-size:1.5rem; color:#f59e0b; margin-right:10px;"></i>
+
+                        <h4 style="margin:0; color:#1e3a8a;">
+                            Với Bộ công cụ Pro, bạn sẽ có:
+                        </h4>
+                    </div>
+
+                    <ul style="
+                        list-style:none;
+                        padding:0;
+                        margin:0;
+                        color:#334155;
+                        line-height:2;
+                        font-size:15px;
+                    ">
+
+                        <li>
+                            <i class="fas fa-chart-line"
+                               style="color:#10b981; width:24px;"></i>
+                            Dashboard tổng quan (doanh thu, khách hàng, hợp đồng đang xử lý...)
+                        </li>
+
+                        <li>
+                            <i class="fas fa-users"
+                               style="color:#10b981; width:24px;"></i>
+                            Xem, thống kê số lần thuê và doanh thu từng khách hàng
+                        </li>
+
+                        <li>
+                            <i class="fas fa-user-edit"
+                               style="color:#10b981; width:24px;"></i>
+                            Chỉnh sửa, tìm kiếm và xuất dữ liệu khách hàng
+                        </li>
+
+                        <li>
+                            <i class="fas fa-coins"
+                               style="color:#10b981; width:24px;"></i>
+                            Thống kê doanh thu tổng, doanh thu theo xe và theo tháng
+                        </li>
+
+                        <li>
+                            <i class="fas fa-calendar-alt"
+                               style="color:#10b981; width:24px;"></i>
+                            Xem lịch xe chạy theo từng ngày
+                        </li>
+
+                    </ul>
+
+                    <div style="
+                        margin-top:20px;
+                        padding:12px;
+                        background:#dbeafe;
+                        border-radius:10px;
+                        text-align:center;
+                        color:#1d4ed8;
+                        font-weight:600;
+                    ">
+                        ⭐ Mở khóa một lần • Sử dụng trọn đời • Cập nhật miễn phí
+                    </div>
+
+                </div>
+
             </div>
         </div>
     </div>
@@ -782,7 +897,7 @@ body.pro-mode #actionPopup {
     <div id="proContent">
           <!-- Nút quay về -->
           <div id="proBackBtn" onclick="goBackToHome()">
-              <i class="fas fa-arrow-left"></i> 
+              <i class="fas fa-arrow-left"></i>
           </div>
 
           <iframe id="proIframe" 
@@ -1108,7 +1223,7 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.4.1.1 - 2026 
+    CarRent v1.4.2 - 2026 
   </div>
 
   <!-- Loading Overlay -->
@@ -2800,7 +2915,7 @@ if (document.getElementById('tab3').style.display === 'block') {
   checkProAccess();
 }
 
-  console.log("🚀 CarRent v1.4.1.1");
+  console.log("🚀 CarRent v1.4.2");
 };
 
 function formatPriceInput(e) {
