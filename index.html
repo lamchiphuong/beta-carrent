@@ -1042,6 +1042,9 @@ body.pro-mode #actionPopup {
               <button id="returnBtnPopup" onclick="confirmReturnFromPopup()" class="btn btn-info" style="width:100%; justify-content:center; display:none;">
           <i class="fas fa-undo"></i> Trả xe
         </button>
+        <button id="swapCarBtnPopup" onclick="swapCarFromPopup()" class="btn btn-secondary" style="width:100%; justify-content:center; background:#0891b2;">
+          <i class="fas fa-exchange-alt"></i> Đổi xe
+        </button>
         <button onclick="openActiveNoteFromPopup()" class="btn btn-note" style="width:100%; justify-content:center;">
           <i class="fas fa-sticky-note"></i> Ghi chú
         </button>
@@ -1054,6 +1057,25 @@ body.pro-mode #actionPopup {
       </div>
     </div>   <!-- ← Đóng action-popup-content -->
   </div>     <!-- ← Đóng actionPopup -->
+
+  <!-- Swap Car Modal -->
+  <div id="swapCarModal" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+      <div class="modal-header">
+        <h2><i class="fas fa-exchange-alt"></i> Đổi xe giữa 2 hợp đồng</h2>
+        <span class="close" onclick="closeSwapCarModal()">&times;</span>
+      </div>
+
+      <div id="swapCarCurrentInfo"></div>
+
+      <label>Chọn hợp đồng muốn đổi xe cùng</label>
+      <select id="swapCarTargetSelect"></select>
+
+      <button onclick="confirmSwapCar()" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;">
+        <i class="fas fa-exchange-alt"></i> Xác nhận đổi xe
+      </button>
+    </div>
+  </div>
 
 
   <!-- Note Modal -->
@@ -1742,15 +1764,20 @@ function showActionPopup(id) {
     const receiveBtn = document.getElementById('receiveBtnPopup');
     const returnBtn = document.getElementById('returnBtnPopup');
 
+    const swapBtn = document.getElementById('swapCarBtnPopup');
+
     if (contract.status === "Chưa nhận xe") {
         receiveBtn.style.display = 'flex';
         returnBtn.style.display = 'none';
+        swapBtn.style.display = 'flex';
     } else if (contract.status === "Đang thuê") {
         receiveBtn.style.display = 'none';
         returnBtn.style.display = 'flex';
+        swapBtn.style.display = 'flex';
     } else {
         receiveBtn.style.display = 'none';
         returnBtn.style.display = 'none';
+        swapBtn.style.display = 'none';
     }
 
     // FIX CHÍNH: Hiển thị popup mạnh tay
@@ -1810,6 +1837,105 @@ function deleteFromPopup() {
   const id = currentActionContractId;
   closeActionPopup();
   deleteContract(id);
+}
+
+// ====================== ĐỔI XE GIỮA 2 HỢP ĐỒNG ======================
+let currentSwapContractId = null;
+
+function swapCarFromPopup() {
+  const id = currentActionContractId;
+  closeActionPopup();
+  openSwapCarModal(id);
+}
+
+function openSwapCarModal(id) {
+  const contract = contracts.find(c => c.id === id);
+  if (!contract) return;
+
+  currentSwapContractId = id;
+
+  document.getElementById('swapCarCurrentInfo').innerHTML = `
+    <div style="background:#f8fafc; padding:15px; border-radius:12px; margin-bottom:12px; line-height:1.7;">
+      <strong>Hợp đồng hiện tại:</strong> ${contract.customer || '—'}<br>
+      <strong>Xe đang dùng:</strong> ${contract.carType} - ${contract.plate}<br>
+      <strong>Thời gian:</strong> ${formatDate(contract.rentDate)} → ${formatDate(contract.returnDate)}
+    </div>
+  `;
+
+  const select = document.getElementById('swapCarTargetSelect');
+  select.innerHTML = '';
+
+  const eligible = contracts.filter(c =>
+    c.id !== id &&
+    c.status !== "Đã hoàn tất" &&
+    c.plate && c.plate !== contract.plate
+  );
+
+  if (eligible.length === 0) {
+    select.innerHTML = '<option value="">Không có hợp đồng nào khác để đổi xe</option>';
+  } else {
+    eligible.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.customer || 'Khách'} — ${c.carType} - ${c.plate} (${formatDate(c.rentDate)} → ${formatDate(c.returnDate)})`;
+      select.appendChild(opt);
+    });
+  }
+
+  document.getElementById('swapCarModal').style.display = 'flex';
+}
+
+function closeSwapCarModal() {
+  document.getElementById('swapCarModal').style.display = 'none';
+  currentSwapContractId = null;
+}
+
+function confirmSwapCar() {
+  const id = currentSwapContractId;
+  const select = document.getElementById('swapCarTargetSelect');
+  const targetId = select.value ? parseInt(select.value) : null;
+
+  if (!targetId) {
+    alert("Vui lòng chọn hợp đồng để đổi xe!");
+    return;
+  }
+
+  const contractA = contracts.find(c => c.id === id);
+  const contractB = contracts.find(c => c.id === targetId);
+  if (!contractA || !contractB) return;
+
+  // Kiểm tra xe sau khi đổi có bị trùng lịch với hợp đồng khác (ngoài 2 hợp đồng đang đổi) không
+  const hasConflict = (checkContract, newPlate) => contracts.some(c =>
+    c.id !== contractA.id && c.id !== contractB.id &&
+    c.plate === newPlate && c.status !== "Đã hoàn tất" &&
+    new Date(checkContract.rentDate) <= new Date(c.returnDate) &&
+    new Date(checkContract.returnDate) >= new Date(c.rentDate)
+  );
+
+  if (hasConflict(contractA, contractB.plate) || hasConflict(contractB, contractA.plate)) {
+    alert("❌ Không thể đổi xe vì sẽ bị trùng lịch với một hợp đồng khác!");
+    return;
+  }
+
+  showSimpleConfirm(
+    "Xác nhận đổi xe",
+    `Đổi xe giữa 2 hợp đồng:<br><br>` +
+    `<strong>${contractA.customer || 'Khách'}</strong>: ${contractA.carType} - ${contractA.plate} ⇄ ${contractB.carType} - ${contractB.plate}<br>` +
+    `<strong>${contractB.customer || 'Khách'}</strong>: ${contractB.carType} - ${contractB.plate} ⇄ ${contractA.carType} - ${contractA.plate}`,
+    () => {
+      const tempType = contractA.carType;
+      const tempPlate = contractA.plate;
+      contractA.carType = contractB.carType;
+      contractA.plate = contractB.plate;
+      contractB.carType = tempType;
+      contractB.plate = tempPlate;
+
+      closeSwapCarModal();
+      renderAll();
+      saveData();
+      showToast("Đã đổi xe giữa 2 hợp đồng!");
+    }
+  );
 }
 
 // ====================== LỊCH XE ======================
@@ -2910,12 +3036,16 @@ window.onload = async () => {
   document.getElementById('actionPopup').addEventListener('click', function(e) {
     if (e.target === this) closeActionPopup();
   });
+
+  document.getElementById('swapCarModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSwapCarModal();
+  });
   // Kiểm tra license khi load
 if (document.getElementById('tab3').style.display === 'block') {
   checkProAccess();
 }
 
-  console.log("🚀 CarRent v1.4.2");
+  console.log("🚀 CarRent v1.4.3 (Đổi xe)");
 };
 
 function formatPriceInput(e) {
