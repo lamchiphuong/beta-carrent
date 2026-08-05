@@ -931,7 +931,16 @@ body.pro-mode #actionPopup {
         </div>
         <input type="hidden" id="contractType" value="normal">
 
-        <select id="carSelect" required><option value="">Chọn xe</option></select>
+        <select id="carSelect" required onchange="toggleExternalCarFields()"><option value="">Chọn xe</option></select>
+
+        <div class="custom-price" id="externalCarSection">
+          <label>Loại xe (xe ngoài danh sách)</label>
+          <input type="text" id="externalCarType" placeholder="Ví dụ: Toyota Vios">
+          <label style="margin-top:10px;">Biển số xe</label>
+          <input type="text" id="externalCarPlate" placeholder="Ví dụ: 51H-123.45" style="text-transform:uppercase;">
+          <label style="margin-top:10px;">Giá thuê xe tổng (VNĐ)</label>
+          <input type="text" id="externalTotalPrice" class="money-input" inputmode="numeric" pattern="[0-9\s]*" placeholder="Ví dụ: 1200000">
+        </div>
 
         <label>Tên khách thuê</label>
         <input type="text" id="customerName" list="customerNameList" placeholder="Tên khách thuê" required>
@@ -1245,7 +1254,7 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.4.3 - 2026 
+    CarRent v1.4.4 - 2026 
   </div>
 
   <!-- Loading Overlay -->
@@ -1506,6 +1515,9 @@ function getDayType(d) {
 }
 
 function calculateRentalTotal(contract) {
+  if (contract.isExternalCar) {
+    return parseMoney(contract.customTotalPrice) || 0;
+  }
   const car = getCarByPlate(contract.plate);
   if (!car) return 0;
   if (contract.contractType === 'app' && contract.customTotalPrice) {
@@ -1572,6 +1584,7 @@ function freezeContract(contract) {
     contractType: contract.contractType || 'normal',
     // SỬA Ở ĐÂY: Không để undefined
     customTotalPrice: contract.customTotalPrice || null,
+    isExternalCar: contract.isExternalCar || false,
     rentalAmount: calculateRentalTotal(contract),
     totalAmount: calculateTotal(contract)
   };
@@ -1604,6 +1617,7 @@ function getCompletedDisplay(con) {
     extraFees: Array.isArray(con.extraFees) ? con.extraFees : [],
     contractType: con.contractType || 'normal',
     customTotalPrice: con.customTotalPrice,
+    isExternalCar: con.isExternalCar || false,
     rentalAmount: calculateRentalTotal(con),
     totalAmount: calculateTotal(con),
     historyNote: con.historyNote
@@ -1640,7 +1654,22 @@ function setContractType(type) {
   document.getElementById('contractType').value = type;
   document.getElementById('typeNormal').classList.toggle('active', type === 'normal');
   document.getElementById('typeApp').classList.toggle('active', type === 'app');
-  document.getElementById('customPriceSection').classList.toggle('show', type === 'app');
+  toggleExternalCarFields();
+}
+
+// ====================== XE NGOÀI DANH SÁCH ======================
+function isExternalCarSelected() {
+  return document.getElementById('carSelect').value === 'external';
+}
+
+function toggleExternalCarFields() {
+  const isExternal = isExternalCarSelected();
+  document.getElementById('externalCarSection').classList.toggle('show', isExternal);
+  document.getElementById('externalCarType').required = isExternal;
+  document.getElementById('externalCarPlate').required = isExternal;
+  document.getElementById('externalTotalPrice').required = isExternal;
+  // Khi chọn xe ngoài danh sách, ẩn ô giá riêng của "Đặt qua app" vì đã có ô giá tổng ở trên
+  document.getElementById('customPriceSection').classList.toggle('show', !isExternal && currentContractType === 'app');
 }
 
 // ====================== GHI CHÚ ======================
@@ -1769,11 +1798,11 @@ function showActionPopup(id) {
     if (contract.status === "Chưa nhận xe") {
         receiveBtn.style.display = 'flex';
         returnBtn.style.display = 'none';
-        swapBtn.style.display = 'flex';
+        swapBtn.style.display = contract.isExternalCar ? 'none' : 'flex';
     } else if (contract.status === "Đang thuê") {
         receiveBtn.style.display = 'none';
         returnBtn.style.display = 'flex';
-        swapBtn.style.display = 'flex';
+        swapBtn.style.display = contract.isExternalCar ? 'none' : 'flex';
     } else {
         receiveBtn.style.display = 'none';
         returnBtn.style.display = 'none';
@@ -1868,6 +1897,7 @@ function openSwapCarModal(id) {
   const eligible = contracts.filter(c =>
     c.id !== id &&
     c.status !== "Đã hoàn tất" &&
+    !c.isExternalCar &&
     c.plate && c.plate !== contract.plate
   );
 
@@ -2304,7 +2334,7 @@ function populateRevenueFilters() {
   // Xe lịch sử (từ frozenData)
   const historyCars = new Map(); // plate -> display name
   contracts.forEach(c => {
-    if (c.status === "Đã hoàn tất" && c.frozenData) {
+    if (c.status === "Đã hoàn tất" && c.frozenData && !c.frozenData.isExternalCar) {
       const fd = c.frozenData;
       const key = fd.plate;
       if (!historyCars.has(key)) {
@@ -2583,13 +2613,17 @@ function showAddContractModal() {
   setContractType('normal');
 
   const sel = document.getElementById('carSelect');
-  sel.innerHTML = '<option value="">Chọn xe</option>';
+  sel.innerHTML = '<option value="">Chọn xe</option><option value="external">🚗 Xe ngoài danh sách</option>';
   cars.forEach(car => {
     const opt = document.createElement('option');
     opt.value = car.id;
     opt.textContent = `${car.type} - ${car.plate}`;
     sel.appendChild(opt);
   });
+  document.getElementById('externalCarType').value = '';
+  document.getElementById('externalCarPlate').value = '';
+  document.getElementById('externalTotalPrice').value = '';
+  toggleExternalCarFields();
 
   updateCustomerDatalists();
   document.getElementById('contractModal').style.display = 'flex';
@@ -2627,14 +2661,25 @@ function editContract(id) {
   setContractType(contract.contractType || 'normal');
 
   const sel = document.getElementById('carSelect');
-  sel.innerHTML = '<option value="">Chọn xe</option>';
+  sel.innerHTML = '<option value="">Chọn xe</option><option value="external">🚗 Xe ngoài danh sách</option>';
   cars.forEach(car => {
     const opt = document.createElement('option');
     opt.value = car.id;
     opt.textContent = `${car.type} - ${car.plate}`;
-    if (car.plate === contract.plate) opt.selected = true;
+    if (car.plate === contract.plate && !contract.isExternalCar) opt.selected = true;
     sel.appendChild(opt);
   });
+
+  document.getElementById('externalCarType').value = '';
+  document.getElementById('externalCarPlate').value = '';
+  document.getElementById('externalTotalPrice').value = '';
+  if (contract.isExternalCar) {
+    sel.value = 'external';
+    document.getElementById('externalCarType').value = contract.carType || '';
+    document.getElementById('externalCarPlate').value = contract.plate || '';
+    document.getElementById('externalTotalPrice').value = contract.customTotalPrice || '';
+  }
+  toggleExternalCarFields();
 
   document.getElementById('customerName').value = contract.customer || '';
   document.getElementById('phone').value = contract.phone || '';
@@ -2770,11 +2815,25 @@ function deleteCar(id) {
 document.getElementById('contractForm').addEventListener('submit', e => {
   e.preventDefault();
 
-  const carId = parseInt(document.getElementById('carSelect').value);
+  const carSelectVal = document.getElementById('carSelect').value;
+  const isExternal = carSelectVal === 'external';
+  const carId = isExternal ? null : parseInt(carSelectVal);
   const contractId = document.getElementById('contractId').value ? parseInt(document.getElementById('contractId').value) : null;
-  
-  const car = getCarById(carId);
-  if (!car) return alert("Vui lòng chọn xe!");
+
+  let car;
+  let externalTotalPriceVal = 0;
+  if (isExternal) {
+    const externalCarTypeVal = document.getElementById('externalCarType').value.trim();
+    const externalCarPlateVal = document.getElementById('externalCarPlate').value.trim().toUpperCase();
+    externalTotalPriceVal = parseMoney(document.getElementById('externalTotalPrice').value);
+    if (!externalCarTypeVal) return alert("Vui lòng nhập loại xe!");
+    if (!externalCarPlateVal) return alert("Vui lòng nhập biển số xe!");
+    if (!externalTotalPriceVal || externalTotalPriceVal <= 0) return alert("Vui lòng nhập giá thuê xe tổng!");
+    car = { id: null, type: externalCarTypeVal, plate: externalCarPlateVal, daily: 0, weekend: 0, holiday: 0 };
+  } else {
+    car = getCarById(carId);
+    if (!car) return alert("Vui lòng chọn xe!");
+  }
 
   const rent = document.getElementById('rentDate').value;
   const ret = document.getElementById('returnDate').value;
@@ -2834,7 +2893,8 @@ if (isDateOverlap(rent, ret, car.plate, contractId)) {
       contract.extraFees = extraFees;
       contract.status = document.getElementById('status').value;
       contract.contractType = currentContractType;
-      contract.customTotalPrice = (currentContractType === 'app' && customTotalPrice > 0) ? customTotalPrice : null;
+      contract.isExternalCar = isExternal;
+      contract.customTotalPrice = isExternal ? externalTotalPriceVal : ((currentContractType === 'app' && customTotalPrice > 0) ? customTotalPrice : null);
       contract.activeNote = document.getElementById('activeNote').value.trim();
     }
     showToast('Hợp đồng đã được cập nhật!');
@@ -2858,7 +2918,8 @@ if (isDateOverlap(rent, ret, car.plate, contractId)) {
       extraFees,
       status: document.getElementById('status').value,
       contractType: currentContractType,
-      customTotalPrice: (currentContractType === 'app' && customTotalPrice > 0) ? customTotalPrice : null,
+      isExternalCar: isExternal,
+      customTotalPrice: isExternal ? externalTotalPriceVal : ((currentContractType === 'app' && customTotalPrice > 0) ? customTotalPrice : null),
       activeNote: document.getElementById('activeNote').value.trim(),
       fullPaymentReceived: false
     });
@@ -2999,7 +3060,7 @@ window.onload = async () => {
     renderActiveContracts();
   });
 
-  const moneyFields = ['dailyPrice','weekendPrice','holidayPrice','deposit','discount','customTotalPrice'];
+  const moneyFields = ['dailyPrice','weekendPrice','holidayPrice','deposit','discount','customTotalPrice','externalTotalPrice'];
   moneyFields.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
@@ -3045,7 +3106,7 @@ if (document.getElementById('tab3').style.display === 'block') {
   checkProAccess();
 }
 
-  console.log("🚀 CarRent v1.4.3 (Đổi xe)");
+  console.log("🚀 CarRent v1.4.4 (chọn xe ngoài)");
 };
 
 function formatPriceInput(e) {
