@@ -770,6 +770,32 @@ body.pro-mode #actionPopup {
 .login-panel input {
   margin-bottom: 12px;
 }
+.password-field-wrap {
+  position: relative;
+}
+.password-field-wrap input {
+  padding-right: 44px;
+}
+.password-toggle-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #5f6368;
+  padding: 0;
+}
+.password-toggle-btn:hover { color: var(--primary); }
+.password-toggle-btn svg { width: 20px; height: 20px; }
+.password-toggle-btn .eye-off { display: none; }
+.password-toggle-btn.showing .eye { display: none; }
+.password-toggle-btn.showing .eye-off { display: block; }
 .login-panel .btn {
   width: 100%;
   justify-content: center;
@@ -813,7 +839,13 @@ body.pro-mode #actionPopup {
       <!-- ==== TAB EMAIL ==== -->
       <div class="login-panel" id="loginPanelEmail">
         <input type="email" id="emailInput" placeholder="Email" autocomplete="email">
-        <input type="password" id="passwordInput" placeholder="Mật khẩu" autocomplete="current-password">
+        <div class="password-field-wrap">
+          <input type="password" id="passwordInput" placeholder="Mật khẩu" autocomplete="current-password">
+          <button type="button" class="password-toggle-btn" id="passwordToggleBtn" onclick="togglePasswordVisibility()" aria-label="Hiện/ẩn mật khẩu" title="Hiện/ẩn mật khẩu">
+            <svg class="eye" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+            <svg class="eye-off" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 3l18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.6 5.1C11.05 5.03 11.52 5 12 5c7 0 10 7 10 7-.6 1.4-1.6 2.9-3 4.2M6.6 6.6C3.9 8.3 2 12 2 12s3 7 10 7c1.3 0 2.5-.2 3.5-.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
         <button class="btn btn-primary" onclick="signInWithEmail()">
           <i class="fas fa-sign-in-alt"></i> Đăng nhập
         </button>
@@ -1648,6 +1680,14 @@ function registerWithEmail() {
   auth.createUserWithEmailAndPassword(email, password)
     .catch(showLoginError)
     .finally(() => setLoginBusy(false));
+}
+
+function togglePasswordVisibility() {
+  const input = document.getElementById('passwordInput');
+  const btn = document.getElementById('passwordToggleBtn');
+  const isShowing = input.type === 'text';
+  input.type = isShowing ? 'password' : 'text';
+  btn.classList.toggle('showing', !isShowing);
 }
 
 function resetPassword() {
