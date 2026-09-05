@@ -12,6 +12,7 @@
   <!-- ==================== FIREBASE SDK ==================== -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -580,14 +581,276 @@ body.pro-mode #actionPopup {
     will-change: transform, opacity;
     transform: translateZ(0);
 }
+
+/* ==================== LOGIN SCREEN ==================== */
+#loginScreen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+  padding: 20px;
+}
+#loginScreen.hidden { display: none; }
+.login-box {
+  background: white;
+  border-radius: 24px;
+  padding: 40px 32px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+.login-box h1 {
+  color: var(--primary);
+  font-size: 2rem;
+  margin-bottom: 6px;
+}
+.login-box p.subtitle {
+  color: var(--gray);
+  margin-bottom: 28px;
+}
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 18px;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.google-btn:hover {
+  border-color: var(--primary);
+  box-shadow: 0 6px 18px rgba(37,99,235,0.15);
+  transform: translateY(-1px);
+}
+.google-btn img { width: 22px; height: 22px; }
+.login-error {
+  margin-top: 16px;
+  color: var(--danger);
+  font-size: 0.9rem;
+  display: none;
+}
+.login-loading {
+  margin-top: 20px;
+  color: var(--gray);
+  font-size: 0.9rem;
+  display: none;
+}
+.app-hidden { display: none !important; }
+
+/* ===== PROFILE BUTTON + DROPDOWN ===== */
+.profile-menu-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 18px;
+}
+.profile-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background: white;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+  transition: all 0.2s ease;
+}
+.profile-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37,99,235,0.35);
+}
+.profile-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.profile-dropdown {
+  display: none;
+  position: absolute;
+  top: 52px;
+  left: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 14px 35px rgba(0,0,0,0.18);
+  padding: 16px;
+  min-width: 250px;
+  z-index: 1500;
+  animation: profileDropIn 0.18s ease;
+}
+.profile-dropdown.show { display: block; }
+@keyframes profileDropIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.profile-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.profile-dropdown-header img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  flex-shrink: 0;
+  object-fit: cover;
+}
+.profile-dropdown-name {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.95rem;
+  word-break: break-word;
+}
+.profile-dropdown-email {
+  color: #64748b;
+  font-size: 0.82rem;
+  margin-top: 2px;
+  word-break: break-all;
+}
+.logout-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: #fef2f2;
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+.logout-btn:hover { background: #fee2e2; }
+
+/* ===== LOGIN METHOD TABS ===== */
+.login-method-tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 22px;
+}
+.login-method-tab {
+  flex: 1;
+  text-align: center;
+  padding: 9px 6px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.login-method-tab.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.login-panel { display: none; text-align: left; }
+.login-panel.active { display: block; }
+.login-panel input {
+  margin-bottom: 12px;
+}
+.login-panel .btn {
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.login-link-row {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+.login-link-row a {
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+}
+.login-link-row a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="loginScreen">
+    <div class="login-box">
+      <h1><i class="fas fa-car"></i> CarRent</h1>
+      <p class="subtitle">Quản lý thuê xe thông minh</p>
+
+      <div class="login-method-tabs">
+        <div class="login-method-tab active" id="tabGoogle" onclick="switchLoginTab('google')">Google</div>
+        <div class="login-method-tab" id="tabEmail" onclick="switchLoginTab('email')">Email</div>
+      </div>
+
+      <!-- ==== TAB GOOGLE ==== -->
+      <div class="login-panel active" id="loginPanelGoogle">
+        <button class="google-btn" id="googleLoginBtn" onclick="signInWithGoogle()">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+          Đăng nhập bằng Google
+        </button>
+      </div>
+
+      <!-- ==== TAB EMAIL ==== -->
+      <div class="login-panel" id="loginPanelEmail">
+        <input type="email" id="emailInput" placeholder="Email" autocomplete="email">
+        <input type="password" id="passwordInput" placeholder="Mật khẩu" autocomplete="current-password">
+        <button class="btn btn-primary" onclick="signInWithEmail()">
+          <i class="fas fa-sign-in-alt"></i> Đăng nhập
+        </button>
+        <button class="btn btn-secondary" onclick="registerWithEmail()">
+          <i class="fas fa-user-plus"></i> Tạo tài khoản mới
+        </button>
+        <div class="login-link-row"><a onclick="resetPassword()">Quên mật khẩu?</a></div>
+      </div>
+
+      <div class="login-loading" id="loginLoading">
+        <i class="fas fa-spinner fa-spin"></i> Đang xử lý...
+      </div>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <div class="container app-hidden" id="appContainer">
     <header>
       <h1><i class="fas fa-car"></i> CarRent</h1>
       <p class="subtitle">Quản lý thuê xe thông minh</p>
     </header>
+
+    <div class="profile-menu-wrap" id="profileMenuWrap" style="display:none;">
+      <button class="profile-btn" id="profileBtn" onclick="toggleProfileDropdown(event)" title="Tài khoản">
+        <img id="userAvatar" src="" alt="Avatar">
+      </button>
+      <div class="profile-dropdown" id="profileDropdown">
+        <div class="profile-dropdown-header">
+          <img id="profileDropdownAvatar" src="" alt="Avatar">
+          <div>
+            <div class="profile-dropdown-name" id="profileDropdownName"></div>
+            <div class="profile-dropdown-email" id="profileDropdownEmail"></div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+      </div>
+    </div>
 
   <div class="tabs">
     <div class="tab active" onclick="switchTab(0)">📋 Hợp đồng đang xử lý</div>
@@ -1254,7 +1517,7 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="version">
-    CarRent v1.4.4 - 2026 
+    CarRent v1.4.5 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -1269,12 +1532,206 @@ body.pro-mode #actionPopup {
 <script>
 // ==================== FIREBASE CONFIG ====================
 const firebaseConfig = {
-  databaseURL: "https://carrent-2026-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  apiKey: "AIzaSyCpXmqWDkPb8cVCna88xbs7ZU9YsbmrMeQ",
+  authDomain: "carrent-2026.firebaseapp.com",
+  databaseURL: "https://carrent-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "carrent-2026",
+  storageBucket: "carrent-2026.firebasestorage.app",
+  messagingSenderId: "592936815699",
+  appId: "1:592936815699:web:38159bb02bf109a78a0aa6"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-const dataRef = db.ref('/');
+const auth = firebase.auth();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// dataRef sẽ được gán sau khi user đăng nhập thành công (mỗi user 1 nhánh riêng)
+let dataRef = null;
+let currentUser = null;
+
+// ==================== AUTH: ĐĂNG NHẬP / ĐĂNG XUẤT ====================
+function signInWithGoogle() {
+  const btn = document.getElementById('googleLoginBtn');
+  const loading = document.getElementById('loginLoading');
+  const errorBox = document.getElementById('loginError');
+  errorBox.style.display = 'none';
+  btn.disabled = true;
+  loading.style.display = 'block';
+
+  auth.signInWithPopup(googleProvider)
+    .catch((error) => {
+      console.error("❌ Lỗi đăng nhập Google:", error);
+      errorBox.textContent = "Đăng nhập thất bại: " + (error.message || error.code);
+      errorBox.style.display = 'block';
+    })
+    .finally(() => {
+      btn.disabled = false;
+      loading.style.display = 'none';
+    });
+}
+
+function signOutUser() {
+  if (confirm("Bạn có chắc muốn đăng xuất?")) {
+    // Ngắt lắng nghe dữ liệu cũ trước khi đăng xuất
+    if (dataRef) dataRef.off();
+    auth.signOut();
+  }
+}
+
+// ==================== AUTH: CHUYỂN TAB PHƯƠNG THỨC ĐĂNG NHẬP ====================
+function switchLoginTab(tab) {
+  document.getElementById('loginError').style.display = 'none';
+
+  document.getElementById('tabGoogle').classList.toggle('active', tab === 'google');
+  document.getElementById('tabEmail').classList.toggle('active', tab === 'email');
+
+  document.getElementById('loginPanelGoogle').classList.toggle('active', tab === 'google');
+  document.getElementById('loginPanelEmail').classList.toggle('active', tab === 'email');
+}
+
+function showLoginError(error) {
+  const errorBox = document.getElementById('loginError');
+  const messages = {
+    'auth/invalid-email': 'Email không hợp lệ.',
+    'auth/user-not-found': 'Tài khoản không tồn tại.',
+    'auth/wrong-password': 'Sai mật khẩu.',
+    'auth/invalid-credential': 'Email hoặc mật khẩu không đúng.',
+    'auth/email-already-in-use': 'Email này đã được đăng ký.',
+    'auth/weak-password': 'Mật khẩu cần ít nhất 6 ký tự.',
+    'auth/too-many-requests': 'Bạn thử quá nhiều lần, vui lòng chờ rồi thử lại.'
+  };
+  errorBox.textContent = messages[error.code] || ("Lỗi: " + (error.message || error.code));
+  errorBox.style.display = 'block';
+}
+
+function setLoginBusy(isBusy) {
+  document.getElementById('loginLoading').style.display = isBusy ? 'block' : 'none';
+  document.querySelectorAll('.login-box button').forEach(b => b.disabled = isBusy);
+}
+
+// ==================== AUTH: ĐĂNG NHẬP / ĐĂNG KÝ BẰNG EMAIL ====================
+function signInWithEmail() {
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  document.getElementById('loginError').style.display = 'none';
+
+  if (!email || !password) {
+    document.getElementById('loginError').textContent = 'Vui lòng nhập đầy đủ email và mật khẩu.';
+    document.getElementById('loginError').style.display = 'block';
+    return;
+  }
+
+  setLoginBusy(true);
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(showLoginError)
+    .finally(() => setLoginBusy(false));
+}
+
+function registerWithEmail() {
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  document.getElementById('loginError').style.display = 'none';
+
+  if (!email || !password) {
+    document.getElementById('loginError').textContent = 'Vui lòng nhập đầy đủ email và mật khẩu.';
+    document.getElementById('loginError').style.display = 'block';
+    return;
+  }
+  if (password.length < 6) {
+    document.getElementById('loginError').textContent = 'Mật khẩu cần ít nhất 6 ký tự.';
+    document.getElementById('loginError').style.display = 'block';
+    return;
+  }
+
+  setLoginBusy(true);
+  auth.createUserWithEmailAndPassword(email, password)
+    .catch(showLoginError)
+    .finally(() => setLoginBusy(false));
+}
+
+function resetPassword() {
+  const email = document.getElementById('emailInput').value.trim();
+  const errorBox = document.getElementById('loginError');
+  errorBox.style.display = 'none';
+
+  if (!email) {
+    errorBox.textContent = 'Vui lòng nhập email vào ô Email trước, rồi bấm "Quên mật khẩu?".';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  setLoginBusy(true);
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+      errorBox.style.color = '#16a34a';
+      errorBox.textContent = 'Đã gửi email đặt lại mật khẩu, vui lòng kiểm tra hộp thư.';
+      errorBox.style.display = 'block';
+    })
+    .catch((error) => {
+      errorBox.style.color = '';
+      showLoginError(error);
+    })
+    .finally(() => setLoginBusy(false));
+}
+
+// Theo dõi trạng thái đăng nhập
+auth.onAuthStateChanged((user) => {
+  const loginScreen = document.getElementById('loginScreen');
+  const appContainer = document.getElementById('appContainer');
+  const profileMenuWrap = document.getElementById('profileMenuWrap');
+
+  if (user) {
+    currentUser = user;
+
+    // Mỗi user có nhánh dữ liệu riêng theo UID
+    dataRef = db.ref('users/' + user.uid);
+
+    // Lưu thông tin hồ sơ (không bắt buộc nhưng hữu ích để quản lý)
+    db.ref('users/' + user.uid + '/profile').set({
+      name: user.displayName || '',
+      email: user.email || '',
+      photoURL: user.photoURL || '',
+      lastLogin: new Date().toISOString()
+    });
+
+    // Hiện nút profile (chỉ avatar) + điền dữ liệu vào dropdown
+    const avatarUrl = user.photoURL || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+    const displayName = user.displayName || user.email || 'Người dùng';
+    document.getElementById('userAvatar').src = avatarUrl;
+    document.getElementById('profileDropdownAvatar').src = avatarUrl;
+    document.getElementById('profileDropdownName').textContent = displayName;
+    document.getElementById('profileDropdownEmail').textContent = user.email || '';
+    profileMenuWrap.style.display = 'inline-block';
+
+    loginScreen.classList.add('hidden');
+    appContainer.classList.remove('app-hidden');
+
+    initApp();
+  } else {
+    currentUser = null;
+    dataRef = null;
+    loginScreen.classList.remove('hidden');
+    appContainer.classList.add('app-hidden');
+    profileMenuWrap.style.display = 'none';
+    closeProfileDropdown();
+  }
+});
+
+// ==================== MENU PROFILE (avatar dropdown) ====================
+function toggleProfileDropdown(e) {
+  if (e) e.stopPropagation();
+  const dropdown = document.getElementById('profileDropdown');
+  if (dropdown) dropdown.classList.toggle('show');
+}
+function closeProfileDropdown() {
+  const dropdown = document.getElementById('profileDropdown');
+  if (dropdown) dropdown.classList.remove('show');
+}
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('profileMenuWrap');
+  if (wrap && !wrap.contains(e.target)) closeProfileDropdown();
+});
 
 // ==================== BIẾN TOÀN CỤC ====================
 let cars = [], contracts = [];
@@ -2893,8 +3350,8 @@ if (isDateOverlap(rent, ret, car.plate, contractId)) {
       contract.extraFees = extraFees;
       contract.status = document.getElementById('status').value;
       contract.contractType = currentContractType;
-      contract.isExternalCar = isExternal;
       contract.customTotalPrice = isExternal ? externalTotalPriceVal : ((currentContractType === 'app' && customTotalPrice > 0) ? customTotalPrice : null);
+      contract.isExternalCar = isExternal;
       contract.activeNote = document.getElementById('activeNote').value.trim();
     }
     showToast('Hợp đồng đã được cập nhật!');
@@ -2918,8 +3375,8 @@ if (isDateOverlap(rent, ret, car.plate, contractId)) {
       extraFees,
       status: document.getElementById('status').value,
       contractType: currentContractType,
-      isExternalCar: isExternal,
       customTotalPrice: isExternal ? externalTotalPriceVal : ((currentContractType === 'app' && customTotalPrice > 0) ? customTotalPrice : null),
+      isExternalCar: isExternal,
       activeNote: document.getElementById('activeNote').value.trim(),
       fullPaymentReceived: false
     });
@@ -3012,7 +3469,9 @@ if (carId) {
 });
 
 // ====================== KHỞI ĐỘNG ======================
-window.onload = async () => {
+let appInitialized = false;
+
+async function initApp() {
   await loadData();
       // === MIGRATION: Sửa dữ liệu cũ có undefined ===
       contracts.forEach(c => {
@@ -3050,64 +3509,69 @@ window.onload = async () => {
   renderAll();
   populateRevenueFilters();
 
-  document.getElementById('searchInput').addEventListener('input', () => {
-    currentSearch = document.getElementById('searchInput').value.trim();
-    renderActiveContracts();
-  });
+  if (!appInitialized) {
+    document.getElementById('searchInput').addEventListener('input', () => {
+      currentSearch = document.getElementById('searchInput').value.trim();
+      renderActiveContracts();
+    });
 
-  document.getElementById('statusFilter').addEventListener('change', () => {
-    currentStatusFilter = document.getElementById('statusFilter').value;
-    renderActiveContracts();
-  });
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      currentStatusFilter = document.getElementById('statusFilter').value;
+      renderActiveContracts();
+    });
 
-  const moneyFields = ['dailyPrice','weekendPrice','holidayPrice','deposit','discount','customTotalPrice','externalTotalPrice'];
-  moneyFields.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('input', formatPriceInput);
-      el.addEventListener('blur', formatPriceInput);
-    }
-  });
+    const moneyFields = ['dailyPrice','weekendPrice','holidayPrice','deposit','discount','customTotalPrice','externalTotalPrice'];
+    moneyFields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', formatPriceInput);
+        el.addEventListener('blur', formatPriceInput);
+      }
+    });
 
-  document.addEventListener('input', e => {
-    if (e.target.classList.contains('fee-amount')) formatPriceInput(e);
-  });
+    document.addEventListener('input', e => {
+      if (e.target.classList.contains('fee-amount')) formatPriceInput(e);
+    });
 
-  document.getElementById('confirmCancelBtn').addEventListener('click', () => {
-    if (currentConfirmCallback) currentConfirmCallback(false);
-    closeConfirmModal();
-  });
-  document.getElementById('confirmOkBtn').addEventListener('click', () => {
-    if (currentConfirmCallback) currentConfirmCallback(true);
-    closeConfirmModal();
-  });
-  document.getElementById('simpleConfirmOkBtn').addEventListener('click', () => {
-    if (currentSimpleConfirmCallback) currentSimpleConfirmCallback();
-    closeSimpleConfirmModal();
-  });
+    document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+      if (currentConfirmCallback) currentConfirmCallback(false);
+      closeConfirmModal();
+    });
+    document.getElementById('confirmOkBtn').addEventListener('click', () => {
+      if (currentConfirmCallback) currentConfirmCallback(true);
+      closeConfirmModal();
+    });
+    document.getElementById('simpleConfirmOkBtn').addEventListener('click', () => {
+      if (currentSimpleConfirmCallback) currentSimpleConfirmCallback();
+      closeSimpleConfirmModal();
+    });
 
-// Tự điền khách hàng
-  document.getElementById('customerName').addEventListener('input', handleNameInput);
+    // Tự điền khách hàng
+    document.getElementById('customerName').addEventListener('input', handleNameInput);
 
-  // Đóng modal khi click nền
-  document.getElementById('customerSelectModal').addEventListener('click', function(e) {
-    if (e.target === this) closeCustomerSelectModal();
-  });
+    // Đóng modal khi click nền
+    document.getElementById('customerSelectModal').addEventListener('click', function(e) {
+      if (e.target === this) closeCustomerSelectModal();
+    });
 
-  document.getElementById('actionPopup').addEventListener('click', function(e) {
-    if (e.target === this) closeActionPopup();
-  });
+    document.getElementById('actionPopup').addEventListener('click', function(e) {
+      if (e.target === this) closeActionPopup();
+    });
 
-  document.getElementById('swapCarModal').addEventListener('click', function(e) {
-    if (e.target === this) closeSwapCarModal();
-  });
+    document.getElementById('swapCarModal').addEventListener('click', function(e) {
+      if (e.target === this) closeSwapCarModal();
+    });
+
+    appInitialized = true;
+  }
+
   // Kiểm tra license khi load
-if (document.getElementById('tab3').style.display === 'block') {
-  checkProAccess();
-}
+  if (document.getElementById('tab3').style.display === 'block') {
+    checkProAccess();
+  }
 
-  console.log("🚀 CarRent v1.4.4 (chọn xe ngoài)");
-};
+  console.log("🚀 CarRent v1.4.5 (chọn xe ngoài + đổi xe + đăng nhập)");
+}
 
 function formatPriceInput(e) {
   let value = e.target.value.replace(/[^0-9]/g, '');
@@ -3224,10 +3688,12 @@ function activateProLicense() {
   if (input === PRO_LICENSE_KEY) {
     localStorage.setItem('proLicense', 'unlocked');
     
-    db.ref('/proLicense').set({
-      status: 'unlocked',
-      activatedAt: new Date().toISOString()
-    });
+    if (currentUser) {
+      db.ref('users/' + currentUser.uid + '/proLicense').set({
+        status: 'unlocked',
+        activatedAt: new Date().toISOString()
+      });
+    }
 
     messageEl.innerHTML = `<span style="color:#16a34a;">✅ Kích hoạt thành công! Đang tải...</span>`;
     setTimeout(() => {
