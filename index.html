@@ -804,6 +804,123 @@ body.pro-mode #actionPopup {
   margin-top: 4px;
 }
 .plan-expiry.expired { color: var(--danger); font-weight: 700; }
+
+/* ===== TOPBAR ACTIONS WRAPPER (chuông thông báo + profile) ===== */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* ===== NÚT THÔNG BÁO (CHUÔNG) + DROPDOWN ===== */
+.notif-menu-wrap {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.notif-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--primary);
+  padding: 0;
+  cursor: pointer;
+  background: white;
+  color: var(--primary);
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.25);
+  transition: all 0.2s ease;
+}
+.notif-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37,99,235,0.35);
+}
+.notif-dot {
+  display: none;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  background: var(--danger);
+  border: 2px solid white;
+  border-radius: 50%;
+}
+.notif-dropdown {
+  display: none;
+  position: absolute;
+  top: 52px;
+  right: 0;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 14px 35px rgba(0,0,0,0.18);
+  padding: 0;
+  width: 320px;
+  max-width: 85vw;
+  z-index: 1500;
+  animation: profileDropIn 0.18s ease;
+  overflow: hidden;
+}
+.notif-dropdown.show { display: block; }
+.notif-dropdown-header {
+  padding: 14px 16px;
+  font-weight: 700;
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.95rem;
+}
+.notif-list {
+  max-height: 360px;
+  overflow-y: auto;
+}
+.notif-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: #f8fafc; }
+.notif-item-title {
+  font-size: 0.9rem;
+  color: #1e293b;
+  margin-bottom: 3px;
+}
+.notif-item-preview {
+  font-size: 0.83rem;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.notif-item-time {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+.notif-item.unread .notif-item-title,
+.notif-item.unread .notif-item-preview {
+  font-weight: 700;
+  color: #0f172a;
+}
+.notif-item.unread { background: #eff6ff; }
+.notif-item.unread:hover { background: #e0f2fe; }
+.notif-item.read .notif-item-title,
+.notif-item.read .notif-item-preview {
+  font-weight: 400;
+  color: #94a3b8;
+}
+.notif-empty {
+  padding: 30px 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.88rem;
+}
 .rename-btn {
   width: 100%;
   padding: 10px 14px;
@@ -1117,24 +1234,39 @@ input:focus, select:focus, textarea:focus {
         <p class="subtitle">Quản lý thuê xe thông minh</p>
       </header>
 
-      <div class="profile-menu-wrap" id="profileMenuWrap" style="display:none;">
-        <button class="profile-btn" id="profileBtn" onclick="toggleProfileDropdown(event)" title="Tài khoản">
-          <img id="userAvatar" src="" alt="Avatar">
-        </button>
-        <div class="profile-dropdown" id="profileDropdown">
-          <div class="profile-dropdown-header">
-            <img id="profileDropdownAvatar" src="" alt="Avatar">
-            <div>
-              <div class="profile-dropdown-name" id="profileDropdownName"></div>
-              <div class="profile-dropdown-email" id="profileDropdownEmail"></div>
-              <div class="profile-plan-row">
-                <span class="plan-badge trial" id="profilePlanBadge">Dùng Thử</span>
-              </div>
-              <div class="plan-expiry" id="profilePlanExpiry"></div>
+      <div class="topbar-actions">
+        <div class="notif-menu-wrap" id="notifMenuWrap" style="display:none;">
+          <button class="notif-btn" id="notifBtn" onclick="toggleNotifDropdown(event)" title="Thông báo">
+            <i class="fas fa-bell"></i>
+            <span class="notif-dot" id="notifDot"></span>
+          </button>
+          <div class="notif-dropdown" id="notifDropdown">
+            <div class="notif-dropdown-header"><i class="fas fa-bell"></i> Thông báo</div>
+            <div class="notif-list" id="notifList">
+              <div class="notif-empty">Chưa có thông báo nào</div>
             </div>
           </div>
-          <button class="rename-btn" onclick="openRenameModal()"><i class="fas fa-pen"></i> Đổi tên hiển thị</button>
-          <button class="logout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+        </div>
+
+        <div class="profile-menu-wrap" id="profileMenuWrap" style="display:none;">
+          <button class="profile-btn" id="profileBtn" onclick="toggleProfileDropdown(event)" title="Tài khoản">
+            <img id="userAvatar" src="" alt="Avatar">
+          </button>
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-dropdown-header">
+              <img id="profileDropdownAvatar" src="" alt="Avatar">
+              <div>
+                <div class="profile-dropdown-name" id="profileDropdownName"></div>
+                <div class="profile-dropdown-email" id="profileDropdownEmail"></div>
+                <div class="profile-plan-row">
+                  <span class="plan-badge trial" id="profilePlanBadge">Dùng Thử</span>
+                </div>
+                <div class="plan-expiry" id="profilePlanExpiry"></div>
+              </div>
+            </div>
+            <button class="rename-btn" onclick="openRenameModal()"><i class="fas fa-pen"></i> Đổi tên hiển thị</button>
+            <button class="logout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1640,6 +1772,18 @@ input:focus, select:focus, textarea:focus {
     </div>
   </div>
 
+  <!-- Notification Detail Modal -->
+  <div id="notifDetailModal" class="modal">
+    <div class="modal-content" style="max-width:480px;">
+      <div class="modal-header">
+        <h2><i class="fas fa-bell"></i> <span id="notifDetailTitle">Thông báo</span></h2>
+        <span class="close" onclick="closeNotifDetailModal()">&times;</span>
+      </div>
+      <div style="color:#94a3b8; font-size:0.8rem; margin-bottom:12px;" id="notifDetailTime"></div>
+      <div id="notifDetailContent" style="line-height:1.7; color:#334155; white-space:pre-wrap;"></div>
+    </div>
+  </div>
+
   <!-- Trial Notice Modal -->
   <div id="trialNoticeModal" class="modal">
     <div class="modal-content" style="max-width:420px; text-align:center;">
@@ -1848,7 +1992,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v1.5.0 - (2026) 
+    CarRent v1.5.1 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -2055,6 +2199,7 @@ auth.onAuthStateChanged((user) => {
       maybeShowTrialPopup();
     });
 
+    initNotifications();
     initApp();
   } else {
     currentUser = null;
@@ -2063,12 +2208,14 @@ auth.onAuthStateChanged((user) => {
     appContainer.classList.add('app-hidden');
     profileMenuWrap.style.display = 'none';
     closeProfileDropdown();
+    teardownNotifications();
   }
 });
 
 // ==================== MENU PROFILE (avatar dropdown) ====================
 function toggleProfileDropdown(e) {
   if (e) e.stopPropagation();
+  closeNotifDropdown();
   const dropdown = document.getElementById('profileDropdown');
   if (dropdown) dropdown.classList.toggle('show');
 }
@@ -2079,6 +2226,9 @@ function closeProfileDropdown() {
 document.addEventListener('click', function(e) {
   const wrap = document.getElementById('profileMenuWrap');
   if (wrap && !wrap.contains(e.target)) closeProfileDropdown();
+
+  const notifWrap = document.getElementById('notifMenuWrap');
+  if (notifWrap && !notifWrap.contains(e.target)) closeNotifDropdown();
 });
 
 // ==================== ĐỔI TÊN HIỂN THỊ ====================
@@ -2246,16 +2396,16 @@ function maybeShowTrialPopup() {
 
   if (expired) {
     icon.textContent = '🔒';
-    daysEl.textContent = 'ĐÃ HẾT HẠN';
+    daysEl.textContent = 'Đã hết hạn';
     daysEl.className = 'trial-days-left expired';
 
     if (subscriptionInfo.plan === 'premium') {
-      title.textContent = 'Gói Premium của bạn';
+      title.textContent = 'Gói Premium của bạn đã hết hạn';
       text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy gia hạn Premium để tiếp tục thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
       upgradeNote.innerHTML = 'Gia hạn gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.';
       actionBtnText.textContent = 'Gia hạn Premium';
     } else {
-      title.textContent = 'Gói Dùng Thử của bạn';
+      title.textContent = 'Gói Dùng Thử đã hết hạn';
       text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy nâng cấp Premium để thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
       upgradeNote.innerHTML = 'Nâng cấp lên gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.';
       actionBtnText.textContent = 'Nâng cấp Premium';
@@ -2275,6 +2425,124 @@ function maybeShowTrialPopup() {
 
 function closeTrialNoticeModal() {
   document.getElementById('trialNoticeModal').style.display = 'none';
+}
+
+// ==================== THÔNG BÁO (NOTIFICATIONS) ====================
+// Dữ liệu thông báo được lưu chung tại nhánh Firebase 'notifications/{id}':
+//   { title: 'Tiêu đề', message: 'Nội dung đầy đủ', createdAt: '2026-01-01T00:00:00.000Z' }
+// Trạng thái đã đọc lưu riêng theo từng user tại 'users/{uid}/notificationsRead/{id}': true
+// (Hiện tại app chưa có màn hình để tạo thông báo mới -> admin có thể thêm trực tiếp
+//  trên Firebase Console vào nhánh 'notifications'.)
+let notifications = [];
+let notifReadMap = {};
+
+function initNotifications() {
+  if (!currentUser) return;
+  const notifMenuWrap = document.getElementById('notifMenuWrap');
+  if (notifMenuWrap) notifMenuWrap.style.display = 'inline-block';
+
+  // Danh sách thông báo (dùng chung cho mọi tài khoản)
+  db.ref('notifications').off('value');
+  db.ref('notifications').on('value', snap => {
+    const val = snap.val() || {};
+    notifications = Object.keys(val)
+      .map(id => ({ id, ...val[id] }))
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    renderNotifDropdown();
+    updateNotifBadge();
+  });
+
+  // Trạng thái đã đọc riêng của user hiện tại
+  db.ref('users/' + currentUser.uid + '/notificationsRead').off('value');
+  db.ref('users/' + currentUser.uid + '/notificationsRead').on('value', snap => {
+    notifReadMap = snap.val() || {};
+    renderNotifDropdown();
+    updateNotifBadge();
+  });
+}
+
+function teardownNotifications() {
+  db.ref('notifications').off('value');
+  if (currentUser) db.ref('users/' + currentUser.uid + '/notificationsRead').off('value');
+  notifications = [];
+  notifReadMap = {};
+  const notifMenuWrap = document.getElementById('notifMenuWrap');
+  if (notifMenuWrap) notifMenuWrap.style.display = 'none';
+  closeNotifDropdown();
+}
+
+function truncateNotifText(str, maxLen) {
+  if (!str) return '';
+  const clean = String(str).replace(/\s+/g, ' ').trim();
+  return clean.length > maxLen ? clean.slice(0, maxLen).trim() + '…' : clean;
+}
+
+function formatNotifTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function renderNotifDropdown() {
+  const listEl = document.getElementById('notifList');
+  if (!listEl) return;
+
+  if (!notifications.length) {
+    listEl.innerHTML = '<div class="notif-empty">Chưa có thông báo nào</div>';
+    return;
+  }
+
+  listEl.innerHTML = notifications.map(n => {
+    const isRead = !!notifReadMap[n.id];
+    const preview = truncateNotifText(n.message, 80);
+    return `
+      <div class="notif-item ${isRead ? 'read' : 'unread'}" onclick="openNotifDetail('${n.id}')">
+        <div class="notif-item-title">${n.title || 'Thông báo'}</div>
+        <div class="notif-item-preview">${preview}</div>
+        <div class="notif-item-time">${formatNotifTime(n.createdAt)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateNotifBadge() {
+  const dot = document.getElementById('notifDot');
+  if (!dot) return;
+  const hasUnread = notifications.some(n => !notifReadMap[n.id]);
+  dot.style.display = hasUnread ? 'block' : 'none';
+}
+
+function toggleNotifDropdown(e) {
+  if (e) e.stopPropagation();
+  closeProfileDropdown();
+  const dropdown = document.getElementById('notifDropdown');
+  if (dropdown) dropdown.classList.toggle('show');
+}
+
+function closeNotifDropdown() {
+  const dropdown = document.getElementById('notifDropdown');
+  if (dropdown) dropdown.classList.remove('show');
+}
+
+function openNotifDetail(id) {
+  const n = notifications.find(x => x.id === id);
+  if (!n) return;
+  closeNotifDropdown();
+
+  document.getElementById('notifDetailTitle').textContent = n.title || 'Thông báo';
+  document.getElementById('notifDetailTime').textContent = formatNotifTime(n.createdAt);
+  document.getElementById('notifDetailContent').textContent = n.message || '';
+  document.getElementById('notifDetailModal').style.display = 'flex';
+
+  // Đánh dấu đã đọc trên Firebase (chỉ ghi nếu trước đó chưa đọc)
+  if (currentUser && !notifReadMap[id]) {
+    db.ref('users/' + currentUser.uid + '/notificationsRead/' + id).set(true);
+  }
+}
+
+function closeNotifDetailModal() {
+  document.getElementById('notifDetailModal').style.display = 'none';
 }
 
 // ==================== BIẾN TOÀN CỤC ====================
@@ -4142,7 +4410,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v1.5.0 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v1.5.1 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
