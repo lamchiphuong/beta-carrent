@@ -57,6 +57,22 @@
     h1 { color: var(--primary); font-size: 2.5rem; text-shadow: 0 4px 10px rgba(37,99,235,0.2); }
     .subtitle { color: var(--gray); font-size: 1.1rem; }
 
+    /* ===== TOPBAR: Logo trái, nút Profile phải, cùng 1 hàng ===== */
+    .app-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+    .app-topbar header { text-align: left; margin-bottom: 0; }
+    .app-topbar h1 { font-size: 1.9rem; }
+    .app-topbar .subtitle { font-size: 0.9rem; }
+    @media (max-width: 600px) {
+      .app-topbar h1 { font-size: 1.4rem; }
+      .app-topbar .subtitle { display: none; }
+    }
+
     .tabs {
       display: flex;
       background: white;
@@ -670,7 +686,8 @@ body.pro-mode #actionPopup {
 .profile-menu-wrap {
   position: relative;
   display: inline-block;
-  margin-bottom: 18px;
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 .profile-btn {
   width: 44px;
@@ -741,6 +758,54 @@ body.pro-mode #actionPopup {
   margin-top: 2px;
   word-break: break-all;
 }
+.profile-plan-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.plan-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.plan-badge.trial {
+  background: #e0f2fe;
+  color: var(--primary);
+}
+.plan-badge.premium {
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  color: #7c2d12;
+  box-shadow: 0 2px 6px rgba(245,158,11,0.4);
+}
+.plan-expiry {
+  color: #64748b;
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+.plan-expiry.expired { color: var(--danger); font-weight: 700; }
+.rename-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: none;
+  background: #eff6ff;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+}
+.rename-btn:hover { background: #dbeafe; }
 .logout-btn {
   width: 100%;
   padding: 10px 14px;
@@ -831,6 +896,29 @@ body.pro-mode #actionPopup {
   text-decoration: none;
 }
 .login-link-row a:hover { text-decoration: underline; }
+
+/* ===== TRIAL NOTICE MODAL ===== */
+.trial-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+.trial-days-left {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 6px 0;
+}
+.trial-days-left.expired { color: var(--danger); }
+.trial-upgrade-note {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #92400e;
+  font-size: 0.88rem;
+  margin: 14px 0;
+  text-align: left;
+}
   </style>
 </head>
 <body>
@@ -881,24 +969,31 @@ body.pro-mode #actionPopup {
   </div>
 
   <div class="container app-hidden" id="appContainer">
-    <header>
-      <h1><i class="fas fa-car"></i> CarRent</h1>
-      <p class="subtitle">Quản lý thuê xe thông minh</p>
-    </header>
+    <div class="app-topbar">
+      <header>
+        <h1><i class="fas fa-car"></i> CarRent</h1>
+        <p class="subtitle">Quản lý thuê xe thông minh</p>
+      </header>
 
-    <div class="profile-menu-wrap" id="profileMenuWrap" style="display:none;">
-      <button class="profile-btn" id="profileBtn" onclick="toggleProfileDropdown(event)" title="Tài khoản">
-        <img id="userAvatar" src="" alt="Avatar">
-      </button>
-      <div class="profile-dropdown" id="profileDropdown">
-        <div class="profile-dropdown-header">
-          <img id="profileDropdownAvatar" src="" alt="Avatar">
-          <div>
-            <div class="profile-dropdown-name" id="profileDropdownName"></div>
-            <div class="profile-dropdown-email" id="profileDropdownEmail"></div>
+      <div class="profile-menu-wrap" id="profileMenuWrap" style="display:none;">
+        <button class="profile-btn" id="profileBtn" onclick="toggleProfileDropdown(event)" title="Tài khoản">
+          <img id="userAvatar" src="" alt="Avatar">
+        </button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-dropdown-header">
+            <img id="profileDropdownAvatar" src="" alt="Avatar">
+            <div>
+              <div class="profile-dropdown-name" id="profileDropdownName"></div>
+              <div class="profile-dropdown-email" id="profileDropdownEmail"></div>
+              <div class="profile-plan-row">
+                <span class="plan-badge trial" id="profilePlanBadge">Dùng Thử</span>
+              </div>
+              <div class="plan-expiry" id="profilePlanExpiry"></div>
+            </div>
           </div>
+          <button class="rename-btn" onclick="openRenameModal()"><i class="fas fa-pen"></i> Đổi tên hiển thị</button>
+          <button class="logout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
         </div>
-        <button class="logout-btn" onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Đăng xuất</button>
       </div>
     </div>
 
@@ -913,7 +1008,7 @@ body.pro-mode #actionPopup {
     <div id="tab0" class="card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <h2><i class="fas fa-list"></i> Danh sách hợp đồng đang xử lý</h2>
-        <button class="btn btn-primary" onclick="showAddContractModal()">
+        <button class="btn btn-primary" id="addContractBtn" onclick="showAddContractModal()">
           <i class="fas fa-plus"></i> Thêm hợp đồng
         </button>
       </div>
@@ -954,7 +1049,7 @@ body.pro-mode #actionPopup {
     <div id="tab1" class="card" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2><i class="fas fa-car-side"></i> Danh sách xe</h2>
-        <button class="btn btn-success" onclick="showAddCarModal()">
+        <button class="btn btn-success" id="addCarBtn" onclick="showAddCarModal()">
           <i class="fas fa-plus"></i> Thêm xe mới
         </button>
       </div>
@@ -1219,7 +1314,7 @@ body.pro-mode #actionPopup {
     </div>
 
   <!-- FAB -->
-  <div class="fab" onclick="showAddContractModal()"><i class="fas fa-plus"></i></div>
+  <div class="fab" id="fabAddBtn" onclick="showAddContractModal()"><i class="fas fa-plus"></i></div>
 
   <!-- Action buttons -->
   <div class="action-buttons">
@@ -1379,6 +1474,44 @@ body.pro-mode #actionPopup {
       </div>
     </div>   <!-- ← Đóng action-popup-content -->
   </div>     <!-- ← Đóng actionPopup -->
+
+  <!-- Rename Display Name Modal -->
+  <div id="renameModal" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+      <div class="modal-header">
+        <h2><i class="fas fa-pen"></i> Đổi tên hiển thị</h2>
+        <span class="close" onclick="closeRenameModal()">&times;</span>
+      </div>
+      <label>Tên hiển thị mới</label>
+      <input type="text" id="renameInput" placeholder="Nhập tên hiển thị..." maxlength="50">
+      <div class="login-error" id="renameError" style="display:none;"></div>
+      <div style="display:flex; gap:12px; margin-top:10px;">
+        <button onclick="closeRenameModal()" class="btn btn-secondary" style="flex:1;">Hủy</button>
+        <button onclick="saveDisplayName()" class="btn btn-primary" style="flex:1;">Lưu tên</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trial Notice Modal -->
+  <div id="trialNoticeModal" class="modal">
+    <div class="modal-content" style="max-width:420px; text-align:center;">
+      <div class="modal-header" style="justify-content:center;">
+        <span class="close" onclick="closeTrialNoticeModal()" style="position:absolute; top:15px; right:20px;">&times;</span>
+      </div>
+      <div class="trial-icon" id="trialNoticeIcon">⏳</div>
+      <h2 id="trialNoticeTitle">Gói Dùng Thử</h2>
+      <div class="trial-days-left" id="trialNoticeDays"></div>
+      <p id="trialNoticeText" style="color:#475569;"></p>
+      <div class="trial-upgrade-note">
+        <i class="fas fa-crown" style="color:#f59e0b;"></i>
+        Nâng cấp lên gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.
+      </div>
+      <div style="display:flex; gap:12px; margin-top:10px;">
+        <button onclick="closeTrialNoticeModal()" class="btn btn-secondary" style="flex:1;">Để sau</button>
+        <button onclick="requestUpgradePremium()" class="btn btn-primary" style="flex:1;"><i class="fas fa-crown"></i> Nâng cấp Premium</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Swap Car Modal -->
   <div id="swapCarModal" class="modal">
@@ -1755,15 +1888,20 @@ auth.onAuthStateChanged((user) => {
 
     // Hiện nút profile (chỉ avatar) + điền dữ liệu vào dropdown
     const avatarUrl = user.photoURL || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-    const displayName = user.displayName || user.email || 'Người dùng';
     document.getElementById('userAvatar').src = avatarUrl;
     document.getElementById('profileDropdownAvatar').src = avatarUrl;
-    document.getElementById('profileDropdownName').textContent = displayName;
+    refreshDisplayNameUI();
     document.getElementById('profileDropdownEmail').textContent = user.email || '';
     profileMenuWrap.style.display = 'inline-block';
 
     loginScreen.classList.add('hidden');
     appContainer.classList.remove('app-hidden');
+
+    loadSubscriptionInfo().then(() => {
+      updatePlanUI();
+      applyLockUI();
+      maybeShowTrialPopup();
+    });
 
     initApp();
   } else {
@@ -1790,6 +1928,178 @@ document.addEventListener('click', function(e) {
   const wrap = document.getElementById('profileMenuWrap');
   if (wrap && !wrap.contains(e.target)) closeProfileDropdown();
 });
+
+// ==================== ĐỔI TÊN HIỂN THỊ ====================
+function refreshDisplayNameUI() {
+  if (!currentUser) return;
+  const displayName = currentUser.displayName || currentUser.email || 'Người dùng';
+  document.getElementById('profileDropdownName').textContent = displayName;
+}
+
+function openRenameModal() {
+  if (!currentUser) return;
+  document.getElementById('renameError').style.display = 'none';
+  document.getElementById('renameInput').value = currentUser.displayName || '';
+  document.getElementById('renameModal').style.display = 'flex';
+  closeProfileDropdown();
+}
+
+function closeRenameModal() {
+  document.getElementById('renameModal').style.display = 'none';
+}
+
+function saveDisplayName() {
+  const newName = document.getElementById('renameInput').value.trim();
+  const errorEl = document.getElementById('renameError');
+  errorEl.style.display = 'none';
+
+  if (!newName) {
+    errorEl.textContent = 'Vui lòng nhập tên hiển thị.';
+    errorEl.style.display = 'block';
+    return;
+  }
+  if (!currentUser) return;
+
+  currentUser.updateProfile({ displayName: newName })
+    .then(() => {
+      db.ref('users/' + currentUser.uid + '/profile/name').set(newName);
+      refreshDisplayNameUI();
+      closeRenameModal();
+      showToast('Đã cập nhật tên hiển thị!');
+    })
+    .catch((error) => {
+      errorEl.textContent = 'Lỗi: ' + (error.message || error.code);
+      errorEl.style.display = 'block';
+    });
+}
+
+// ==================== GÓI SỬ DỤNG (Dùng Thử / Premium) ====================
+const TRIAL_DAYS = 7; // Số ngày dùng thử mặc định cho tài khoản mới
+let subscriptionInfo = null; // { plan: 'trial'|'premium', startDate, expiryDate }
+
+function loadSubscriptionInfo() {
+  if (!currentUser) return Promise.resolve();
+  const subRef = db.ref('users/' + currentUser.uid + '/subscription');
+  return subRef.once('value').then(snap => {
+    let sub = snap.val();
+    if (!sub || !sub.expiryDate) {
+      // Tài khoản mới: khởi tạo gói Dùng Thử
+      const now = new Date();
+      const expiry = new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+      sub = {
+        plan: 'trial',
+        startDate: now.toISOString(),
+        expiryDate: expiry.toISOString()
+      };
+      subRef.set(sub);
+    }
+    subscriptionInfo = sub;
+  }).catch(err => {
+    console.error('Lỗi tải thông tin gói:', err);
+  });
+}
+
+function getDaysLeft() {
+  if (!subscriptionInfo || !subscriptionInfo.expiryDate) return 0;
+  const now = new Date();
+  const expiry = new Date(subscriptionInfo.expiryDate);
+  return Math.ceil((expiry - now) / (24 * 60 * 60 * 1000));
+}
+
+// Tài khoản bị khoá (chỉ xem) khi gói hiện tại đã hết hạn
+function isAccountLocked() {
+  if (!subscriptionInfo || !subscriptionInfo.expiryDate) return false;
+  return new Date() > new Date(subscriptionInfo.expiryDate);
+}
+
+function formatExpiryDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('vi-VN');
+}
+
+function updatePlanUI() {
+  if (!subscriptionInfo) return;
+  const badge = document.getElementById('profilePlanBadge');
+  const expiryEl = document.getElementById('profilePlanExpiry');
+  const locked = isAccountLocked();
+
+  if (subscriptionInfo.plan === 'premium') {
+    badge.textContent = 'Premium';
+    badge.className = 'plan-badge premium';
+  } else {
+    badge.textContent = 'Dùng Thử';
+    badge.className = 'plan-badge trial';
+  }
+
+  let expiryText = 'Hạn sử dụng: ' + formatExpiryDate(subscriptionInfo.expiryDate);
+  if (subscriptionInfo.plan === 'trial' && !locked) {
+    expiryText += ` (còn ${getDaysLeft()} ngày)`;
+  }
+  expiryEl.textContent = expiryText;
+  expiryEl.className = 'plan-expiry' + (locked ? ' expired' : '');
+}
+
+// Ẩn/khoá các nút thêm mới khi tài khoản đã hết hạn
+function applyLockUI() {
+  const locked = isAccountLocked();
+  ['addContractBtn', 'addCarBtn', 'fabAddBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.opacity = locked ? '0.5' : '';
+    el.style.pointerEvents = locked ? 'none' : '';
+    el.title = locked ? 'Gói Dùng Thử đã hết hạn - vui lòng nâng cấp Premium' : '';
+  });
+}
+
+// Chặn các thao tác chỉnh sửa/thêm mới khi tài khoản đã hết hạn
+function guardAgainstLock() {
+  if (isAccountLocked()) {
+    showToast('⚠️ Gói Dùng Thử đã hết hạn. Vui lòng nâng cấp Premium để tiếp tục chỉnh sửa.');
+    return false;
+  }
+  return true;
+}
+
+function requestUpgradePremium() {
+  showToast('Vui lòng liên hệ admin để nâng cấp gói Premium!');
+}
+
+// Popup báo số ngày còn lại / hết hạn - hiện 1 lần khi mở app lần đầu trong ngày
+function maybeShowTrialPopup() {
+  if (!subscriptionInfo || subscriptionInfo.plan !== 'trial' || !currentUser) return;
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const storageKey = 'trialPopupShown_' + currentUser.uid + '_' + todayKey;
+  if (localStorage.getItem(storageKey)) return;
+
+  const daysLeft = getDaysLeft();
+  const icon = document.getElementById('trialNoticeIcon');
+  const title = document.getElementById('trialNoticeTitle');
+  const daysEl = document.getElementById('trialNoticeDays');
+  const text = document.getElementById('trialNoticeText');
+
+  if (daysLeft <= 0) {
+    icon.textContent = '🔒';
+    title.textContent = 'Gói Dùng Thử đã hết hạn';
+    daysEl.textContent = 'Đã hết hạn';
+    daysEl.className = 'trial-days-left expired';
+    text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy nâng cấp Premium để thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
+  } else {
+    icon.textContent = '⏳';
+    title.textContent = 'Gói Dùng Thử';
+    daysEl.textContent = `Còn ${daysLeft} ngày`;
+    daysEl.className = 'trial-days-left';
+    text.textContent = 'Hãy nâng cấp lên gói Premium trước khi hết hạn để không bị gián đoạn công việc.';
+  }
+
+  document.getElementById('trialNoticeModal').style.display = 'flex';
+  localStorage.setItem(storageKey, '1');
+}
+
+function closeTrialNoticeModal() {
+  document.getElementById('trialNoticeModal').style.display = 'none';
+}
 
 // ==================== BIẾN TOÀN CỤC ====================
 let cars = [], contracts = [];
@@ -2189,6 +2499,7 @@ function toggleExternalCarFields() {
 
 // ====================== GHI CHÚ ======================
 function openActiveNoteModal(id) {
+  if (!guardAgainstLock()) return;
   const contract = contracts.find(c => c.id === id);
   if (!contract) return;
   document.getElementById('noteContractId').value = id;
@@ -2214,6 +2525,7 @@ function closeNoteModal() {
 }
 
 function openHistoryNoteModal(id) {
+  if (!guardAgainstLock()) return;
   const contract = contracts.find(c => c.id === id);
   if (!contract) return;
   document.getElementById('historyNoteContractId').value = id;
@@ -2393,6 +2705,7 @@ function swapCarFromPopup() {
 }
 
 function openSwapCarModal(id) {
+  if (!guardAgainstLock()) return;
   const contract = contracts.find(c => c.id === id);
   if (!contract) return;
 
@@ -3112,6 +3425,7 @@ function goBackToHome() {
 }
 // ====================== MODAL FUNCTIONS ======================
 function showAddContractModal() {
+  if (!guardAgainstLock()) return;
   document.getElementById('contractModalTitle').textContent = "Thêm hợp đồng thuê xe";
   document.getElementById('contractSubmitBtn').textContent = "Lưu hợp đồng";
   document.getElementById('contractId').value = '';
@@ -3147,6 +3461,7 @@ function showAddContractModal() {
 function closeModal() { document.getElementById('contractModal').style.display = 'none'; }
 
 function showAddCarModal() {
+  if (!guardAgainstLock()) return;
   document.getElementById('carModalTitle').textContent = "Thêm xe mới";
   document.getElementById('carSubmitBtn').textContent = "Thêm xe";
   document.getElementById('carId').value = '';
@@ -3166,6 +3481,7 @@ function goHome() {
 }
 
 function editContract(id) {
+  if (!guardAgainstLock()) return;
   const contract = contracts.find(c => c.id === id);
   if (!contract) return;
 
@@ -3239,6 +3555,7 @@ function editContract(id) {
 }
 
 function deleteContract(id) {
+  if (!guardAgainstLock()) return;
   showSimpleConfirm("Hủy hợp đồng", "Bạn có chắc muốn hủy hợp đồng này?<br><strong>Hành động này không thể hoàn tác.</strong>", () => {
     contracts = contracts.filter(c => c.id !== id);
     renderAll();
@@ -3248,6 +3565,7 @@ function deleteContract(id) {
 }
 
 function confirmReceive(id) {
+  if (!guardAgainstLock()) return;
   const contract = contracts.find(c => c.id === id);
   if (!contract) return;
 
@@ -3275,6 +3593,7 @@ function confirmReceive(id) {
 }
 
 function confirmReturn(id) {
+  if (!guardAgainstLock()) return;
   showConfirm("Xác nhận trả xe", "Bạn chắc chắn khách đã trả xe?<br><strong>Toàn bộ thông tin sẽ được lưu lại.</strong>", "🔄", () => {
     const contract = contracts.find(c => c.id === id);
     if (contract) {
@@ -3288,6 +3607,7 @@ function confirmReturn(id) {
 }
 
 function editCar(id) {
+  if (!guardAgainstLock()) return;
   const car = cars.find(c => c.id === id);
   if (!car) return;
   document.getElementById('carModalTitle').textContent = "Sửa thông tin xe";
@@ -3304,6 +3624,7 @@ function editCar(id) {
 }
 
 function deleteCar(id) {
+  if (!guardAgainstLock()) return;
   const car = cars.find(c => c.id === id);
   if (!car) return;
 
@@ -3329,6 +3650,7 @@ function deleteCar(id) {
 // ====================== FORM CONTRACT SUBMIT ======================
 document.getElementById('contractForm').addEventListener('submit', e => {
   e.preventDefault();
+  if (!guardAgainstLock()) return;
 
   const carSelectVal = document.getElementById('carSelect').value;
   const isExternal = carSelectVal === 'external';
@@ -3449,7 +3771,7 @@ if (isDateOverlap(rent, ret, car.plate, contractId)) {
 // ====================== FORM XE SUBMIT (ĐÃ SỬA - HỖ TRỢ ĐỔI BIỂN SỐ) ======================
 document.getElementById('carForm').addEventListener('submit', e => {
   e.preventDefault();
-
+  if (!guardAgainstLock()) return;
   const carId = document.getElementById('carId').value ? parseInt(document.getElementById('carId').value) : null;
   const newPlate = document.getElementById('licensePlate').value.trim().toUpperCase();
   const newType = document.getElementById('carType').value.trim();
