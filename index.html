@@ -1196,6 +1196,12 @@ input:focus, select:focus, textarea:focus {
       <h2><i class="fas fa-history"></i> Lịch sử hợp đồng & Doanh thu</h2>
       
       <div style="margin: 20px 0; padding: 20px; background: #f8fafc; border-radius: 16px; display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">
+        <div style="flex: 1; min-width: 220px;">
+          <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Tìm hợp đồng</label>
+          <input type="text" id="revenueSearchInput" oninput="filterCompletedContracts()"
+                 placeholder="Tên khách, SĐT, biển số..."
+                 style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; width:100%; margin-bottom:0;">
+        </div>
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Năm</label>
           <select id="revenueYearFilter" onchange="filterCompletedContracts()" 
@@ -1819,7 +1825,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v1.4.5 - (2026) 
+    CarRent v1.4.6 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -2238,6 +2244,7 @@ let currentRevenueYear = '';
 let currentRevenueMonth = '';
 let currentRevenueCar = '';
 let currentRevenueType = '';
+let currentRevenueSearch = '';
 
 let currentContractType = 'normal';
 let currentActionContractId = null;
@@ -3316,6 +3323,7 @@ function filterCompletedContracts() {
   currentRevenueMonth = document.getElementById('revenueMonthFilter').value;
   currentRevenueCar = document.getElementById('revenueCarFilter').value;
   currentRevenueType = document.getElementById('revenueTypeFilter').value;
+  currentRevenueSearch = (document.getElementById('revenueSearchInput').value || '').trim().toLowerCase();
   renderCompletedContracts();
 }
 
@@ -3324,8 +3332,16 @@ function resetRevenueFilter() {
   document.getElementById('revenueMonthFilter').value = '';
   document.getElementById('revenueCarFilter').value = '';
   document.getElementById('revenueTypeFilter').value = '';
-  currentRevenueYear = currentRevenueMonth = currentRevenueCar = currentRevenueType = '';
+  document.getElementById('revenueSearchInput').value = '';
+  currentRevenueYear = currentRevenueMonth = currentRevenueCar = currentRevenueType = currentRevenueSearch = '';
   renderCompletedContracts();
+}
+
+// Lọc theo từ khóa tìm kiếm: tên KH, SĐT, biển số
+function matchesRevenueSearch(d) {
+  if (!currentRevenueSearch) return true;
+  const haystack = `${d.customer || ''} ${d.phone || ''} ${d.plate || ''}`.toLowerCase();
+  return haystack.includes(currentRevenueSearch);
 }
 
 function renderCompletedContracts() {
@@ -3349,6 +3365,9 @@ function renderCompletedContracts() {
   }
   if (currentRevenueType) {
     filtered = filtered.filter(c => (c.contractType || 'normal') === currentRevenueType);
+  }
+  if (currentRevenueSearch) {
+    filtered = filtered.filter(c => matchesRevenueSearch(getCompletedDisplay(c)));
   }
 
   filtered.sort((a, b) => new Date(a.rentDate) - new Date(b.rentDate));
@@ -3414,6 +3433,9 @@ function printRevenue() {
       const d = getCompletedDisplay(c);
       return d.plate === currentRevenueCar;
     });
+  }
+  if (currentRevenueSearch) {
+    filtered = filtered.filter(c => matchesRevenueSearch(getCompletedDisplay(c)));
   }
 
   if (filtered.length === 0) {
@@ -4069,7 +4091,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v1.4.5 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v1.4.6 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
@@ -4101,6 +4123,9 @@ function exportRevenueToExcel() {
       return d.plate === currentRevenueCar;
     });
   }
+  if (currentRevenueSearch) {
+    filtered = filtered.filter(c => matchesRevenueSearch(getCompletedDisplay(c)));
+  }
 
   if (filtered.length === 0) {
     alert("Không có dữ liệu để xuất Excel!");
@@ -4109,11 +4134,22 @@ function exportRevenueToExcel() {
 
   filtered.sort((a, b) => new Date(a.rentDate) - new Date(b.rentDate));
 
+  const COL_COUNT = 14; // số cột của bảng dữ liệu (STT -> Ghi chú)
+  const MONEY_COL_MIN = 9;  // cột "Tiền thuê xe"
+  const MONEY_COL_MAX = 12; // cột "Tổng doanh thu"
+
+  // ===== Giống định dạng phần "In báo cáo": Tiêu đề + Tiêu đề phụ =====
+  const reportTitle = document.getElementById('revenueTitle').textContent;
   const data = [
+    ["BÁO CÁO DOANH THU"],
+    [reportTitle],
+    [], // dòng trống ngăn cách
     ["STT", "Khách hàng", "SĐT", "Loại xe", "Biển số", "Loại hợp đồng", 
      "Ngày nhận xe", "Ngày trả xe", "Số ngày", "Tiền thuê xe", "Phụ phí", 
      "Giảm giá", "Tổng doanh thu", "Ghi chú"]
   ];
+  const HEADER_ROW = data.length - 1; // dòng chứa tiêu đề cột
+  const DATA_START_ROW = data.length; // dòng bắt đầu dữ liệu
 
   let totalRevenue = 0;
 
@@ -4144,6 +4180,20 @@ function exportRevenueToExcel() {
     ]);
   });
 
+  const DATA_END_ROW = data.length - 1; // dòng dữ liệu cuối cùng
+
+  // ===== Dòng tổng doanh thu (giống dòng "Tổng doanh thu" ở bản in) =====
+  data.push([]); // dòng trống ngăn cách
+  const totalRow = new Array(COL_COUNT).fill('');
+  totalRow[0] = 'TỔNG DOANH THU';
+  totalRow[MONEY_COL_MAX] = totalRevenue;
+  data.push(totalRow);
+  const TOTAL_ROW = data.length - 1;
+
+  data.push([]); // dòng trống
+  data.push([`In ngày: ${new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' })}`]);
+  const DATE_ROW = data.length - 1;
+
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(data);
 
@@ -4152,6 +4202,24 @@ function exportRevenueToExcel() {
     {wch:15}, {wch:18}, {wch:18}, {wch:8}, {wch:15},
     {wch:12}, {wch:12}, {wch:16}, {wch:35}
   ];
+
+  // Gộp ô cho tiêu đề, tiêu đề phụ, dòng nhãn tổng doanh thu, và dòng ngày in
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: COL_COUNT - 1 } }, // BÁO CÁO DOANH THU
+    { s: { r: 1, c: 0 }, e: { r: 1, c: COL_COUNT - 1 } }, // Tiêu đề phụ (bộ lọc)
+    { s: { r: TOTAL_ROW, c: 0 }, e: { r: TOTAL_ROW, c: MONEY_COL_MAX - 1 } }, // Nhãn "TỔNG DOANH THU"
+    { s: { r: DATE_ROW, c: 0 }, e: { r: DATE_ROW, c: COL_COUNT - 1 } } // Ngày in
+  ];
+
+  // ===== Định dạng số tiền có dấu ngăn cách hàng nghìn cho các cột tiền =====
+  for (let r = DATA_START_ROW; r <= DATA_END_ROW; r++) {
+    for (let c = MONEY_COL_MIN; c <= MONEY_COL_MAX; c++) {
+      const ref = XLSX.utils.encode_cell({ r, c });
+      if (ws[ref]) ws[ref].z = '#,##0';
+    }
+  }
+  const totalCellRef = XLSX.utils.encode_cell({ r: TOTAL_ROW, c: MONEY_COL_MAX });
+  if (ws[totalCellRef]) ws[totalCellRef].z = '#,##0';
 
   let sheetName = currentRevenueMonth && currentRevenueYear 
     ? `Tháng ${currentRevenueMonth} ${currentRevenueYear}` 
