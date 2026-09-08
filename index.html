@@ -919,6 +919,125 @@ body.pro-mode #actionPopup {
   margin: 14px 0;
   text-align: left;
 }
+
+/* ==================== NÂNG CẤP ĐỘ NỔI / BÓNG (ELEVATION UPGRADE) ==================== */
+/* Card chính: bóng sâu hơn, viền mờ nhẹ để tách khỏi nền */
+.card {
+  box-shadow: 0 4px 6px rgba(15,23,42,0.04), 0 16px 40px rgba(15,23,42,0.10);
+  border: 1px solid rgba(226,232,240,0.7);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.card:hover {
+  box-shadow: 0 6px 10px rgba(15,23,42,0.05), 0 22px 50px rgba(15,23,42,0.13);
+}
+
+/* Thanh tab: bóng nổi rõ hơn */
+.tabs {
+  box-shadow: 0 4px 6px rgba(15,23,42,0.04), 0 14px 32px rgba(15,23,42,0.12);
+}
+.tab.active {
+  box-shadow: 0 6px 16px rgba(37,99,235,0.35), 0 2px 4px rgba(37,99,235,0.2);
+}
+.tab:not(.active):hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+/* Nút bấm: nổi khối, có bóng đổ theo màu, nhấc lên khi hover */
+.btn {
+  box-shadow: 0 2px 4px rgba(15,23,42,0.08), 0 6px 14px rgba(15,23,42,0.10);
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(15,23,42,0.10), 0 10px 22px rgba(15,23,42,0.16);
+}
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(15,23,42,0.10);
+}
+.btn-primary { box-shadow: 0 4px 10px rgba(37,99,235,0.30); }
+.btn-primary:hover { box-shadow: 0 8px 20px rgba(37,99,235,0.40); }
+.btn-success { box-shadow: 0 4px 10px rgba(22,163,74,0.30); }
+.btn-success:hover { box-shadow: 0 8px 20px rgba(22,163,74,0.40); }
+.btn-danger { box-shadow: 0 4px 10px rgba(220,38,38,0.30); }
+.btn-danger:hover { box-shadow: 0 8px 20px rgba(220,38,38,0.40); }
+.btn-info { box-shadow: 0 4px 10px rgba(14,165,233,0.30); }
+.btn-info:hover { box-shadow: 0 8px 20px rgba(14,165,233,0.40); }
+.btn-edit { box-shadow: 0 4px 10px rgba(139,92,246,0.30); }
+.btn-edit:hover { box-shadow: 0 8px 20px rgba(139,92,246,0.40); }
+.btn-note, .btn-secondary { box-shadow: 0 4px 10px rgba(100,116,139,0.30); }
+.btn-note:hover, .btn-secondary:hover { box-shadow: 0 8px 20px rgba(100,116,139,0.40); }
+
+/* FAB & action-btn: bóng đậm hơn, nhấc rõ khi hover */
+.fab {
+  box-shadow: 0 10px 24px rgba(37,99,235,0.45), 0 4px 8px rgba(37,99,235,0.3);
+  transition: all 0.25s ease;
+}
+.fab:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 14px 30px rgba(37,99,235,0.55); }
+.action-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.22); }
+
+/* Bảng: khối bảng nổi lên khỏi nền, header có bóng nhẹ phân tách */
+.table-container {
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6);
+}
+th {
+  box-shadow: 0 2px 4px rgba(15,23,42,0.05);
+  position: relative;
+  z-index: 1;
+}
+tbody tr {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+tbody tr:hover {
+  box-shadow: 0 4px 12px rgba(15,23,42,0.08);
+}
+
+/* Badge trạng thái: bóng nhẹ để nổi trên nền hàng */
+.status {
+  box-shadow: 0 2px 5px rgba(15,23,42,0.10);
+}
+
+/* Input/select/textarea: bóng nhẹ bên trong + nổi khi focus */
+input, select, textarea {
+  box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.12), 0 4px 10px rgba(37,99,235,0.10);
+}
+
+/* Modal: bóng sâu và mềm hơn để tạo cảm giác nổi hẳn khỏi nền */
+.modal-content {
+  box-shadow: 0 30px 70px rgba(15,23,42,0.35), 0 8px 20px rgba(15,23,42,0.15);
+}
+.action-popup-content {
+  box-shadow: 0 30px 70px rgba(15,23,42,0.35), 0 8px 20px rgba(15,23,42,0.15);
+}
+
+/* Profile button & dropdown: nổi rõ hơn trên topbar */
+.profile-btn {
+  box-shadow: 0 6px 16px rgba(37,99,235,0.28);
+}
+.profile-dropdown {
+  box-shadow: 0 20px 45px rgba(15,23,42,0.22);
+}
+
+/* type-btn (loại hợp đồng) & extra-fee-row: thêm chiều sâu nhẹ */
+.type-btn {
+  box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+}
+.type-btn.active {
+  box-shadow: 0 4px 12px rgba(37,99,235,0.20);
+}
+.extra-fee-row {
+  box-shadow: inset 0 1px 3px rgba(15,23,42,0.06);
+}
+
+/* Toast: nổi mạnh để thu hút chú ý */
+#toast {
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+}
   </style>
 </head>
 <body>
