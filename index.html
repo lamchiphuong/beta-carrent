@@ -2396,16 +2396,16 @@ function maybeShowTrialPopup() {
 
   if (expired) {
     icon.textContent = '🔒';
-    daysEl.textContent = 'Đã hết hạn';
+    daysEl.textContent = 'đã hết hạn';
     daysEl.className = 'trial-days-left expired';
 
     if (subscriptionInfo.plan === 'premium') {
-      title.textContent = 'Gói Premium của bạn đã hết hạn';
+      title.textContent = 'Gói Premium của bạn';
       text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy gia hạn Premium để tiếp tục thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
       upgradeNote.innerHTML = 'Gia hạn gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.';
       actionBtnText.textContent = 'Gia hạn Premium';
     } else {
-      title.textContent = 'Gói Dùng Thử đã hết hạn';
+      title.textContent = 'Gói Dùng Thử của bạn';
       text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy nâng cấp Premium để thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
       upgradeNote.innerHTML = 'Nâng cấp lên gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.';
       actionBtnText.textContent = 'Nâng cấp Premium';
