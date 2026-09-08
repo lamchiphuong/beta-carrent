@@ -49,22 +49,25 @@
     font-size:0.9rem;transition:opacity .2s;
   }
   .btn:hover{opacity:0.9;}
+  .btn:disabled{opacity:0.5;cursor:not-allowed;}
   .btn-primary{background:var(--primary);color:#fff;width:100%;}
   .btn-success{background:var(--success);color:#fff;}
   .btn-edit{background:#8b5cf6;color:#fff;}
   .btn-secondary{background:var(--gray);color:#fff;}
   .btn-danger{background:var(--danger);color:#fff;}
-  .btn-info{background:#0ea5e9;color:#fff;}
+  .btn-warning{background:var(--warning);color:#fff;}
   .btn-sm{padding:7px 12px;font-size:0.8rem;}
-  .btn-block{width:100%;}
 
   /* ===== Topbar ===== */
-  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
   .admin-email{font-size:0.85rem;color:var(--gray);}
 
   /* ===== Tabs ===== */
-  .tabs{display:flex;background:#fff;border-radius:14px;padding:6px;box-shadow:0 8px 20px rgba(0,0,0,0.06);margin-bottom:20px;width:fit-content;flex-wrap:wrap;gap:4px;}
-  .tab-btn{padding:10px 20px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.9rem;color:var(--gray);transition:all .2s;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .tab-btn{
+    padding:10px 18px;border:none;border-radius:12px;background:#fff;color:var(--gray);
+    font-weight:600;font-size:0.9rem;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  }
   .tab-btn.active{background:var(--primary);color:#fff;}
   .tab-panel{display:none;}
   .tab-panel.active{display:block;}
@@ -77,13 +80,13 @@
 
   /* ===== Card / Table ===== */
   .card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 10px 25px rgba(0,0,0,0.07);overflow:hidden;margin-bottom:20px;}
-  .card h3{color:var(--primary-dark);font-size:1.05rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .card h3{color:var(--primary-dark);margin-bottom:14px;font-size:1.05rem;}
   .table-wrap{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;min-width:900px;}
   th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #e2e8f0;white-space:nowrap;font-size:0.88rem;}
   th{background:#f8fafc;color:var(--primary-dark);font-weight:600;position:sticky;top:0;}
   tr:hover{background:#f1f5f9;}
-  td.wrap-cell{white-space:normal;max-width:280px;}
+  td.wrap-cell{white-space:normal;max-width:320px;}
 
   .plan-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;}
   .plan-badge.trial{background:#fef3c7;color:#d97706;}
@@ -91,24 +94,13 @@
   .expiry-text.expired{color:var(--danger);font-weight:700;}
   .expiry-text.ok{color:#16a34a;}
 
-  .target-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;background:#e0e7ff;color:#3730a3;}
-  .target-badge.all{background:#dcfce7;color:#166534;}
+  .target-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;background:#dbeafe;color:#1d4ed8;}
+  .target-badge.selected{background:#ede9fe;color:#6d28d9;}
   .recalled-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;background:#fee2e2;color:#b91c1c;}
 
-  #emptyState, #loadingRow, #notifEmptyState, #notifLoadingRow{text-align:center;color:var(--gray);padding:30px;}
-
-  /* ===== Recipient picker ===== */
-  .target-mode{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;}
-  .target-mode label{display:flex;align-items:center;gap:6px;font-size:0.9rem;font-weight:600;color:#334155;cursor:pointer;}
-  .recipient-box{
-    border:1px solid #cbd5e1;border-radius:12px;padding:10px;max-height:230px;overflow-y:auto;margin-top:8px;
+  #emptyState, #loadingRow, #notifEmptyState, #notifLoadingRow, #recalledEmptyState, #recalledLoadingRow{
+    text-align:center;color:var(--gray);padding:30px;
   }
-  .recipient-search{width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;margin-bottom:8px;}
-  .recipient-item{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;font-size:0.87rem;}
-  .recipient-item:hover{background:#f1f5f9;}
-  .recipient-item .r-name{font-weight:600;color:#1e293b;}
-  .recipient-item .r-email{color:var(--gray);font-size:0.78rem;}
-  .recipient-count{font-size:0.8rem;color:var(--gray);margin-top:6px;}
 
   /* ===== Modal ===== */
   .modal{
@@ -116,7 +108,7 @@
     align-items:center;justify-content:center;z-index:2000;padding:15px;
   }
   .modal-content{
-    background:#fff;border-radius:20px;width:100%;max-width:460px;padding:24px;
+    background:#fff;border-radius:20px;width:100%;max-width:440px;padding:24px;
     max-height:92vh;overflow-y:auto;
   }
   .modal-content.wide{max-width:560px;}
@@ -124,8 +116,26 @@
   .modal-actions{display:flex;gap:10px;margin-top:18px;}
   .modal-actions .btn{flex:1;}
   .uid-note{font-size:0.75rem;color:var(--gray);word-break:break-all;margin-top:-6px;margin-bottom:14px;}
-  .notif-detail-box{background:#f8fafc;border-radius:12px;padding:16px;line-height:1.7;white-space:pre-wrap;font-size:0.92rem;}
-  .notif-meta{font-size:0.8rem;color:var(--gray);margin-bottom:10px;}
+
+  /* User picker */
+  .user-pick-search{margin-bottom:10px;}
+  .user-pick-list{max-height:320px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;}
+  .user-pick-item{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:0.87rem;
+  }
+  .user-pick-item:last-child{border-bottom:none;}
+  .user-pick-item label{flex:1;cursor:pointer;}
+  .user-pick-item .u-name{font-weight:600;}
+  .user-pick-item .u-email{color:var(--gray);font-size:0.78rem;}
+  .picked-count{font-size:0.8rem;color:var(--primary-dark);font-weight:600;margin:8px 0;}
+
+  .target-radio-group{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
+  .target-radio-group label{display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;}
+
+  .detail-box{background:#f8fafc;border-radius:12px;padding:14px;font-size:0.88rem;line-height:1.5;white-space:pre-wrap;}
+  .detail-meta{font-size:0.78rem;color:var(--gray);margin-top:10px;}
+  .detail-target-list{margin-top:10px;max-height:180px;overflow-y:auto;font-size:0.82rem;}
+  .detail-target-list div{padding:4px 0;border-bottom:1px solid #f1f5f9;}
 
   /* Toast */
   #toast{
@@ -154,7 +164,7 @@
 <div class="container hidden" id="appContainer">
   <div class="topbar">
     <div>
-      <h1>📋 Quản Lý Nâng Cao</h1>
+      <h1>🛠️ Quản Lý Nâng Cao</h1>
       <div class="subtitle">CarRent Admin Tool</div>
     </div>
     <div style="text-align:right;">
@@ -164,11 +174,11 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" id="tabBtnUsers" onclick="switchTab('users')"><i class="fas fa-users"></i> Người dùng &amp; Gói</button>
-    <button class="tab-btn" id="tabBtnNotif" onclick="switchTab('notif')"><i class="fas fa-bell"></i> Thông báo</button>
+    <button class="tab-btn active" id="tabBtnUsers" onclick="switchTab('users')">📋 Gói Đăng Ký</button>
+    <button class="tab-btn" id="tabBtnNotif" onclick="switchTab('notif')">🔔 Thông Báo</button>
   </div>
 
-  <!-- ========== TAB: NGƯỜI DÙNG & GÓI ĐĂNG KÝ ========== -->
+  <!-- ============ TAB: GÓI ĐĂNG KÝ ============ -->
   <div class="tab-panel active" id="panelUsers">
     <div class="toolbar">
       <input type="text" id="searchInput" placeholder="🔍 Tìm theo tên hoặc email..." oninput="renderTable()">
@@ -198,47 +208,37 @@
     </div>
   </div>
 
-  <!-- ========== TAB: THÔNG BÁO ========== -->
+  <!-- ============ TAB: THÔNG BÁO ============ -->
   <div class="tab-panel" id="panelNotif">
 
-    <!-- Soạn thông báo -->
     <div class="card">
-      <h3><i class="fas fa-paper-plane"></i> Soạn thông báo mới</h3>
+      <h3>📝 Soạn thông báo mới</h3>
 
       <div class="field">
         <label>Tiêu đề</label>
-        <input type="text" id="notifTitle" placeholder="VD: Bảo trì hệ thống">
+        <input type="text" id="notifTitle" placeholder="Ví dụ: Bảo trì hệ thống">
       </div>
 
       <div class="field">
         <label>Nội dung</label>
-        <textarea id="notifMessage" placeholder="Nội dung chi tiết thông báo..."></textarea>
+        <textarea id="notifMessage" placeholder="Nội dung thông báo gửi tới người dùng..."></textarea>
       </div>
 
       <div class="field">
         <label>Đối tượng nhận</label>
-        <div class="target-mode">
-          <label><input type="radio" name="targetMode" value="all" checked onchange="onTargetModeChange()"> Tất cả người dùng</label>
-          <label><input type="radio" name="targetMode" value="selected" onchange="onTargetModeChange()"> Chọn tài khoản cụ thể</label>
+        <div class="target-radio-group">
+          <label><input type="radio" name="notifTarget" value="all" checked onchange="onTargetTypeChange()"> Tất cả người dùng</label>
+          <label><input type="radio" name="notifTarget" value="selected" onchange="onTargetTypeChange()"> Chọn người dùng cụ thể</label>
         </div>
-
-        <div id="recipientPicker" class="hidden">
-          <input type="text" class="recipient-search" id="recipientSearch" placeholder="🔍 Lọc theo tên/email..." oninput="renderRecipientList()">
-          <div class="recipient-box" id="recipientBox"></div>
-          <div class="recipient-count" id="recipientCount">Đã chọn 0 tài khoản</div>
-        </div>
+        <button class="btn btn-secondary btn-sm hidden" id="btnPickUsers" onclick="openUserPickerModal()">👥 Chọn người dùng...</button>
+        <div class="picked-count hidden" id="pickedCountLabel"></div>
       </div>
 
-      <button class="btn btn-success btn-block" onclick="sendNotification()"><i class="fas fa-paper-plane"></i> Gửi thông báo</button>
+      <button class="btn btn-success" onclick="sendNotification()">📤 Gửi thông báo</button>
     </div>
 
-    <!-- Danh sách đã gửi -->
     <div class="card">
-      <h3><i class="fas fa-history"></i> Tất cả thông báo đã gửi</h3>
-      <div class="toolbar">
-        <input type="text" id="notifSearchInput" placeholder="🔍 Tìm theo tiêu đề hoặc nội dung..." oninput="renderNotifTable()">
-        <button class="btn btn-secondary" onclick="loadNotifications()">↻ Tải lại</button>
-      </div>
+      <h3>📨 Thông báo đã gửi</h3>
       <div class="table-wrap">
         <table>
           <thead>
@@ -246,8 +246,8 @@
               <th>Tiêu đề</th>
               <th>Nội dung</th>
               <th>Đối tượng</th>
-              <th>Thời gian gửi</th>
-              <th>Trạng thái</th>
+              <th>Người gửi</th>
+              <th>Thời gian</th>
               <th>Hành động</th>
             </tr>
           </thead>
@@ -259,6 +259,27 @@
       <div id="notifEmptyState" class="hidden">Chưa có thông báo nào được gửi.</div>
     </div>
 
+    <div class="card">
+      <h3>🗄️ Lịch sử thông báo đã thu hồi</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tiêu đề</th>
+              <th>Nội dung</th>
+              <th>Đối tượng</th>
+              <th>Đã gửi lúc</th>
+              <th>Thu hồi lúc</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="recalledTableBody">
+            <tr id="recalledLoadingRow"><td colspan="6">Đang tải lịch sử...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="recalledEmptyState" class="hidden">Chưa có thông báo nào bị thu hồi.</div>
+    </div>
   </div>
 </div>
 
@@ -298,15 +319,34 @@
   </div>
 </div>
 
-<!-- ===================== MODAL XEM THÔNG BÁO ===================== -->
-<div class="modal" id="notifViewModal">
+<!-- ===================== MODAL CHỌN NGƯỜI DÙNG ===================== -->
+<div class="modal" id="userPickerModal">
   <div class="modal-content wide">
-    <h2 id="notifViewTitle">📢 Thông báo</h2>
-    <div class="notif-meta" id="notifViewMeta"></div>
-    <div class="notif-detail-box" id="notifViewContent"></div>
+    <h2>👥 Chọn người dùng nhận thông báo</h2>
+    <div class="field user-pick-search">
+      <input type="text" id="userPickSearch" placeholder="🔍 Tìm theo tên hoặc email..." oninput="renderUserPickerList()">
+    </div>
+    <div class="picked-count" id="pickerLiveCount">Đã chọn: 0</div>
+    <div class="user-pick-list" id="userPickList"></div>
     <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeNotifViewModal()">Đóng</button>
-      <button class="btn btn-danger" id="notifViewRecallBtn" onclick="recallFromView()">🗑 Thu hồi</button>
+      <button class="btn btn-secondary" onclick="closeUserPickerModal()">Hủy</button>
+      <button class="btn btn-success" onclick="confirmUserPicker()">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL CHI TIẾT THÔNG BÁO ===================== -->
+<div class="modal" id="notifDetailModal">
+  <div class="modal-content wide">
+    <h2 id="notifDetailTitleModal">Chi tiết thông báo</h2>
+    <div class="detail-box" id="notifDetailContentModal"></div>
+    <div class="detail-meta" id="notifDetailMetaModal"></div>
+    <div id="notifDetailTargetWrap" class="hidden">
+      <div class="detail-meta" style="margin-top:14px;font-weight:600;">Danh sách người nhận:</div>
+      <div class="detail-target-list" id="notifDetailTargetList"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeNotifDetailModal()">Đóng</button>
     </div>
   </div>
 </div>
@@ -334,10 +374,7 @@ const ADMIN_UID = '0SMmwdl1d1MERapmfG3l3js7n4r2';
 
 let allUsers = [];     // [{uid, name, email, plan, startDate, expiryDate}]
 let editingUid = null;
-
-let allNotifications = [];   // [{id, title, message, createdAt, targetType, targetUids, recalled}]
-let selectedRecipients = {}; // { uid: true }
-let viewingNotifId = null;
+let currentAdminEmail = '';
 
 // ==================== AUTH ====================
 function doLoginGoogle(){
@@ -364,11 +401,13 @@ auth.onAuthStateChanged(user => {
   const loginScreen = document.getElementById('loginScreen');
   const appContainer = document.getElementById('appContainer');
   if(user && user.uid === ADMIN_UID){
+    currentAdminEmail = user.email || '';
     loginScreen.classList.add('hidden');
     appContainer.classList.remove('hidden');
-    document.getElementById('adminEmailLabel').textContent = user.email || '';
+    document.getElementById('adminEmailLabel').textContent = currentAdminEmail;
     loadUsers();
     loadNotifications();
+    loadRecalledNotifications();
   } else {
     loginScreen.classList.remove('hidden');
     appContainer.classList.add('hidden');
@@ -377,10 +416,11 @@ auth.onAuthStateChanged(user => {
 
 // ==================== TABS ====================
 function switchTab(tab){
-  document.getElementById('tabBtnUsers').classList.toggle('active', tab === 'users');
-  document.getElementById('tabBtnNotif').classList.toggle('active', tab === 'notif');
-  document.getElementById('panelUsers').classList.toggle('active', tab === 'users');
-  document.getElementById('panelNotif').classList.toggle('active', tab === 'notif');
+  const isUsers = tab === 'users';
+  document.getElementById('panelUsers').classList.toggle('active', isUsers);
+  document.getElementById('panelNotif').classList.toggle('active', !isUsers);
+  document.getElementById('tabBtnUsers').classList.toggle('active', isUsers);
+  document.getElementById('tabBtnNotif').classList.toggle('active', !isUsers);
 }
 
 // ==================== LOAD USERS ====================
@@ -404,7 +444,6 @@ function loadUsers(){
       };
     });
     renderTable();
-    renderRecipientList();
   }).catch(err => {
     document.getElementById('usersTableBody').innerHTML =
       `<tr><td colspan="7" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}
@@ -419,7 +458,7 @@ function formatDateShort(iso){
   return d.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'});
 }
 
-function formatDateTimeShort(iso){
+function formatDateTime(iso){
   if(!iso) return '—';
   const d = new Date(iso);
   if(isNaN(d)) return '—';
@@ -464,7 +503,7 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// ==================== EDIT MODAL (USER) ====================
+// ==================== EDIT MODAL ====================
 function openEditModal(uid){
   const u = allUsers.find(x => x.uid === uid);
   if(!u) return;
@@ -516,232 +555,6 @@ function saveEdit(){
   });
 }
 
-// ==================== THÔNG BÁO: CHỌN NGƯỜI NHẬN ====================
-function onTargetModeChange(){
-  const mode = document.querySelector('input[name="targetMode"]:checked').value;
-  const picker = document.getElementById('recipientPicker');
-  if(mode === 'selected'){
-    picker.classList.remove('hidden');
-    renderRecipientList();
-  } else {
-    picker.classList.add('hidden');
-  }
-}
-
-function renderRecipientList(){
-  const box = document.getElementById('recipientBox');
-  if(!box) return;
-  const q = (document.getElementById('recipientSearch').value || '').trim().toLowerCase();
-
-  const filtered = allUsers.filter(u =>
-    !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-  );
-
-  if(filtered.length === 0){
-    box.innerHTML = '<div style="color:var(--gray);font-size:0.85rem;padding:8px;">Không tìm thấy tài khoản nào.</div>';
-  } else {
-    box.innerHTML = filtered.map(u => `
-      <label class="recipient-item">
-        <input type="checkbox" data-uid="${u.uid}" ${selectedRecipients[u.uid] ? 'checked' : ''} onchange="toggleRecipient('${u.uid}', this.checked)">
-        <div>
-          <div class="r-name">${escapeHtml(u.name) || '(chưa đặt tên)'}</div>
-          <div class="r-email">${escapeHtml(u.email) || '—'}</div>
-        </div>
-      </label>
-    `).join('');
-  }
-  updateRecipientCount();
-}
-
-function toggleRecipient(uid, checked){
-  if(checked) selectedRecipients[uid] = true;
-  else delete selectedRecipients[uid];
-  updateRecipientCount();
-}
-
-function updateRecipientCount(){
-  const count = Object.keys(selectedRecipients).length;
-  document.getElementById('recipientCount').textContent = `Đã chọn ${count} tài khoản`;
-}
-
-// ==================== GỬI THÔNG BÁO ====================
-function sendNotification(){
-  const title = document.getElementById('notifTitle').value.trim();
-  const message = document.getElementById('notifMessage').value.trim();
-  const mode = document.querySelector('input[name="targetMode"]:checked').value;
-
-  if(!title || !message){
-    showToast('⚠️ Vui lòng nhập đầy đủ tiêu đề và nội dung.');
-    return;
-  }
-
-  let targetUids = null;
-  if(mode === 'selected'){
-    targetUids = Object.keys(selectedRecipients);
-    if(targetUids.length === 0){
-      showToast('⚠️ Vui lòng chọn ít nhất một tài khoản nhận.');
-      return;
-    }
-  }
-
-  const payload = {
-    title,
-    message,
-    createdAt: new Date().toISOString(),
-    senderEmail: (auth.currentUser && auth.currentUser.email) || '',
-    targetType: mode, // 'all' hoặc 'selected'
-    recalled: false
-  };
-  if(mode === 'selected'){
-    payload.targetUids = targetUids;
-  }
-
-  const newRef = db.ref('notifications').push();
-  newRef.set(payload).then(() => {
-    showToast('✅ Đã gửi thông báo!');
-    document.getElementById('notifTitle').value = '';
-    document.getElementById('notifMessage').value = '';
-    document.querySelector('input[name="targetMode"][value="all"]').checked = true;
-    selectedRecipients = {};
-    onTargetModeChange();
-    loadNotifications();
-  }).catch(err => {
-    showToast('❌ Lỗi khi gửi: ' + (err.message || err.code));
-  });
-}
-
-function truncateText(str, maxLen){
-  if(!str) return '';
-  const clean = String(str).replace(/\s+/g, ' ').trim();
-  return clean.length > maxLen ? clean.slice(0, maxLen).trim() + '…' : clean;
-}
-
-function targetLabel(n){
-  if(n.targetType === 'selected' && Array.isArray(n.targetUids)){
-    return `${n.targetUids.length} tài khoản`;
-  }
-  return 'Tất cả';
-}
-
-function renderNotifTable(){
-  const q = document.getElementById('notifSearchInput').value.trim().toLowerCase();
-  const tbody = document.getElementById('notifTableBody');
-  const emptyState = document.getElementById('notifEmptyState');
-
-  const filtered = allNotifications.filter(n =>
-    !q || (n.title || '').toLowerCase().includes(q) || (n.message || '').toLowerCase().includes(q)
-  );
-
-  if(filtered.length === 0){
-    tbody.innerHTML = '';
-    emptyState.classList.remove('hidden');
-    return;
-  }
-  emptyState.classList.add('hidden');
-
-  tbody.innerHTML = filtered.map(n => {
-    const isSelected = n.targetType === 'selected';
-    return `
-      <tr>
-        <td>${escapeHtml(n.title) || '(không có tiêu đề)'}</td>
-        <td class="wrap-cell">${escapeHtml(truncateText(n.message, 90))}</td>
-        <td><span class="target-badge ${isSelected ? '' : 'all'}">${targetLabel(n)}</span></td>
-        <td>${formatDateTimeShort(n.createdAt)}</td>
-        <td>${n.recalled ? '<span class="recalled-badge">Đã thu hồi</span>' : '<span class="expiry-text ok">Đang hiển thị</span>'}</td>
-        <td>
-          <button class="btn btn-info btn-sm" onclick="openNotifView('${n.id}')">Xem</button>
-          ${n.recalled ? '' : `<button class="btn btn-danger btn-sm" onclick="recallNotification('${n.id}')">Thu hồi</button>`}
-        </td>
-      </tr>`;
-  }).join('');
-}
-
-// ==================== XEM CHI TIẾT / THU HỒI ====================
-function openNotifView(id){
-  const n = allNotifications.find(x => x.id === id);
-  if(!n) return;
-  viewingNotifId = id;
-
-  let recipientsInfo = 'Tất cả người dùng';
-  if(n.targetType === 'selected' && Array.isArray(n.targetUids)){
-    const names = n.targetUids.map(uid => {
-      const u = allUsers.find(x => x.uid === uid);
-      return u ? (u.name || u.email || uid) : uid;
-    });
-    recipientsInfo = `${n.targetUids.length} tài khoản: ${names.join(', ')}`;
-  }
-
-  document.getElementById('notifViewTitle').textContent = '📢 ' + (n.title || 'Thông báo');
-  document.getElementById('notifViewMeta').innerHTML =
-    `Gửi lúc: ${formatDateTimeShort(n.createdAt)}${n.senderEmail ? ' • bởi ' + escapeHtml(n.senderEmail) : ''}<br>` +
-    `Đối tượng nhận: ${escapeHtml(recipientsInfo)}` +
-    (n.recalled ? '<br><span class="recalled-badge">Đã thu hồi</span>' : '');
-  document.getElementById('notifViewContent').textContent = n.message || '';
-
-  const recallBtn = document.getElementById('notifViewRecallBtn');
-  recallBtn.classList.toggle('hidden', !!n.recalled);
-
-  document.getElementById('notifViewModal').style.display = 'flex';
-}
-
-function closeNotifViewModal(){
-  document.getElementById('notifViewModal').style.display = 'none';
-  viewingNotifId = null;
-}
-
-function recallFromView(){
-  if(!viewingNotifId) return;
-  recallNotification(viewingNotifId, true);
-}
-
-function recallNotification(id, fromView){
-  if(!confirm('Thu hồi thông báo này? Người dùng sẽ không còn thấy thông báo này trên ứng dụng nữa.')) return;
-
-  // Xoá khỏi nhánh 'notifications' để gỡ ngay khỏi app của người dùng (realtime listener),
-  // đồng thời lưu lại bản ghi vào 'notificationsRecalled' để giữ lịch sử admin.
-  const n = allNotifications.find(x => x.id === id);
-  if(!n) return;
-
-  const archived = Object.assign({}, n, { recalled: true, recalledAt: new Date().toISOString() });
-  delete archived.id;
-
-  const updates = {};
-  updates['notificationsRecalled/' + id] = archived;
-  updates['notifications/' + id] = null;
-
-  db.ref().update(updates).then(() => {
-    showToast('✅ Đã thu hồi thông báo.');
-    if(fromView) closeNotifViewModal();
-    loadNotifications();
-  }).catch(err => {
-    showToast('❌ Lỗi khi thu hồi: ' + (err.message || err.code));
-  });
-}
-
-// Khi tải danh sách, gộp thêm các thông báo đã thu hồi (từ nhánh lưu trữ) để admin vẫn xem được lịch sử đầy đủ
-function loadNotifications(){
-  document.getElementById('notifTableBody').innerHTML =
-    '<tr id="notifLoadingRow"><td colspan="6">Đang tải danh sách thông báo...</td></tr>';
-
-  Promise.all([
-    db.ref('notifications').once('value'),
-    db.ref('notificationsRecalled').once('value')
-  ]).then(([activeSnap, recalledSnap]) => {
-    const active = activeSnap.val() || {};
-    const recalled = recalledSnap.val() || {};
-
-    const activeList = Object.keys(active).map(id => ({ id, ...active[id] }));
-    const recalledList = Object.keys(recalled).map(id => ({ id, ...recalled[id] }));
-
-    allNotifications = activeList.concat(recalledList)
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-    renderNotifTable();
-  }).catch(err => {
-    document.getElementById('notifTableBody').innerHTML =
-      `<tr><td colspan="6" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}</td></tr>`;
-  });
-}
-
 // ==================== TOAST ====================
 let toastTimer = null;
 function showToast(msg){
@@ -756,9 +569,296 @@ function showToast(msg){
 document.getElementById('editModal').addEventListener('click', function(e){
   if(e.target === this) closeEditModal();
 });
-document.getElementById('notifViewModal').addEventListener('click', function(e){
-  if(e.target === this) closeNotifViewModal();
+document.getElementById('userPickerModal').addEventListener('click', function(e){
+  if(e.target === this) closeUserPickerModal();
 });
+document.getElementById('notifDetailModal').addEventListener('click', function(e){
+  if(e.target === this) closeNotifDetailModal();
+});
+
+// =====================================================================
+// ==================== THÔNG BÁO (NOTIFICATIONS) =====================
+// =====================================================================
+// Dữ liệu thông báo được lưu chung tại nhánh Firebase 'notifications/{id}':
+//   { title, message, createdAt, senderEmail,
+//     targetType: 'all' | 'selected', targetUids: [uid1, uid2, ...] (chỉ có khi 'selected') }
+// Trạng thái đã đọc lưu riêng theo từng user tại 'users/{uid}/notificationsRead/{id}': true
+// Khi admin thu hồi, bản ghi bị xoá khỏi 'notifications' (nên biến mất khỏi app người dùng
+// ngay lập tức) và được lưu lại tại 'notificationsRecalled/{id}' kèm 'recalledAt' để xem lịch sử.
+// Vì mỗi thông báo hàng loạt chỉ là MỘT bản ghi duy nhất trong 'notifications' (không nhân bản
+// theo từng user), bảng "Thông báo đã gửi" bên dưới tự nhiên chỉ hiển thị một dòng cho mỗi
+// thông báo hàng loạt, dù nó được gửi tới hàng trăm tài khoản.
+
+let sentNotifications = [];   // danh sách thông báo đang hoạt động (chưa thu hồi)
+let recalledNotifications = []; // lịch sử đã thu hồi
+let pickedUids = new Set();     // uid đang được chọn trong modal chọn người dùng
+let confirmedTargetUids = [];   // uid đã xác nhận để gửi thông báo (targetType = 'selected')
+
+function onTargetTypeChange(){
+  const type = document.querySelector('input[name="notifTarget"]:checked').value;
+  const btnPick = document.getElementById('btnPickUsers');
+  const label = document.getElementById('pickedCountLabel');
+  if(type === 'selected'){
+    btnPick.classList.remove('hidden');
+    label.classList.remove('hidden');
+    updatePickedCountLabel();
+  } else {
+    btnPick.classList.add('hidden');
+    label.classList.add('hidden');
+  }
+}
+
+function updatePickedCountLabel(){
+  const label = document.getElementById('pickedCountLabel');
+  label.textContent = confirmedTargetUids.length > 0
+    ? `Đã chọn ${confirmedTargetUids.length} người dùng`
+    : 'Chưa chọn người dùng nào';
+}
+
+// ---------- Modal chọn người dùng ----------
+function openUserPickerModal(){
+  if(allUsers.length === 0){
+    showToast('⚠️ Chưa có dữ liệu người dùng, đang tải lại...');
+    loadUsers();
+  }
+  pickedUids = new Set(confirmedTargetUids);
+  document.getElementById('userPickSearch').value = '';
+  renderUserPickerList();
+  document.getElementById('userPickerModal').style.display = 'flex';
+}
+
+function closeUserPickerModal(){
+  document.getElementById('userPickerModal').style.display = 'none';
+}
+
+function renderUserPickerList(){
+  const q = document.getElementById('userPickSearch').value.trim().toLowerCase();
+  const listEl = document.getElementById('userPickList');
+  const filtered = allUsers.filter(u =>
+    !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  );
+
+  if(filtered.length === 0){
+    listEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--gray);">Không tìm thấy người dùng.</div>';
+  } else {
+    listEl.innerHTML = filtered.map(u => {
+      const checked = pickedUids.has(u.uid) ? 'checked' : '';
+      const displayName = escapeHtml(u.name) || '(chưa đặt tên)';
+      return `
+        <div class="user-pick-item">
+          <input type="checkbox" id="pick_${u.uid}" ${checked} onchange="togglePickUser('${u.uid}', this.checked)">
+          <label for="pick_${u.uid}">
+            <div class="u-name">${displayName}</div>
+            <div class="u-email">${escapeHtml(u.email) || '—'}</div>
+          </label>
+        </div>`;
+    }).join('');
+  }
+  document.getElementById('pickerLiveCount').textContent = 'Đã chọn: ' + pickedUids.size;
+}
+
+function togglePickUser(uid, isChecked){
+  if(isChecked) pickedUids.add(uid);
+  else pickedUids.delete(uid);
+  document.getElementById('pickerLiveCount').textContent = 'Đã chọn: ' + pickedUids.size;
+}
+
+function confirmUserPicker(){
+  confirmedTargetUids = Array.from(pickedUids);
+  updatePickedCountLabel();
+  closeUserPickerModal();
+}
+
+// ---------- Gửi thông báo ----------
+function sendNotification(){
+  const title = document.getElementById('notifTitle').value.trim();
+  const message = document.getElementById('notifMessage').value.trim();
+  const targetType = document.querySelector('input[name="notifTarget"]:checked').value;
+
+  if(!title || !message){
+    showToast('⚠️ Vui lòng nhập đầy đủ tiêu đề và nội dung.');
+    return;
+  }
+  if(targetType === 'selected' && confirmedTargetUids.length === 0){
+    showToast('⚠️ Vui lòng chọn ít nhất một người dùng nhận thông báo.');
+    return;
+  }
+
+  const payload = {
+    title,
+    message,
+    createdAt: new Date().toISOString(),
+    senderEmail: currentAdminEmail,
+    targetType
+  };
+  if(targetType === 'selected'){
+    payload.targetUids = confirmedTargetUids;
+  }
+
+  db.ref('notifications').push(payload).then(() => {
+    showToast('✅ Đã gửi thông báo!');
+    document.getElementById('notifTitle').value = '';
+    document.getElementById('notifMessage').value = '';
+    document.querySelector('input[name="notifTarget"][value="all"]').checked = true;
+    confirmedTargetUids = [];
+    onTargetTypeChange();
+  }).catch(err => {
+    showToast('❌ Lỗi gửi thông báo: ' + (err.message || err.code));
+  });
+}
+
+// ---------- Danh sách thông báo đã gửi (đang hoạt động) ----------
+function loadNotifications(){
+  db.ref('notifications').off('value');
+  db.ref('notifications').on('value', snap => {
+    const val = snap.val() || {};
+    sentNotifications = Object.keys(val)
+      .map(id => ({ id, ...val[id] }))
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    renderNotifTable();
+  }, err => {
+    document.getElementById('notifTableBody').innerHTML =
+      `<tr><td colspan="6" style="color:var(--danger);">Lỗi tải thông báo: ${err.message || err.code}</td></tr>`;
+  });
+}
+
+function truncateText(str, maxLen){
+  if(!str) return '';
+  const clean = String(str).replace(/\s+/g, ' ').trim();
+  return clean.length > maxLen ? clean.slice(0, maxLen).trim() + '…' : clean;
+}
+
+function targetLabel(n){
+  if(n.targetType === 'selected'){
+    const count = Array.isArray(n.targetUids) ? n.targetUids.length : 0;
+    return `<span class="target-badge selected">👤 ${count} người dùng</span>`;
+  }
+  return `<span class="target-badge">📢 Tất cả</span>`;
+}
+
+function renderNotifTable(){
+  const tbody = document.getElementById('notifTableBody');
+  const emptyState = document.getElementById('notifEmptyState');
+
+  if(sentNotifications.length === 0){
+    tbody.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  // Mỗi thông báo (kể cả gửi hàng loạt cho "Tất cả") chỉ tồn tại DUY NHẤT 1 bản ghi
+  // trong 'notifications', nên ở đây tự nhiên chỉ hiện 1 dòng cho mỗi thông báo,
+  // không lặp lại theo từng người nhận.
+  tbody.innerHTML = sentNotifications.map(n => `
+    <tr>
+      <td class="wrap-cell">${escapeHtml(n.title) || '(không có tiêu đề)'}</td>
+      <td class="wrap-cell">${escapeHtml(truncateText(n.message, 60))}</td>
+      <td>${targetLabel(n)}</td>
+      <td>${escapeHtml(n.senderEmail) || '—'}</td>
+      <td>${formatDateTime(n.createdAt)}</td>
+      <td style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="viewNotifDetail('${n.id}', false)">Xem</button>
+        <button class="btn btn-danger btn-sm" onclick="recallNotification('${n.id}')">Thu hồi</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ---------- Thu hồi thông báo ----------
+function recallNotification(id){
+  const n = sentNotifications.find(x => x.id === id);
+  if(!n) return;
+  if(!confirm(`Thu hồi thông báo "${n.title || '(không có tiêu đề)'}"? Thông báo sẽ biến mất khỏi ứng dụng của người dùng ngay lập tức.`)) return;
+
+  const recalledPayload = { ...n, recalledAt: new Date().toISOString() };
+  delete recalledPayload.id;
+
+  const updates = {};
+  updates['notificationsRecalled/' + id] = recalledPayload;
+  updates['notifications/' + id] = null; // xoá khỏi nhánh đang hoạt động -> biến mất khỏi app người dùng
+
+  db.ref().update(updates).then(() => {
+    showToast('✅ Đã thu hồi thông báo.');
+  }).catch(err => {
+    showToast('❌ Lỗi thu hồi: ' + (err.message || err.code));
+  });
+}
+
+// ---------- Lịch sử đã thu hồi ----------
+function loadRecalledNotifications(){
+  db.ref('notificationsRecalled').off('value');
+  db.ref('notificationsRecalled').on('value', snap => {
+    const val = snap.val() || {};
+    recalledNotifications = Object.keys(val)
+      .map(id => ({ id, ...val[id] }))
+      .sort((a, b) => new Date(b.recalledAt || 0) - new Date(a.recalledAt || 0));
+    renderRecalledTable();
+  }, err => {
+    document.getElementById('recalledTableBody').innerHTML =
+      `<tr><td colspan="6" style="color:var(--danger);">Lỗi tải lịch sử: ${err.message || err.code}</td></tr>`;
+  });
+}
+
+function renderRecalledTable(){
+  const tbody = document.getElementById('recalledTableBody');
+  const emptyState = document.getElementById('recalledEmptyState');
+
+  if(recalledNotifications.length === 0){
+    tbody.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  tbody.innerHTML = recalledNotifications.map(n => `
+    <tr>
+      <td class="wrap-cell">${escapeHtml(n.title) || '(không có tiêu đề)'}</td>
+      <td class="wrap-cell">${escapeHtml(truncateText(n.message, 60))}</td>
+      <td>${targetLabel(n)}</td>
+      <td>${formatDateTime(n.createdAt)}</td>
+      <td>${formatDateTime(n.recalledAt)}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="viewNotifDetail('${n.id}', true)">Xem</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ---------- Xem chi tiết thông báo ----------
+function viewNotifDetail(id, isRecalled){
+  const list = isRecalled ? recalledNotifications : sentNotifications;
+  const n = list.find(x => x.id === id);
+  if(!n) return;
+
+  document.getElementById('notifDetailTitleModal').textContent = n.title || '(không có tiêu đề)';
+  document.getElementById('notifDetailContentModal').textContent = n.message || '';
+
+  let meta = `Người gửi: ${n.senderEmail || '—'} · Gửi lúc: ${formatDateTime(n.createdAt)}`;
+  if(isRecalled) meta += ` · Thu hồi lúc: ${formatDateTime(n.recalledAt)}`;
+  meta += ` · Đối tượng: ${n.targetType === 'selected' ? 'Người dùng được chọn' : 'Tất cả người dùng'}`;
+  document.getElementById('notifDetailMetaModal').innerHTML = escapeHtml(meta);
+
+  const targetWrap = document.getElementById('notifDetailTargetWrap');
+  const targetListEl = document.getElementById('notifDetailTargetList');
+  if(n.targetType === 'selected' && Array.isArray(n.targetUids) && n.targetUids.length > 0){
+    targetWrap.classList.remove('hidden');
+    targetListEl.innerHTML = n.targetUids.map(uid => {
+      const u = allUsers.find(x => x.uid === uid);
+      const label = u ? `${escapeHtml(u.name) || '(chưa đặt tên)'} — ${escapeHtml(u.email) || '—'}` : `UID: ${uid}`;
+      return `<div>${label}</div>`;
+    }).join('');
+  } else {
+    targetWrap.classList.add('hidden');
+    targetListEl.innerHTML = '';
+  }
+
+  document.getElementById('notifDetailModal').style.display = 'flex';
+}
+
+function closeNotifDetailModal(){
+  document.getElementById('notifDetailModal').style.display = 'none';
+}
 </script>
 </body>
 </html>
