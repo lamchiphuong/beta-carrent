@@ -1652,11 +1652,11 @@ input:focus, select:focus, textarea:focus {
       <p id="trialNoticeText" style="color:#475569;"></p>
       <div class="trial-upgrade-note">
         <i class="fas fa-crown" style="color:#f59e0b;"></i>
-        Nâng cấp lên gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.
+        <span id="trialNoticeUpgradeNote">Nâng cấp lên gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.</span>
       </div>
       <div style="display:flex; gap:12px; margin-top:10px;">
         <button onclick="closeTrialNoticeModal()" class="btn btn-secondary" style="flex:1;">Để sau</button>
-        <button onclick="requestUpgradePremium()" class="btn btn-primary" style="flex:1;"><i class="fas fa-crown"></i> Nâng cấp Premium</button>
+        <button onclick="requestUpgradePremium()" class="btn btn-primary" style="flex:1;"><i class="fas fa-crown"></i> <span id="trialNoticeActionBtnText">Nâng cấp Premium</span></button>
       </div>
     </div>
   </div>
@@ -1848,7 +1848,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v1.4.6 - (2026) 
+    CarRent v1.5.0 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -2214,19 +2214,23 @@ function guardAgainstLock() {
 }
 
 function requestUpgradePremium() {
-  showToast('Vui lòng liên hệ admin để nâng cấp gói Premium!');
+  if (subscriptionInfo && subscriptionInfo.plan === 'premium') {
+    showToast('Vui lòng liên hệ admin để gia hạn gói Premium!');
+  } else {
+    showToast('Vui lòng liên hệ admin để nâng cấp gói Premium!');
+  }
 }
 
-// Popup báo số ngày còn lại / hết hạn - hiện 1 lần khi mở app lần đầu trong ngày
+// Popup báo số ngày còn lại / hết hạn - hết hạn thì hiện mỗi lần mở app, còn hạn thì 1 lần/ngày
 function maybeShowTrialPopup() {
-  if (!subscriptionInfo || subscriptionInfo.plan !== 'trial' || !currentUser) return;
+  if (!subscriptionInfo || !subscriptionInfo.expiryDate || !currentUser) return;
 
   const daysLeft = getDaysLeft();
-  const expired = daysLeft <= 0;
+  const expired = isAccountLocked(); // dựa theo hết hạn thực tế, không phân biệt gói trial/premium
 
-  // Tài khoản ĐÃ HẾT HẠN: luôn hiện popup mỗi khi mở app (không giới hạn 1 lần/ngày)
-  // để nhắc nâng cấp Premium. Còn hạn thì vẫn giữ nguyên chỉ hiện 1 lần/ngày.
+  // Còn hạn: chỉ hiện nhắc nhở cho gói Dùng Thử, và chỉ 1 lần/ngày
   if (!expired) {
+    if (subscriptionInfo.plan !== 'trial') return;
     const todayKey = new Date().toISOString().slice(0, 10);
     const storageKey = 'trialPopupShown_' + currentUser.uid + '_' + todayKey;
     if (localStorage.getItem(storageKey)) return;
@@ -2237,19 +2241,33 @@ function maybeShowTrialPopup() {
   const title = document.getElementById('trialNoticeTitle');
   const daysEl = document.getElementById('trialNoticeDays');
   const text = document.getElementById('trialNoticeText');
+  const upgradeNote = document.getElementById('trialNoticeUpgradeNote');
+  const actionBtnText = document.getElementById('trialNoticeActionBtnText');
 
   if (expired) {
     icon.textContent = '🔒';
-    title.textContent = 'Gói Dùng Thử đã hết hạn';
     daysEl.textContent = 'Đã hết hạn';
     daysEl.className = 'trial-days-left expired';
-    text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy nâng cấp Premium để thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
+
+    if (subscriptionInfo.plan === 'premium') {
+      title.textContent = 'Gói Premium của bạn đã hết hạn';
+      text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy gia hạn Premium để tiếp tục thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
+      upgradeNote.innerHTML = 'Gia hạn gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.';
+      actionBtnText.textContent = 'Gia hạn Premium';
+    } else {
+      title.textContent = 'Gói Dùng Thử đã hết hạn';
+      text.textContent = 'Bạn chỉ có thể xem dữ liệu. Hãy nâng cấp Premium để thêm hợp đồng, thêm xe và chỉnh sửa trở lại.';
+      upgradeNote.innerHTML = 'Nâng cấp lên gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.';
+      actionBtnText.textContent = 'Nâng cấp Premium';
+    }
   } else {
     icon.textContent = '⏳';
     title.textContent = 'Gói Dùng Thử';
     daysEl.textContent = `Còn ${daysLeft} ngày`;
     daysEl.className = 'trial-days-left';
     text.textContent = 'Hãy nâng cấp lên gói Premium trước khi hết hạn để không bị gián đoạn công việc.';
+    upgradeNote.innerHTML = 'Nâng cấp lên gói <strong>Premium</strong> để tiếp tục sử dụng đầy đủ tính năng: thêm hợp đồng, thêm xe và mọi chỉnh sửa không giới hạn.';
+    actionBtnText.textContent = 'Nâng cấp Premium';
   }
 
   document.getElementById('trialNoticeModal').style.display = 'flex';
@@ -4124,7 +4142,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v1.4.6 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v1.5.0 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
