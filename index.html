@@ -2175,12 +2175,20 @@ auth.onAuthStateChanged((user) => {
     dataRef = db.ref('users/' + user.uid);
 
     // Lưu thông tin hồ sơ (không bắt buộc nhưng hữu ích để quản lý)
-    db.ref('users/' + user.uid + '/profile').set({
-      name: user.displayName || '',
-      email: user.email || '',
-      photoURL: user.photoURL || '',
-      lastLogin: new Date().toISOString()
-    });
+    // Dùng update() + giữ lại photoURL đã có trong DB (vd: admin chỉnh tay)
+    // để tránh bị ảnh từ tài khoản đăng nhập (Google...) ghi đè mất mỗi lần login.
+    (function syncProfileOnLogin(u) {
+      const profileRef = db.ref('users/' + u.uid + '/profile');
+      profileRef.once('value').then(snap => {
+        const existing = snap.val() || {};
+        profileRef.update({
+          name: u.displayName || '',
+          email: u.email || '',
+          photoURL: existing.photoURL || u.photoURL || '',
+          lastLogin: new Date().toISOString()
+        });
+      }).catch(err => console.error('Lỗi đồng bộ profile:', err));
+    })(user);
 
     // Hiện nút profile (chỉ avatar) + điền dữ liệu vào dropdown
     const avatarUrl = user.photoURL || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
@@ -2744,7 +2752,9 @@ function retryLoad() {
 async function saveData() {
   try {
     console.log("🔄 Đang lưu dữ liệu...");
-    await dataRef.set({ cars: cars, contracts: contracts });
+    // Dùng update() thay vì set() để KHÔNG xoá mất các nhánh khác
+    // của user (profile, subscription, notifications, proLicense...)
+    await dataRef.update({ cars: cars, contracts: contracts });
     console.log("✅ Lưu thành công!");
     return true;
   } catch (e) {
