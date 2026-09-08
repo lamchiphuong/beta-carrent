@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CarRent Admin - Quản Lý Gói Đăng Ký</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -108,17 +109,11 @@
 <div id="loginScreen">
   <h2>🔐 CarRent Admin</h2>
   <div id="loginError" class="error-box"></div>
-  <div class="field">
-    <label>Email quản trị</label>
-    <input type="email" id="adminEmail" placeholder="admin@example.com">
-  </div>
-  <div class="field">
-    <label>Mật khẩu</label>
-    <input type="password" id="adminPassword" placeholder="••••••••">
-  </div>
-  <button class="btn btn-primary" onclick="doLogin()">Đăng nhập</button>
+  <button class="btn btn-primary" onclick="doLoginGoogle()">
+    <i class="fab fa-google"></i> Đăng nhập bằng Google
+  </button>
   <p style="font-size:0.75rem;color:var(--gray);margin-top:14px;text-align:center;">
-    Đăng nhập bằng tài khoản Firebase đã được cấp quyền admin (xem hướng dẫn thiết lập Rules bên dưới file).
+    Chỉ tài khoản Google có UID được cấp quyền admin trong Firebase Rules mới xem/sửa được dữ liệu.
   </p>
 </div>
 
@@ -215,24 +210,26 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// UID admin được phép quản lý toàn bộ user (phải khớp với UID khai trong Firebase Rules)
+const ADMIN_UID = 'iBdCzMEG9ZYAyYPK9gapIQFDqWm2';
 
 let allUsers = [];     // [{uid, name, email, plan, startDate, expiryDate}]
 let editingUid = null;
 
 // ==================== AUTH ====================
-function doLogin(){
-  const email = document.getElementById('adminEmail').value.trim();
-  const password = document.getElementById('adminPassword').value;
+function doLoginGoogle(){
   const errBox = document.getElementById('loginError');
   errBox.style.display = 'none';
 
-  if(!email || !password){
-    errBox.textContent = 'Vui lòng nhập email và mật khẩu.';
-    errBox.style.display = 'block';
-    return;
-  }
-
-  auth.signInWithEmailAndPassword(email, password).catch(err => {
+  auth.signInWithPopup(googleProvider).then(result => {
+    if(result.user.uid !== ADMIN_UID){
+      errBox.textContent = 'Tài khoản này không có quyền quản trị. Vui lòng đăng nhập đúng tài khoản admin.';
+      errBox.style.display = 'block';
+      auth.signOut();
+    }
+  }).catch(err => {
     errBox.textContent = 'Đăng nhập thất bại: ' + (err.message || err.code);
     errBox.style.display = 'block';
   });
@@ -245,7 +242,7 @@ function doLogout(){
 auth.onAuthStateChanged(user => {
   const loginScreen = document.getElementById('loginScreen');
   const appContainer = document.getElementById('appContainer');
-  if(user){
+  if(user && user.uid === ADMIN_UID){
     loginScreen.classList.add('hidden');
     appContainer.classList.remove('hidden');
     document.getElementById('adminEmailLabel').textContent = user.email || '';
