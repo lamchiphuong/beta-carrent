@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CarRent Admin - Quản Lý Gói Đăng Ký</title>
+<title>CarRent Admin - Quản Lý Nâng Cao</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -32,9 +32,11 @@
   #loginScreen h2{margin-bottom:18px;text-align:center;color:var(--primary-dark);}
   .field{margin-bottom:14px;}
   .field label{display:block;font-size:0.85rem;font-weight:600;color:var(--gray);margin-bottom:5px;}
-  .field input, .field select{
+  .field input, .field select, .field textarea{
     width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.95rem;
+    font-family:inherit;
   }
+  .field textarea{resize:vertical;min-height:100px;}
   .error-box{
     display:none;background:#fee2e2;color:#b91c1c;padding:10px 12px;border-radius:10px;
     font-size:0.85rem;margin-bottom:12px;
@@ -52,11 +54,20 @@
   .btn-edit{background:#8b5cf6;color:#fff;}
   .btn-secondary{background:var(--gray);color:#fff;}
   .btn-danger{background:var(--danger);color:#fff;}
+  .btn-info{background:#0ea5e9;color:#fff;}
   .btn-sm{padding:7px 12px;font-size:0.8rem;}
+  .btn-block{width:100%;}
 
   /* ===== Topbar ===== */
   .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
   .admin-email{font-size:0.85rem;color:var(--gray);}
+
+  /* ===== Tabs ===== */
+  .tabs{display:flex;background:#fff;border-radius:14px;padding:6px;box-shadow:0 8px 20px rgba(0,0,0,0.06);margin-bottom:20px;width:fit-content;flex-wrap:wrap;gap:4px;}
+  .tab-btn{padding:10px 20px;border:none;background:transparent;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.9rem;color:var(--gray);transition:all .2s;}
+  .tab-btn.active{background:var(--primary);color:#fff;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
 
   /* ===== Search ===== */
   .toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
@@ -65,12 +76,14 @@
   }
 
   /* ===== Card / Table ===== */
-  .card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 10px 25px rgba(0,0,0,0.07);overflow:hidden;}
+  .card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 10px 25px rgba(0,0,0,0.07);overflow:hidden;margin-bottom:20px;}
+  .card h3{color:var(--primary-dark);font-size:1.05rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
   .table-wrap{overflow-x:auto;}
   table{width:100%;border-collapse:collapse;min-width:900px;}
   th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #e2e8f0;white-space:nowrap;font-size:0.88rem;}
   th{background:#f8fafc;color:var(--primary-dark);font-weight:600;position:sticky;top:0;}
   tr:hover{background:#f1f5f9;}
+  td.wrap-cell{white-space:normal;max-width:280px;}
 
   .plan-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;}
   .plan-badge.trial{background:#fef3c7;color:#d97706;}
@@ -78,7 +91,24 @@
   .expiry-text.expired{color:var(--danger);font-weight:700;}
   .expiry-text.ok{color:#16a34a;}
 
-  #emptyState, #loadingRow{text-align:center;color:var(--gray);padding:30px;}
+  .target-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;background:#e0e7ff;color:#3730a3;}
+  .target-badge.all{background:#dcfce7;color:#166534;}
+  .recalled-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;background:#fee2e2;color:#b91c1c;}
+
+  #emptyState, #loadingRow, #notifEmptyState, #notifLoadingRow{text-align:center;color:var(--gray);padding:30px;}
+
+  /* ===== Recipient picker ===== */
+  .target-mode{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;}
+  .target-mode label{display:flex;align-items:center;gap:6px;font-size:0.9rem;font-weight:600;color:#334155;cursor:pointer;}
+  .recipient-box{
+    border:1px solid #cbd5e1;border-radius:12px;padding:10px;max-height:230px;overflow-y:auto;margin-top:8px;
+  }
+  .recipient-search{width:100%;padding:9px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:0.85rem;margin-bottom:8px;}
+  .recipient-item{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;font-size:0.87rem;}
+  .recipient-item:hover{background:#f1f5f9;}
+  .recipient-item .r-name{font-weight:600;color:#1e293b;}
+  .recipient-item .r-email{color:var(--gray);font-size:0.78rem;}
+  .recipient-count{font-size:0.8rem;color:var(--gray);margin-top:6px;}
 
   /* ===== Modal ===== */
   .modal{
@@ -86,19 +116,22 @@
     align-items:center;justify-content:center;z-index:2000;padding:15px;
   }
   .modal-content{
-    background:#fff;border-radius:20px;width:100%;max-width:440px;padding:24px;
+    background:#fff;border-radius:20px;width:100%;max-width:460px;padding:24px;
     max-height:92vh;overflow-y:auto;
   }
+  .modal-content.wide{max-width:560px;}
   .modal-content h2{color:var(--primary-dark);margin-bottom:16px;font-size:1.2rem;}
   .modal-actions{display:flex;gap:10px;margin-top:18px;}
   .modal-actions .btn{flex:1;}
   .uid-note{font-size:0.75rem;color:var(--gray);word-break:break-all;margin-top:-6px;margin-bottom:14px;}
+  .notif-detail-box{background:#f8fafc;border-radius:12px;padding:16px;line-height:1.7;white-space:pre-wrap;font-size:0.92rem;}
+  .notif-meta{font-size:0.8rem;color:var(--gray);margin-bottom:10px;}
 
   /* Toast */
   #toast{
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
     background:#1e293b;color:#fff;padding:12px 22px;border-radius:12px;font-size:0.9rem;
-    opacity:0;transition:all .3s ease;z-index:3000;
+    opacity:0;transition:all .3s ease;z-index:3000;max-width:90vw;text-align:center;
   }
   #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 </style>
@@ -121,7 +154,7 @@
 <div class="container hidden" id="appContainer">
   <div class="topbar">
     <div>
-      <h1>📋 Quản Lý Gói Đăng Ký</h1>
+      <h1>📋 Quản Lý Nâng Cao</h1>
       <div class="subtitle">CarRent Admin Tool</div>
     </div>
     <div style="text-align:right;">
@@ -130,35 +163,106 @@
     </div>
   </div>
 
-  <div class="toolbar">
-    <input type="text" id="searchInput" placeholder="🔍 Tìm theo tên hoặc email..." oninput="renderTable()">
-    <button class="btn btn-secondary" onclick="loadUsers()">↻ Tải lại</button>
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBtnUsers" onclick="switchTab('users')"><i class="fas fa-users"></i> Người dùng &amp; Gói</button>
+    <button class="tab-btn" id="tabBtnNotif" onclick="switchTab('notif')"><i class="fas fa-bell"></i> Thông báo</button>
   </div>
 
-  <div class="card">
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Tên hiển thị</th>
-            <th>Email</th>
-            <th>Gói</th>
-            <th>Bắt đầu</th>
-            <th>Hết hạn</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody id="usersTableBody">
-          <tr id="loadingRow"><td colspan="7">Đang tải danh sách người dùng...</td></tr>
-        </tbody>
-      </table>
+  <!-- ========== TAB: NGƯỜI DÙNG & GÓI ĐĂNG KÝ ========== -->
+  <div class="tab-panel active" id="panelUsers">
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="🔍 Tìm theo tên hoặc email..." oninput="renderTable()">
+      <button class="btn btn-secondary" onclick="loadUsers()">↻ Tải lại</button>
     </div>
-    <div id="emptyState" class="hidden">Không tìm thấy người dùng nào.</div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tên hiển thị</th>
+              <th>Email</th>
+              <th>Gói</th>
+              <th>Bắt đầu</th>
+              <th>Hết hạn</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr id="loadingRow"><td colspan="7">Đang tải danh sách người dùng...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="hidden">Không tìm thấy người dùng nào.</div>
+    </div>
+  </div>
+
+  <!-- ========== TAB: THÔNG BÁO ========== -->
+  <div class="tab-panel" id="panelNotif">
+
+    <!-- Soạn thông báo -->
+    <div class="card">
+      <h3><i class="fas fa-paper-plane"></i> Soạn thông báo mới</h3>
+
+      <div class="field">
+        <label>Tiêu đề</label>
+        <input type="text" id="notifTitle" placeholder="VD: Bảo trì hệ thống">
+      </div>
+
+      <div class="field">
+        <label>Nội dung</label>
+        <textarea id="notifMessage" placeholder="Nội dung chi tiết thông báo..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Đối tượng nhận</label>
+        <div class="target-mode">
+          <label><input type="radio" name="targetMode" value="all" checked onchange="onTargetModeChange()"> Tất cả người dùng</label>
+          <label><input type="radio" name="targetMode" value="selected" onchange="onTargetModeChange()"> Chọn tài khoản cụ thể</label>
+        </div>
+
+        <div id="recipientPicker" class="hidden">
+          <input type="text" class="recipient-search" id="recipientSearch" placeholder="🔍 Lọc theo tên/email..." oninput="renderRecipientList()">
+          <div class="recipient-box" id="recipientBox"></div>
+          <div class="recipient-count" id="recipientCount">Đã chọn 0 tài khoản</div>
+        </div>
+      </div>
+
+      <button class="btn btn-success btn-block" onclick="sendNotification()"><i class="fas fa-paper-plane"></i> Gửi thông báo</button>
+    </div>
+
+    <!-- Danh sách đã gửi -->
+    <div class="card">
+      <h3><i class="fas fa-history"></i> Tất cả thông báo đã gửi</h3>
+      <div class="toolbar">
+        <input type="text" id="notifSearchInput" placeholder="🔍 Tìm theo tiêu đề hoặc nội dung..." oninput="renderNotifTable()">
+        <button class="btn btn-secondary" onclick="loadNotifications()">↻ Tải lại</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tiêu đề</th>
+              <th>Nội dung</th>
+              <th>Đối tượng</th>
+              <th>Thời gian gửi</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody id="notifTableBody">
+            <tr id="notifLoadingRow"><td colspan="6">Đang tải danh sách thông báo...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="notifEmptyState" class="hidden">Chưa có thông báo nào được gửi.</div>
+    </div>
+
   </div>
 </div>
 
-<!-- ===================== MODAL EDIT ===================== -->
+<!-- ===================== MODAL EDIT USER ===================== -->
 <div class="modal" id="editModal">
   <div class="modal-content">
     <h2>✏️ Sửa thông tin người dùng</h2>
@@ -194,6 +298,19 @@
   </div>
 </div>
 
+<!-- ===================== MODAL XEM THÔNG BÁO ===================== -->
+<div class="modal" id="notifViewModal">
+  <div class="modal-content wide">
+    <h2 id="notifViewTitle">📢 Thông báo</h2>
+    <div class="notif-meta" id="notifViewMeta"></div>
+    <div class="notif-detail-box" id="notifViewContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeNotifViewModal()">Đóng</button>
+      <button class="btn btn-danger" id="notifViewRecallBtn" onclick="recallFromView()">🗑 Thu hồi</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -217,6 +334,10 @@ const ADMIN_UID = '0SMmwdl1d1MERapmfG3l3js7n4r2';
 
 let allUsers = [];     // [{uid, name, email, plan, startDate, expiryDate}]
 let editingUid = null;
+
+let allNotifications = [];   // [{id, title, message, createdAt, targetType, targetUids, recalled}]
+let selectedRecipients = {}; // { uid: true }
+let viewingNotifId = null;
 
 // ==================== AUTH ====================
 function doLoginGoogle(){
@@ -247,11 +368,20 @@ auth.onAuthStateChanged(user => {
     appContainer.classList.remove('hidden');
     document.getElementById('adminEmailLabel').textContent = user.email || '';
     loadUsers();
+    loadNotifications();
   } else {
     loginScreen.classList.remove('hidden');
     appContainer.classList.add('hidden');
   }
 });
+
+// ==================== TABS ====================
+function switchTab(tab){
+  document.getElementById('tabBtnUsers').classList.toggle('active', tab === 'users');
+  document.getElementById('tabBtnNotif').classList.toggle('active', tab === 'notif');
+  document.getElementById('panelUsers').classList.toggle('active', tab === 'users');
+  document.getElementById('panelNotif').classList.toggle('active', tab === 'notif');
+}
 
 // ==================== LOAD USERS ====================
 function loadUsers(){
@@ -274,6 +404,7 @@ function loadUsers(){
       };
     });
     renderTable();
+    renderRecipientList();
   }).catch(err => {
     document.getElementById('usersTableBody').innerHTML =
       `<tr><td colspan="7" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}
@@ -286,6 +417,13 @@ function formatDateShort(iso){
   const d = new Date(iso);
   if(isNaN(d)) return '—';
   return d.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+
+function formatDateTimeShort(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(isNaN(d)) return '—';
+  return d.toLocaleString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
 }
 
 function renderTable(){
@@ -326,7 +464,7 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// ==================== EDIT MODAL ====================
+// ==================== EDIT MODAL (USER) ====================
 function openEditModal(uid){
   const u = allUsers.find(x => x.uid === uid);
   if(!u) return;
@@ -378,6 +516,232 @@ function saveEdit(){
   });
 }
 
+// ==================== THÔNG BÁO: CHỌN NGƯỜI NHẬN ====================
+function onTargetModeChange(){
+  const mode = document.querySelector('input[name="targetMode"]:checked').value;
+  const picker = document.getElementById('recipientPicker');
+  if(mode === 'selected'){
+    picker.classList.remove('hidden');
+    renderRecipientList();
+  } else {
+    picker.classList.add('hidden');
+  }
+}
+
+function renderRecipientList(){
+  const box = document.getElementById('recipientBox');
+  if(!box) return;
+  const q = (document.getElementById('recipientSearch').value || '').trim().toLowerCase();
+
+  const filtered = allUsers.filter(u =>
+    !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  );
+
+  if(filtered.length === 0){
+    box.innerHTML = '<div style="color:var(--gray);font-size:0.85rem;padding:8px;">Không tìm thấy tài khoản nào.</div>';
+  } else {
+    box.innerHTML = filtered.map(u => `
+      <label class="recipient-item">
+        <input type="checkbox" data-uid="${u.uid}" ${selectedRecipients[u.uid] ? 'checked' : ''} onchange="toggleRecipient('${u.uid}', this.checked)">
+        <div>
+          <div class="r-name">${escapeHtml(u.name) || '(chưa đặt tên)'}</div>
+          <div class="r-email">${escapeHtml(u.email) || '—'}</div>
+        </div>
+      </label>
+    `).join('');
+  }
+  updateRecipientCount();
+}
+
+function toggleRecipient(uid, checked){
+  if(checked) selectedRecipients[uid] = true;
+  else delete selectedRecipients[uid];
+  updateRecipientCount();
+}
+
+function updateRecipientCount(){
+  const count = Object.keys(selectedRecipients).length;
+  document.getElementById('recipientCount').textContent = `Đã chọn ${count} tài khoản`;
+}
+
+// ==================== GỬI THÔNG BÁO ====================
+function sendNotification(){
+  const title = document.getElementById('notifTitle').value.trim();
+  const message = document.getElementById('notifMessage').value.trim();
+  const mode = document.querySelector('input[name="targetMode"]:checked').value;
+
+  if(!title || !message){
+    showToast('⚠️ Vui lòng nhập đầy đủ tiêu đề và nội dung.');
+    return;
+  }
+
+  let targetUids = null;
+  if(mode === 'selected'){
+    targetUids = Object.keys(selectedRecipients);
+    if(targetUids.length === 0){
+      showToast('⚠️ Vui lòng chọn ít nhất một tài khoản nhận.');
+      return;
+    }
+  }
+
+  const payload = {
+    title,
+    message,
+    createdAt: new Date().toISOString(),
+    senderEmail: (auth.currentUser && auth.currentUser.email) || '',
+    targetType: mode, // 'all' hoặc 'selected'
+    recalled: false
+  };
+  if(mode === 'selected'){
+    payload.targetUids = targetUids;
+  }
+
+  const newRef = db.ref('notifications').push();
+  newRef.set(payload).then(() => {
+    showToast('✅ Đã gửi thông báo!');
+    document.getElementById('notifTitle').value = '';
+    document.getElementById('notifMessage').value = '';
+    document.querySelector('input[name="targetMode"][value="all"]').checked = true;
+    selectedRecipients = {};
+    onTargetModeChange();
+    loadNotifications();
+  }).catch(err => {
+    showToast('❌ Lỗi khi gửi: ' + (err.message || err.code));
+  });
+}
+
+function truncateText(str, maxLen){
+  if(!str) return '';
+  const clean = String(str).replace(/\s+/g, ' ').trim();
+  return clean.length > maxLen ? clean.slice(0, maxLen).trim() + '…' : clean;
+}
+
+function targetLabel(n){
+  if(n.targetType === 'selected' && Array.isArray(n.targetUids)){
+    return `${n.targetUids.length} tài khoản`;
+  }
+  return 'Tất cả';
+}
+
+function renderNotifTable(){
+  const q = document.getElementById('notifSearchInput').value.trim().toLowerCase();
+  const tbody = document.getElementById('notifTableBody');
+  const emptyState = document.getElementById('notifEmptyState');
+
+  const filtered = allNotifications.filter(n =>
+    !q || (n.title || '').toLowerCase().includes(q) || (n.message || '').toLowerCase().includes(q)
+  );
+
+  if(filtered.length === 0){
+    tbody.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  tbody.innerHTML = filtered.map(n => {
+    const isSelected = n.targetType === 'selected';
+    return `
+      <tr>
+        <td>${escapeHtml(n.title) || '(không có tiêu đề)'}</td>
+        <td class="wrap-cell">${escapeHtml(truncateText(n.message, 90))}</td>
+        <td><span class="target-badge ${isSelected ? '' : 'all'}">${targetLabel(n)}</span></td>
+        <td>${formatDateTimeShort(n.createdAt)}</td>
+        <td>${n.recalled ? '<span class="recalled-badge">Đã thu hồi</span>' : '<span class="expiry-text ok">Đang hiển thị</span>'}</td>
+        <td>
+          <button class="btn btn-info btn-sm" onclick="openNotifView('${n.id}')">Xem</button>
+          ${n.recalled ? '' : `<button class="btn btn-danger btn-sm" onclick="recallNotification('${n.id}')">Thu hồi</button>`}
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// ==================== XEM CHI TIẾT / THU HỒI ====================
+function openNotifView(id){
+  const n = allNotifications.find(x => x.id === id);
+  if(!n) return;
+  viewingNotifId = id;
+
+  let recipientsInfo = 'Tất cả người dùng';
+  if(n.targetType === 'selected' && Array.isArray(n.targetUids)){
+    const names = n.targetUids.map(uid => {
+      const u = allUsers.find(x => x.uid === uid);
+      return u ? (u.name || u.email || uid) : uid;
+    });
+    recipientsInfo = `${n.targetUids.length} tài khoản: ${names.join(', ')}`;
+  }
+
+  document.getElementById('notifViewTitle').textContent = '📢 ' + (n.title || 'Thông báo');
+  document.getElementById('notifViewMeta').innerHTML =
+    `Gửi lúc: ${formatDateTimeShort(n.createdAt)}${n.senderEmail ? ' • bởi ' + escapeHtml(n.senderEmail) : ''}<br>` +
+    `Đối tượng nhận: ${escapeHtml(recipientsInfo)}` +
+    (n.recalled ? '<br><span class="recalled-badge">Đã thu hồi</span>' : '');
+  document.getElementById('notifViewContent').textContent = n.message || '';
+
+  const recallBtn = document.getElementById('notifViewRecallBtn');
+  recallBtn.classList.toggle('hidden', !!n.recalled);
+
+  document.getElementById('notifViewModal').style.display = 'flex';
+}
+
+function closeNotifViewModal(){
+  document.getElementById('notifViewModal').style.display = 'none';
+  viewingNotifId = null;
+}
+
+function recallFromView(){
+  if(!viewingNotifId) return;
+  recallNotification(viewingNotifId, true);
+}
+
+function recallNotification(id, fromView){
+  if(!confirm('Thu hồi thông báo này? Người dùng sẽ không còn thấy thông báo này trên ứng dụng nữa.')) return;
+
+  // Xoá khỏi nhánh 'notifications' để gỡ ngay khỏi app của người dùng (realtime listener),
+  // đồng thời lưu lại bản ghi vào 'notificationsRecalled' để giữ lịch sử admin.
+  const n = allNotifications.find(x => x.id === id);
+  if(!n) return;
+
+  const archived = Object.assign({}, n, { recalled: true, recalledAt: new Date().toISOString() });
+  delete archived.id;
+
+  const updates = {};
+  updates['notificationsRecalled/' + id] = archived;
+  updates['notifications/' + id] = null;
+
+  db.ref().update(updates).then(() => {
+    showToast('✅ Đã thu hồi thông báo.');
+    if(fromView) closeNotifViewModal();
+    loadNotifications();
+  }).catch(err => {
+    showToast('❌ Lỗi khi thu hồi: ' + (err.message || err.code));
+  });
+}
+
+// Khi tải danh sách, gộp thêm các thông báo đã thu hồi (từ nhánh lưu trữ) để admin vẫn xem được lịch sử đầy đủ
+function loadNotifications(){
+  document.getElementById('notifTableBody').innerHTML =
+    '<tr id="notifLoadingRow"><td colspan="6">Đang tải danh sách thông báo...</td></tr>';
+
+  Promise.all([
+    db.ref('notifications').once('value'),
+    db.ref('notificationsRecalled').once('value')
+  ]).then(([activeSnap, recalledSnap]) => {
+    const active = activeSnap.val() || {};
+    const recalled = recalledSnap.val() || {};
+
+    const activeList = Object.keys(active).map(id => ({ id, ...active[id] }));
+    const recalledList = Object.keys(recalled).map(id => ({ id, ...recalled[id] }));
+
+    allNotifications = activeList.concat(recalledList)
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    renderNotifTable();
+  }).catch(err => {
+    document.getElementById('notifTableBody').innerHTML =
+      `<tr><td colspan="6" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}</td></tr>`;
+  });
+}
+
 // ==================== TOAST ====================
 let toastTimer = null;
 function showToast(msg){
@@ -391,6 +755,9 @@ function showToast(msg){
 // Đóng modal khi bấm ra ngoài
 document.getElementById('editModal').addEventListener('click', function(e){
   if(e.target === this) closeEditModal();
+});
+document.getElementById('notifViewModal').addEventListener('click', function(e){
+  if(e.target === this) closeNotifViewModal();
 });
 </script>
 </body>
