@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarRent Admin - Quản Lý Gói Đăng Ký</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<style>
+  :root{
+    --primary:#2563eb; --primary-dark:#1e40af; --success:#16a34a;
+    --danger:#dc2626; --warning:#d97706; --gray:#64748b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    background:linear-gradient(135deg,#f8fafc 0%,#e0f2fe 100%);
+    min-height:100vh; padding:20px; color:#1e293b;
+  }
+  .container{max-width:1200px;margin:0 auto;}
+  header{text-align:center;margin-bottom:25px;}
+  h1{color:var(--primary);font-size:1.9rem;}
+  .subtitle{color:var(--gray);font-size:0.95rem;margin-top:4px;}
+
+  /* ===== Login ===== */
+  #loginScreen{
+    max-width:380px;margin:60px auto;background:#fff;border-radius:20px;
+    padding:30px;box-shadow:0 12px 30px rgba(0,0,0,0.08);
+  }
+  #loginScreen h2{margin-bottom:18px;text-align:center;color:var(--primary-dark);}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:0.85rem;font-weight:600;color:var(--gray);margin-bottom:5px;}
+  .field input, .field select{
+    width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.95rem;
+  }
+  .error-box{
+    display:none;background:#fee2e2;color:#b91c1c;padding:10px 12px;border-radius:10px;
+    font-size:0.85rem;margin-bottom:12px;
+  }
+  .hidden{display:none !important;}
+
+  /* ===== Buttons ===== */
+  .btn{
+    padding:10px 18px;border:none;border-radius:10px;font-weight:600;cursor:pointer;
+    font-size:0.9rem;transition:opacity .2s;
+  }
+  .btn:hover{opacity:0.9;}
+  .btn-primary{background:var(--primary);color:#fff;width:100%;}
+  .btn-success{background:var(--success);color:#fff;}
+  .btn-edit{background:#8b5cf6;color:#fff;}
+  .btn-secondary{background:var(--gray);color:#fff;}
+  .btn-danger{background:var(--danger);color:#fff;}
+  .btn-sm{padding:7px 12px;font-size:0.8rem;}
+
+  /* ===== Topbar ===== */
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+  .admin-email{font-size:0.85rem;color:var(--gray);}
+
+  /* ===== Search ===== */
+  .toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .toolbar input{
+    flex:1;min-width:220px;padding:11px 14px;border:1px solid #cbd5e1;border-radius:10px;font-size:0.9rem;
+  }
+
+  /* ===== Card / Table ===== */
+  .card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 10px 25px rgba(0,0,0,0.07);overflow:hidden;}
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;min-width:900px;}
+  th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #e2e8f0;white-space:nowrap;font-size:0.88rem;}
+  th{background:#f8fafc;color:var(--primary-dark);font-weight:600;position:sticky;top:0;}
+  tr:hover{background:#f1f5f9;}
+
+  .plan-badge{padding:4px 10px;border-radius:50px;font-size:0.78rem;font-weight:700;}
+  .plan-badge.trial{background:#fef3c7;color:#d97706;}
+  .plan-badge.premium{background:#d1fae5;color:#166534;}
+  .expiry-text.expired{color:var(--danger);font-weight:700;}
+  .expiry-text.ok{color:#16a34a;}
+
+  #emptyState, #loadingRow{text-align:center;color:var(--gray);padding:30px;}
+
+  /* ===== Modal ===== */
+  .modal{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+    align-items:center;justify-content:center;z-index:2000;padding:15px;
+  }
+  .modal-content{
+    background:#fff;border-radius:20px;width:100%;max-width:440px;padding:24px;
+    max-height:92vh;overflow-y:auto;
+  }
+  .modal-content h2{color:var(--primary-dark);margin-bottom:16px;font-size:1.2rem;}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+  .modal-actions .btn{flex:1;}
+  .uid-note{font-size:0.75rem;color:var(--gray);word-break:break-all;margin-top:-6px;margin-bottom:14px;}
+
+  /* Toast */
+  #toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
+    background:#1e293b;color:#fff;padding:12px 22px;border-radius:12px;font-size:0.9rem;
+    opacity:0;transition:all .3s ease;z-index:3000;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="loginScreen">
+  <h2>🔐 CarRent Admin</h2>
+  <div id="loginError" class="error-box"></div>
+  <div class="field">
+    <label>Email quản trị</label>
+    <input type="email" id="adminEmail" placeholder="admin@example.com">
+  </div>
+  <div class="field">
+    <label>Mật khẩu</label>
+    <input type="password" id="adminPassword" placeholder="••••••••">
+  </div>
+  <button class="btn btn-primary" onclick="doLogin()">Đăng nhập</button>
+  <p style="font-size:0.75rem;color:var(--gray);margin-top:14px;text-align:center;">
+    Đăng nhập bằng tài khoản Firebase đã được cấp quyền admin (xem hướng dẫn thiết lập Rules bên dưới file).
+  </p>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div class="container hidden" id="appContainer">
+  <div class="topbar">
+    <div>
+      <h1>📋 Quản Lý Gói Đăng Ký</h1>
+      <div class="subtitle">CarRent Admin Tool</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="admin-email" id="adminEmailLabel"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px;" onclick="doLogout()">Đăng xuất</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="🔍 Tìm theo tên hoặc email..." oninput="renderTable()">
+    <button class="btn btn-secondary" onclick="loadUsers()">↻ Tải lại</button>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tên hiển thị</th>
+            <th>Email</th>
+            <th>Gói</th>
+            <th>Bắt đầu</th>
+            <th>Hết hạn</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr id="loadingRow"><td colspan="7">Đang tải danh sách người dùng...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="emptyState" class="hidden">Không tìm thấy người dùng nào.</div>
+  </div>
+</div>
+
+<!-- ===================== MODAL EDIT ===================== -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h2>✏️ Sửa thông tin người dùng</h2>
+    <div class="uid-note" id="editUidNote"></div>
+
+    <div class="field">
+      <label>Tên hiển thị</label>
+      <input type="text" id="editName">
+    </div>
+
+    <div class="field">
+      <label>Gói</label>
+      <select id="editPlan">
+        <option value="trial">Dùng Thử</option>
+        <option value="premium">Premium</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Ngày bắt đầu</label>
+      <input type="date" id="editStartDate">
+    </div>
+
+    <div class="field">
+      <label>Ngày hết hạn</label>
+      <input type="date" id="editExpiryDate">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Hủy</button>
+      <button class="btn btn-success" onclick="saveEdit()">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ==================== FIREBASE CONFIG (giống app CarRent gốc) ====================
+const firebaseConfig = {
+  apiKey: "AIzaSyCpXmqWDkPb8cVCna88xbs7ZU9YsbmrMeQ",
+  authDomain: "carrent-2026.firebaseapp.com",
+  databaseURL: "https://carrent-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "carrent-2026",
+  storageBucket: "carrent-2026.firebasestorage.app",
+  messagingSenderId: "592936815699",
+  appId: "1:592936815699:web:38159bb02bf109a78a0aa6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
+let allUsers = [];     // [{uid, name, email, plan, startDate, expiryDate}]
+let editingUid = null;
+
+// ==================== AUTH ====================
+function doLogin(){
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const errBox = document.getElementById('loginError');
+  errBox.style.display = 'none';
+
+  if(!email || !password){
+    errBox.textContent = 'Vui lòng nhập email và mật khẩu.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  auth.signInWithEmailAndPassword(email, password).catch(err => {
+    errBox.textContent = 'Đăng nhập thất bại: ' + (err.message || err.code);
+    errBox.style.display = 'block';
+  });
+}
+
+function doLogout(){
+  if(confirm('Đăng xuất khỏi công cụ quản trị?')) auth.signOut();
+}
+
+auth.onAuthStateChanged(user => {
+  const loginScreen = document.getElementById('loginScreen');
+  const appContainer = document.getElementById('appContainer');
+  if(user){
+    loginScreen.classList.add('hidden');
+    appContainer.classList.remove('hidden');
+    document.getElementById('adminEmailLabel').textContent = user.email || '';
+    loadUsers();
+  } else {
+    loginScreen.classList.remove('hidden');
+    appContainer.classList.add('hidden');
+  }
+});
+
+// ==================== LOAD USERS ====================
+function loadUsers(){
+  document.getElementById('usersTableBody').innerHTML =
+    '<tr id="loadingRow"><td colspan="7">Đang tải danh sách người dùng...</td></tr>';
+
+  db.ref('users').once('value').then(snap => {
+    const data = snap.val() || {};
+    allUsers = Object.keys(data).map(uid => {
+      const u = data[uid] || {};
+      const profile = u.profile || {};
+      const sub = u.subscription || {};
+      return {
+        uid,
+        name: profile.name || '',
+        email: profile.email || '',
+        plan: sub.plan || 'trial',
+        startDate: sub.startDate || '',
+        expiryDate: sub.expiryDate || ''
+      };
+    });
+    renderTable();
+  }).catch(err => {
+    document.getElementById('usersTableBody').innerHTML =
+      `<tr><td colspan="7" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}
+       <br><small>Kiểm tra lại Firebase Rules cho phép tài khoản admin đọc nhánh "users".</small></td></tr>`;
+  });
+}
+
+function formatDateShort(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(isNaN(d)) return '—';
+  return d.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+
+function renderTable(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const tbody = document.getElementById('usersTableBody');
+  const emptyState = document.getElementById('emptyState');
+
+  const filtered = allUsers.filter(u =>
+    !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+  );
+
+  if(filtered.length === 0){
+    tbody.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  tbody.innerHTML = filtered.map(u => {
+    const expired = u.expiryDate && new Date() > new Date(u.expiryDate);
+    const planLabel = u.plan === 'premium' ? 'Premium' : 'Dùng Thử';
+    return `
+      <tr>
+        <td>${escapeHtml(u.name) || '<em style="color:#94a3b8;">(chưa đặt tên)</em>'}</td>
+        <td>${escapeHtml(u.email) || '—'}</td>
+        <td><span class="plan-badge ${u.plan === 'premium' ? 'premium' : 'trial'}">${planLabel}</span></td>
+        <td>${formatDateShort(u.startDate)}</td>
+        <td>${formatDateShort(u.expiryDate)}</td>
+        <td><span class="expiry-text ${expired ? 'expired' : 'ok'}">${expired ? '⛔ Hết hạn' : '✅ Còn hạn'}</span></td>
+        <td><button class="btn btn-edit btn-sm" onclick="openEditModal('${u.uid}')">Sửa</button></td>
+      </tr>`;
+  }).join('');
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+// ==================== EDIT MODAL ====================
+function openEditModal(uid){
+  const u = allUsers.find(x => x.uid === uid);
+  if(!u) return;
+  editingUid = uid;
+
+  document.getElementById('editUidNote').textContent = 'UID: ' + uid;
+  document.getElementById('editName').value = u.name || '';
+  document.getElementById('editPlan').value = u.plan || 'trial';
+  document.getElementById('editStartDate').value = u.startDate ? u.startDate.slice(0,10) : '';
+  document.getElementById('editExpiryDate').value = u.expiryDate ? u.expiryDate.slice(0,10) : '';
+
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal(){
+  document.getElementById('editModal').style.display = 'none';
+  editingUid = null;
+}
+
+function saveEdit(){
+  if(!editingUid) return;
+
+  const name = document.getElementById('editName').value.trim();
+  const plan = document.getElementById('editPlan').value;
+  const startDateStr = document.getElementById('editStartDate').value;
+  const expiryDateStr = document.getElementById('editExpiryDate').value;
+
+  if(!startDateStr || !expiryDateStr){
+    showToast('⚠️ Vui lòng chọn đầy đủ ngày bắt đầu và hết hạn.');
+    return;
+  }
+  if(new Date(expiryDateStr) < new Date(startDateStr)){
+    showToast('⚠️ Ngày hết hạn phải sau ngày bắt đầu.');
+    return;
+  }
+
+  const updates = {};
+  updates['users/' + editingUid + '/profile/name'] = name;
+  updates['users/' + editingUid + '/subscription/plan'] = plan;
+  updates['users/' + editingUid + '/subscription/startDate'] = new Date(startDateStr).toISOString();
+  updates['users/' + editingUid + '/subscription/expiryDate'] = new Date(expiryDateStr + 'T23:59:59').toISOString();
+
+  db.ref().update(updates).then(() => {
+    showToast('✅ Đã lưu thay đổi!');
+    closeEditModal();
+    loadUsers();
+  }).catch(err => {
+    showToast('❌ Lỗi: ' + (err.message || err.code));
+  });
+}
+
+// ==================== TOAST ====================
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Đóng modal khi bấm ra ngoài
+document.getElementById('editModal').addEventListener('click', function(e){
+  if(e.target === this) closeEditModal();
+});
+</script>
+</body>
+</html>
