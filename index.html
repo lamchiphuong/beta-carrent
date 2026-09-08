@@ -628,6 +628,22 @@ body.pro-mode #actionPopup {
   padding: 20px;
 }
 #loginScreen.hidden { display: none; }
+
+/* ==================== AUTH CHECK (SPLASH) SCREEN ==================== */
+#authCheckScreen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 6000;
+  gap: 16px;
+}
+#authCheckScreen.hidden { display: none; }
+#authCheckScreen i { font-size: 2.4rem; color: var(--primary); }
+#authCheckScreen p { color: var(--gray); font-weight: 600; font-size: 1.05rem; }
 .login-box {
   background: white;
   border-radius: 24px;
@@ -1042,8 +1058,15 @@ input:focus, select:focus, textarea:focus {
 </head>
 <body>
 
+  <!-- ==================== AUTH CHECK (SPLASH) SCREEN ==================== -->
+  <!-- Hiện ngay khi mở app, tránh nháy màn hình đăng nhập cho user đã đăng nhập rồi -->
+  <div id="authCheckScreen">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Đang đăng nhập...</p>
+  </div>
+
   <!-- ==================== LOGIN SCREEN ==================== -->
-  <div id="loginScreen">
+  <div id="loginScreen" class="hidden">
     <div class="login-box">
       <h1><i class="fas fa-car"></i> CarRent</h1>
       <p class="subtitle">Quản lý thuê xe thông minh</p>
@@ -1996,6 +2019,10 @@ auth.onAuthStateChanged((user) => {
   const loginScreen = document.getElementById('loginScreen');
   const appContainer = document.getElementById('appContainer');
   const profileMenuWrap = document.getElementById('profileMenuWrap');
+  const authCheckScreen = document.getElementById('authCheckScreen');
+
+  // Đã xác định được trạng thái đăng nhập (đã có hoặc chưa có user) -> ẩn màn hình "Đang đăng nhập..."
+  if (authCheckScreen) authCheckScreen.classList.add('hidden');
 
   if (user) {
     currentUser = user;
@@ -2194,17 +2221,24 @@ function requestUpgradePremium() {
 function maybeShowTrialPopup() {
   if (!subscriptionInfo || subscriptionInfo.plan !== 'trial' || !currentUser) return;
 
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const storageKey = 'trialPopupShown_' + currentUser.uid + '_' + todayKey;
-  if (localStorage.getItem(storageKey)) return;
-
   const daysLeft = getDaysLeft();
+  const expired = daysLeft <= 0;
+
+  // Tài khoản ĐÃ HẾT HẠN: luôn hiện popup mỗi khi mở app (không giới hạn 1 lần/ngày)
+  // để nhắc nâng cấp Premium. Còn hạn thì vẫn giữ nguyên chỉ hiện 1 lần/ngày.
+  if (!expired) {
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const storageKey = 'trialPopupShown_' + currentUser.uid + '_' + todayKey;
+    if (localStorage.getItem(storageKey)) return;
+    localStorage.setItem(storageKey, '1');
+  }
+
   const icon = document.getElementById('trialNoticeIcon');
   const title = document.getElementById('trialNoticeTitle');
   const daysEl = document.getElementById('trialNoticeDays');
   const text = document.getElementById('trialNoticeText');
 
-  if (daysLeft <= 0) {
+  if (expired) {
     icon.textContent = '🔒';
     title.textContent = 'Gói Dùng Thử đã hết hạn';
     daysEl.textContent = 'Đã hết hạn';
@@ -2219,7 +2253,6 @@ function maybeShowTrialPopup() {
   }
 
   document.getElementById('trialNoticeModal').style.display = 'flex';
-  localStorage.setItem(storageKey, '1');
 }
 
 function closeTrialNoticeModal() {
