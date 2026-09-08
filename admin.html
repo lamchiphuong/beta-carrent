@@ -199,13 +199,13 @@
 <script>
 // ==================== FIREBASE CONFIG (giống app CarRent gốc) ====================
 const firebaseConfig = {
-  apiKey: "AIzaSyDVFVjVmCoLYSxKnYIkwuhd6Zcq0LWAG_Y",
-  authDomain: "thuexe-carrent.firebaseapp.com",
-  databaseURL: "https://thuexe-carrent-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "thuexe-carrent",
-  storageBucket: "thuexe-carrent.firebasestorage.app",
-  messagingSenderId: "424567111623",
-  appId: "1:424567111623:web:23ca9ba3962471eda623e2"
+  apiKey: "AIzaSyCpXmqWDkPb8cVCna88xbs7ZU9YsbmrMeQ",
+  authDomain: "carrent-2026.firebaseapp.com",
+  databaseURL: "https://carrent-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "carrent-2026",
+  storageBucket: "carrent-2026.firebasestorage.app",
+  messagingSenderId: "592936815699",
+  appId: "1:592936815699:web:8234b53dd749315a8a0aa6"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -213,7 +213,7 @@ const auth = firebase.auth();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // UID admin được phép quản lý toàn bộ user (phải khớp với UID khai trong Firebase Rules)
-const ADMIN_UID = 'iBdCzMEG9ZYAyYPK9gapIQFDqWm2';
+const ADMIN_UID = '0SMmwdl1d1MERapmfG3l3js7n4r2';
 
 let allUsers = [];     // [{uid, name, email, plan, startDate, expiryDate}]
 let editingUid = null;
