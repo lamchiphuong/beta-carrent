@@ -430,10 +430,12 @@ function loadUsers(){
 
   db.ref('users').once('value').then(snap => {
     const data = snap.val() || {};
+    rawNotifByUid = {};
     allUsers = Object.keys(data).map(uid => {
       const u = data[uid] || {};
       const profile = u.profile || {};
       const sub = u.subscription || {};
+      rawNotifByUid[uid] = u.notifications || {};
       return {
         uid,
         name: profile.name || '',
@@ -444,6 +446,7 @@ function loadUsers(){
       };
     });
     renderTable();
+    if(typeof renderNotifTable === 'function') renderNotifTable();
   }).catch(err => {
     document.getElementById('usersTableBody').innerHTML =
       `<tr><td colspan="7" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}
@@ -579,20 +582,34 @@ document.getElementById('notifDetailModal').addEventListener('click', function(e
 // =====================================================================
 // ==================== THÔNG BÁO (NOTIFICATIONS) =====================
 // =====================================================================
-// Dữ liệu thông báo được lưu chung tại nhánh Firebase 'notifications/{id}':
-//   { title, message, createdAt, senderEmail,
-//     targetType: 'all' | 'selected', targetUids: [uid1, uid2, ...] (chỉ có khi 'selected') }
-// Trạng thái đã đọc lưu riêng theo từng user tại 'users/{uid}/notificationsRead/{id}': true
-// Khi admin thu hồi, bản ghi bị xoá khỏi 'notifications' (nên biến mất khỏi app người dùng
-// ngay lập tức) và được lưu lại tại 'notificationsRecalled/{id}' kèm 'recalledAt' để xem lịch sử.
-// Vì mỗi thông báo hàng loạt chỉ là MỘT bản ghi duy nhất trong 'notifications' (không nhân bản
-// theo từng user), bảng "Thông báo đã gửi" bên dưới tự nhiên chỉ hiển thị một dòng cho mỗi
-// thông báo hàng loạt, dù nó được gửi tới hàng trăm tài khoản.
+// Kiến trúc "ghi riêng theo từng user" (chặn ở tầng dữ liệu, không chỉ lọc ở client):
+//
+//   users/{uid}/notifications/{id}: { title, message, createdAt, senderEmail, read: false }
+//     -> bản sao thông báo dành RIÊNG cho user đó. Firebase Rules chỉ cho phép chính user đó
+//        (hoặc admin) đọc nhánh này, nên user A không thể lấy được nội dung thông báo của user B
+//        dù có mở DevTools/Network kiểm tra — vì dữ liệu đó vốn không được gửi tới máy họ.
+//     -> user tự ghi field "read" của bản ghi thuộc chính mình khi họ mở xem (rule chỉ cho phép
+//        ghi đúng field "read", không cho sửa nội dung).
+//
+//   notificationsMeta/{id}: { title, message, createdAt, senderEmail, targetType, targetUids }
+//     -> bản ghi TỔNG, chỉ admin đọc/ghi được, dùng để hiển thị bảng quản lý & để biết cần xoá
+//        khỏi những uid nào khi thu hồi. targetType: 'all' | 'selected'. targetUids luôn là mảng
+//        UID đã nhận (kể cả khi gửi "Tất cả" — là snapshot toàn bộ user tại thời điểm gửi).
+//
+//   notificationsMetaRecalled/{id}: giống notificationsMeta + 'recalledAt', chỉ admin đọc/ghi,
+//     lưu lại lịch sử sau khi thu hồi.
+//
+// Khi thu hồi: xoá users/{uid}/notifications/{id} ở TỪNG uid trong targetUids (biến mất khỏi
+// app người dùng ngay lập tức) + xoá notificationsMeta/{id} + ghi notificationsMetaRecalled/{id}.
+//
+// Vì bảng quản lý đọc từ notificationsMeta (1 bản ghi tổng cho mỗi lần gửi, dù gửi cho bao
+// nhiêu người), thông báo hàng loạt vẫn chỉ hiện đúng 1 dòng — không lặp lại theo từng user.
 
-let sentNotifications = [];   // danh sách thông báo đang hoạt động (chưa thu hồi)
-let recalledNotifications = []; // lịch sử đã thu hồi
+let sentNotifications = [];     // danh sách thông báo đang hoạt động (từ notificationsMeta)
+let recalledNotifications = []; // lịch sử đã thu hồi (từ notificationsMetaRecalled)
 let pickedUids = new Set();     // uid đang được chọn trong modal chọn người dùng
 let confirmedTargetUids = [];   // uid đã xác nhận để gửi thông báo (targetType = 'selected')
+let rawNotifByUid = {};         // {uid: {notifId: {..., read}}} - lấy từ snapshot 'users' khi loadUsers(), dùng để tính số người đã đọc
 
 function onTargetTypeChange(){
   const type = document.querySelector('input[name="notifTarget"]:checked').value;
@@ -683,20 +700,38 @@ function sendNotification(){
     showToast('⚠️ Vui lòng chọn ít nhất một người dùng nhận thông báo.');
     return;
   }
-
-  const payload = {
-    title,
-    message,
-    createdAt: new Date().toISOString(),
-    senderEmail: currentAdminEmail,
-    targetType
-  };
-  if(targetType === 'selected'){
-    payload.targetUids = confirmedTargetUids;
+  if(allUsers.length === 0){
+    showToast('⚠️ Chưa có dữ liệu người dùng, vui lòng bấm "Tải lại" ở tab Gói Đăng Ký rồi thử lại.');
+    return;
   }
 
-  db.ref('notifications').push(payload).then(() => {
-    showToast('✅ Đã gửi thông báo!');
+  // targetUids luôn được xác định tường minh (kể cả 'all' = snapshot toàn bộ user hiện có),
+  // vì mỗi user chỉ nhận được thông báo qua đúng đường ghi users/{uid}/notifications/{id}.
+  const targetUids = targetType === 'all' ? allUsers.map(u => u.uid) : confirmedTargetUids.slice();
+  if(targetUids.length === 0){
+    showToast('⚠️ Không có người dùng nào để gửi.');
+    return;
+  }
+
+  const id = db.ref('notificationsMeta').push().key;
+  const now = new Date().toISOString();
+
+  const metaPayload = {
+    title, message, createdAt: now, senderEmail: currentAdminEmail,
+    targetType, targetUids
+  };
+  const perUserPayload = {
+    title, message, createdAt: now, senderEmail: currentAdminEmail, read: false
+  };
+
+  const updates = {};
+  updates['notificationsMeta/' + id] = metaPayload;
+  targetUids.forEach(uid => {
+    updates['users/' + uid + '/notifications/' + id] = perUserPayload;
+  });
+
+  db.ref().update(updates).then(() => {
+    showToast(`✅ Đã gửi thông báo tới ${targetUids.length} người dùng!`);
     document.getElementById('notifTitle').value = '';
     document.getElementById('notifMessage').value = '';
     document.querySelector('input[name="notifTarget"][value="all"]').checked = true;
@@ -709,8 +744,8 @@ function sendNotification(){
 
 // ---------- Danh sách thông báo đã gửi (đang hoạt động) ----------
 function loadNotifications(){
-  db.ref('notifications').off('value');
-  db.ref('notifications').on('value', snap => {
+  db.ref('notificationsMeta').off('value');
+  db.ref('notificationsMeta').on('value', snap => {
     const val = snap.val() || {};
     sentNotifications = Object.keys(val)
       .map(id => ({ id, ...val[id] }))
@@ -722,6 +757,18 @@ function loadNotifications(){
   });
 }
 
+// Đếm số người trong targetUids đã có notifications/{id}/read === true, dựa trên snapshot
+// 'users' được nạp lần gần nhất (loadUsers()). Bấm "↻ Tải lại" ở tab Gói Đăng Ký để cập nhật mới nhất.
+function countReadStats(n){
+  const uids = Array.isArray(n.targetUids) ? n.targetUids : [];
+  let read = 0;
+  uids.forEach(uid => {
+    const rec = rawNotifByUid[uid] && rawNotifByUid[uid][n.id];
+    if(rec && rec.read) read++;
+  });
+  return { read, total: uids.length };
+}
+
 function truncateText(str, maxLen){
   if(!str) return '';
   const clean = String(str).replace(/\s+/g, ' ').trim();
@@ -729,11 +776,11 @@ function truncateText(str, maxLen){
 }
 
 function targetLabel(n){
+  const count = Array.isArray(n.targetUids) ? n.targetUids.length : 0;
   if(n.targetType === 'selected'){
-    const count = Array.isArray(n.targetUids) ? n.targetUids.length : 0;
     return `<span class="target-badge selected">👤 ${count} người dùng</span>`;
   }
-  return `<span class="target-badge">📢 Tất cả</span>`;
+  return `<span class="target-badge">📢 Tất cả (${count})</span>`;
 }
 
 function renderNotifTable(){
@@ -747,9 +794,9 @@ function renderNotifTable(){
   }
   emptyState.classList.add('hidden');
 
-  // Mỗi thông báo (kể cả gửi hàng loạt cho "Tất cả") chỉ tồn tại DUY NHẤT 1 bản ghi
-  // trong 'notifications', nên ở đây tự nhiên chỉ hiện 1 dòng cho mỗi thông báo,
-  // không lặp lại theo từng người nhận.
+  // Mỗi thông báo (kể cả gửi hàng loạt cho "Tất cả") chỉ có DUY NHẤT 1 bản ghi trong
+  // 'notificationsMeta', nên ở đây tự nhiên chỉ hiện 1 dòng cho mỗi thông báo, dù nó đã
+  // được ghi riêng vào users/{uid}/notifications cho hàng trăm tài khoản.
   tbody.innerHTML = sentNotifications.map(n => `
     <tr>
       <td class="wrap-cell">${escapeHtml(n.title) || '(không có tiêu đề)'}</td>
@@ -769,14 +816,17 @@ function renderNotifTable(){
 function recallNotification(id){
   const n = sentNotifications.find(x => x.id === id);
   if(!n) return;
-  if(!confirm(`Thu hồi thông báo "${n.title || '(không có tiêu đề)'}"? Thông báo sẽ biến mất khỏi ứng dụng của người dùng ngay lập tức.`)) return;
+  if(!confirm(`Thu hồi thông báo "${n.title || '(không có tiêu đề)'}"? Thông báo sẽ biến mất khỏi ứng dụng của tất cả người nhận ngay lập tức.`)) return;
 
   const recalledPayload = { ...n, recalledAt: new Date().toISOString() };
   delete recalledPayload.id;
 
   const updates = {};
-  updates['notificationsRecalled/' + id] = recalledPayload;
-  updates['notifications/' + id] = null; // xoá khỏi nhánh đang hoạt động -> biến mất khỏi app người dùng
+  updates['notificationsMetaRecalled/' + id] = recalledPayload;
+  updates['notificationsMeta/' + id] = null;
+  (n.targetUids || []).forEach(uid => {
+    updates['users/' + uid + '/notifications/' + id] = null; // xoá khỏi máy từng người nhận
+  });
 
   db.ref().update(updates).then(() => {
     showToast('✅ Đã thu hồi thông báo.');
@@ -787,8 +837,8 @@ function recallNotification(id){
 
 // ---------- Lịch sử đã thu hồi ----------
 function loadRecalledNotifications(){
-  db.ref('notificationsRecalled').off('value');
-  db.ref('notificationsRecalled').on('value', snap => {
+  db.ref('notificationsMetaRecalled').off('value');
+  db.ref('notificationsMetaRecalled').on('value', snap => {
     const val = snap.val() || {};
     recalledNotifications = Object.keys(val)
       .map(id => ({ id, ...val[id] }))
@@ -837,16 +887,22 @@ function viewNotifDetail(id, isRecalled){
   let meta = `Người gửi: ${n.senderEmail || '—'} · Gửi lúc: ${formatDateTime(n.createdAt)}`;
   if(isRecalled) meta += ` · Thu hồi lúc: ${formatDateTime(n.recalledAt)}`;
   meta += ` · Đối tượng: ${n.targetType === 'selected' ? 'Người dùng được chọn' : 'Tất cả người dùng'}`;
+  if(!isRecalled){
+    const stats = countReadStats(n);
+    meta += ` · Đã đọc: ${stats.read}/${stats.total} (tính theo lần "Tải lại" gần nhất)`;
+  }
   document.getElementById('notifDetailMetaModal').innerHTML = escapeHtml(meta);
 
   const targetWrap = document.getElementById('notifDetailTargetWrap');
   const targetListEl = document.getElementById('notifDetailTargetList');
-  if(n.targetType === 'selected' && Array.isArray(n.targetUids) && n.targetUids.length > 0){
+  if(Array.isArray(n.targetUids) && n.targetUids.length > 0){
     targetWrap.classList.remove('hidden');
     targetListEl.innerHTML = n.targetUids.map(uid => {
       const u = allUsers.find(x => x.uid === uid);
+      const rec = rawNotifByUid[uid] && rawNotifByUid[uid][n.id];
+      const readMark = !isRecalled ? (rec && rec.read ? ' ✅ đã đọc' : ' ⬜ chưa đọc') : '';
       const label = u ? `${escapeHtml(u.name) || '(chưa đặt tên)'} — ${escapeHtml(u.email) || '—'}` : `UID: ${uid}`;
-      return `<div>${label}</div>`;
+      return `<div>${label}${readMark}</div>`;
     }).join('');
   } else {
     targetWrap.classList.add('hidden');
