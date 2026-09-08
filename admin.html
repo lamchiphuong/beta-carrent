@@ -190,6 +190,7 @@
         <table>
           <thead>
             <tr>
+              <th>Ảnh</th>
               <th>Tên hiển thị</th>
               <th>Email</th>
               <th>Gói</th>
@@ -200,7 +201,7 @@
             </tr>
           </thead>
           <tbody id="usersTableBody">
-            <tr id="loadingRow"><td colspan="7">Đang tải danh sách người dùng...</td></tr>
+            <tr id="loadingRow"><td colspan="8">Đang tải danh sách người dùng...</td></tr>
           </tbody>
         </table>
       </div>
@@ -292,6 +293,15 @@
     <div class="field">
       <label>Tên hiển thị</label>
       <input type="text" id="editName">
+    </div>
+
+    <div class="field">
+      <label>URL ảnh đại diện</label>
+      <input type="text" id="editPhotoURL" placeholder="https://...">
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+        <img id="editPhotoPreview" src="" alt="" style="width:44px;height:44px;border-radius:50%;object-fit:cover;background:#e2e8f0;display:none;">
+        <span id="editPhotoPreviewEmpty" style="font-size:0.78rem;color:var(--gray);">Chưa có ảnh</span>
+      </div>
     </div>
 
     <div class="field">
@@ -440,6 +450,7 @@ function loadUsers(){
         uid,
         name: profile.name || '',
         email: profile.email || '',
+        photoURL: profile.photoURL || '',
         plan: sub.plan || 'trial',
         startDate: sub.startDate || '',
         expiryDate: sub.expiryDate || ''
@@ -449,7 +460,7 @@ function loadUsers(){
     if(typeof renderNotifTable === 'function') renderNotifTable();
   }).catch(err => {
     document.getElementById('usersTableBody').innerHTML =
-      `<tr><td colspan="7" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}
+      `<tr><td colspan="8" style="color:var(--danger);">Lỗi tải dữ liệu: ${err.message || err.code}
        <br><small>Kiểm tra lại Firebase Rules cho phép tài khoản admin đọc nhánh "users".</small></td></tr>`;
   });
 }
@@ -487,8 +498,12 @@ function renderTable(){
   tbody.innerHTML = filtered.map(u => {
     const expired = u.expiryDate && new Date() > new Date(u.expiryDate);
     const planLabel = u.plan === 'premium' ? 'Premium' : 'Dùng Thử';
+    const avatarHtml = u.photoURL
+      ? `<img src="${escapeHtml(u.photoURL)}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;width:34px;height:34px;border-radius:50%;background:#e2e8f0;align-items:center;justify-content:center;font-size:0.9rem;">👤</span>`
+      : `<span style="display:inline-flex;width:34px;height:34px;border-radius:50%;background:#e2e8f0;align-items:center;justify-content:center;font-size:0.9rem;">👤</span>`;
     return `
       <tr>
+        <td>${avatarHtml}</td>
         <td>${escapeHtml(u.name) || '<em style="color:#94a3b8;">(chưa đặt tên)</em>'}</td>
         <td>${escapeHtml(u.email) || '—'}</td>
         <td><span class="plan-badge ${u.plan === 'premium' ? 'premium' : 'trial'}">${planLabel}</span></td>
@@ -514,22 +529,47 @@ function openEditModal(uid){
 
   document.getElementById('editUidNote').textContent = 'UID: ' + uid;
   document.getElementById('editName').value = u.name || '';
+  document.getElementById('editPhotoURL').value = u.photoURL || '';
   document.getElementById('editPlan').value = u.plan || 'trial';
   document.getElementById('editStartDate').value = u.startDate ? u.startDate.slice(0,10) : '';
   document.getElementById('editExpiryDate').value = u.expiryDate ? u.expiryDate.slice(0,10) : '';
 
+  updateEditPhotoPreview();
   document.getElementById('editModal').style.display = 'flex';
 }
+
+function updateEditPhotoPreview(){
+  const url = document.getElementById('editPhotoURL').value.trim();
+  const img = document.getElementById('editPhotoPreview');
+  const emptyLabel = document.getElementById('editPhotoPreviewEmpty');
+  if(url){
+    img.src = url;
+    img.style.display = 'block';
+    emptyLabel.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    img.src = '';
+    emptyLabel.style.display = 'inline';
+  }
+}
+document.getElementById('editPhotoURL').addEventListener('input', updateEditPhotoPreview);
+document.getElementById('editPhotoPreview').addEventListener('error', function(){
+  this.style.display = 'none';
+  document.getElementById('editPhotoPreviewEmpty').textContent = '⚠️ Không tải được ảnh từ URL này';
+  document.getElementById('editPhotoPreviewEmpty').style.display = 'inline';
+});
 
 function closeEditModal(){
   document.getElementById('editModal').style.display = 'none';
   editingUid = null;
+  document.getElementById('editPhotoPreviewEmpty').textContent = 'Chưa có ảnh';
 }
 
 function saveEdit(){
   if(!editingUid) return;
 
   const name = document.getElementById('editName').value.trim();
+  const photoURL = document.getElementById('editPhotoURL').value.trim();
   const plan = document.getElementById('editPlan').value;
   const startDateStr = document.getElementById('editStartDate').value;
   const expiryDateStr = document.getElementById('editExpiryDate').value;
@@ -545,6 +585,7 @@ function saveEdit(){
 
   const updates = {};
   updates['users/' + editingUid + '/profile/name'] = name;
+  updates['users/' + editingUid + '/profile/photoURL'] = photoURL;
   updates['users/' + editingUid + '/subscription/plan'] = plan;
   updates['users/' + editingUid + '/subscription/startDate'] = new Date(startDateStr).toISOString();
   updates['users/' + editingUid + '/subscription/expiryDate'] = new Date(expiryDateStr + 'T23:59:59').toISOString();
