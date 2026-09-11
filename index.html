@@ -290,6 +290,36 @@
       gap: 15px;
     }
 
+    /* ===== SEGMENTED TOGGLE (chọn 2 lựa chọn kiểu button, thay cho <select>) ===== */
+    .segmented-toggle {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .seg-btn {
+      flex: 1;
+      padding: 12px 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .seg-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .seg-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    }
+
     .money-group {
       margin-bottom: 18px;
     }
@@ -840,16 +870,48 @@ body.pro-mode #actionPopup {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(37,99,235,0.35);
 }
+.notif-btn.has-unread {
+  animation: notifBtnPulse 1.6s ease-in-out infinite;
+}
+.notif-btn.has-unread i {
+  animation: notifBellShake 3s ease-in-out infinite;
+  transform-origin: top center;
+  display: inline-block;
+}
+@keyframes notifBtnPulse {
+  0%, 100% { box-shadow: 0 4px 14px rgba(37,99,235,0.25); }
+  50% { box-shadow: 0 4px 18px rgba(220,38,38,0.45); }
+}
+@keyframes notifBellShake {
+  0%, 85%, 100% { transform: rotate(0); }
+  87% { transform: rotate(-12deg); }
+  89% { transform: rotate(10deg); }
+  91% { transform: rotate(-8deg); }
+  93% { transform: rotate(6deg); }
+  95% { transform: rotate(0); }
+}
 .notif-dot {
   display: none;
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 11px;
-  height: 11px;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
   background: var(--danger);
   border: 2px solid white;
-  border-radius: 50%;
+  border-radius: 999px;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 800;
+  line-height: 14px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(220,38,38,0.5);
+  animation: notifDotPop 0.25s ease;
+}
+@keyframes notifDotPop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
 }
 .notif-dropdown {
   display: none;
@@ -1648,10 +1710,15 @@ input:focus, select:focus, textarea:focus {
 
         <div style="margin-bottom: 20px;">
           <label>Nhận xe vào</label>
-          <select id="rentDayType">
-            <option value="cungngay" selected>Cùng ngày</option>
-            <option value="homtruoc">Tối hôm trước</option>
-          </select>
+          <input type="hidden" id="rentDayType" value="cungngay">
+          <div class="segmented-toggle" id="rentDayTypeToggle">
+            <button type="button" class="seg-btn active" data-value="cungngay" onclick="setRentDayType('cungngay')">
+              <i class="fas fa-sun"></i> Cùng ngày
+            </button>
+            <button type="button" class="seg-btn" data-value="homtruoc" onclick="setRentDayType('homtruoc')">
+              <i class="fas fa-moon"></i> Tối hôm trước
+            </button>
+          </div>
         </div>
 
         <!-- NỬA NGÀY -->
@@ -1992,7 +2059,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v1.5.1 - (2026) 
+    CarRent v2.0 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -2325,7 +2392,7 @@ function isAccountLocked() {
 function formatExpiryDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString('vi-VN');
+  return d.toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 }
 
 function updatePlanUI() {
@@ -2480,7 +2547,7 @@ function formatNotifTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
 }
 
 function renderNotifDropdown() {
@@ -2507,9 +2574,20 @@ function renderNotifDropdown() {
 
 function updateNotifBadge() {
   const dot = document.getElementById('notifDot');
+  const btn = document.getElementById('notifBtn');
   if (!dot) return;
-  const hasUnread = notifications.some(n => !n.read);
-  dot.style.display = hasUnread ? 'block' : 'none';
+  const unreadCount = notifications.filter(n => !n.read).length;
+  if (unreadCount > 0) {
+    dot.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+    dot.style.display = 'flex';
+    dot.style.alignItems = 'center';
+    dot.style.justifyContent = 'center';
+    if (btn) btn.classList.add('has-unread');
+  } else {
+    dot.textContent = '';
+    dot.style.display = 'none';
+    if (btn) btn.classList.remove('has-unread');
+  }
 }
 
 function toggleNotifDropdown(e) {
@@ -2576,6 +2654,13 @@ function formatMoney(num) {
 function parseMoney(str) {
   if (!str) return 0;
   return parseInt(str.toString().replace(/[^0-9]/g, '')) || 0;
+}
+
+function setRentDayType(value) {
+  document.getElementById('rentDayType').value = value;
+  document.querySelectorAll('#rentDayTypeToggle .seg-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.value === value);
+  });
 }
 
 function formatDate(dateStr) {
@@ -3831,7 +3916,7 @@ function printRevenue() {
   html += `
         </tbody>
       </table>
-      <div class="date">In ngày: ${new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' })}</div>
+      <div class="date">In ngày: ${new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' })}</div>
     </body>
     </html>`;
 
@@ -3896,7 +3981,7 @@ function showAddContractModal() {
 
   document.getElementById('rentTime').value = '08:00';
   document.getElementById('returnTime').value = '20:00';
-  document.getElementById('rentDayType').value = 'cungngay';
+  setRentDayType('cungngay');
   document.getElementById('discount').value = '0';
   document.getElementById('rentHalf').value = 'full';
   document.getElementById('returnHalf').value = 'full';
@@ -3980,7 +4065,7 @@ function editContract(id) {
   document.getElementById('returnDate').value = contract.returnDate || '';
   document.getElementById('rentTime').value = contract.rentTime || '08:00';
   document.getElementById('returnTime').value = contract.returnTime || '20:00';
-  document.getElementById('rentDayType').value = contract.rentDayType || 'cungngay';
+  setRentDayType(contract.rentDayType || 'cungngay');
   document.getElementById('rentHalf').value = contract.rentHalf || 'full';
   document.getElementById('returnHalf').value = contract.returnHalf || 'full';
   document.getElementById('status').value = contract.status || 'Chưa nhận xe';
@@ -4412,7 +4497,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v1.5.1 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v2.0 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
@@ -4512,7 +4597,7 @@ function exportRevenueToExcel() {
   const TOTAL_ROW = data.length - 1;
 
   data.push([]); // dòng trống
-  data.push([`In ngày: ${new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' })}`]);
+  data.push([`In ngày: ${new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' })}`]);
   const DATE_ROW = data.length - 1;
 
   const wb = XLSX.utils.book_new();
