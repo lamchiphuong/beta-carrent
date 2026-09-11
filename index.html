@@ -562,32 +562,39 @@
     }
 
     /* ==================== BỘ QUẢN LÝ PRO (nội dung inline, dùng chung dữ liệu contracts/cars) ==================== */
-    .pro-wrap { max-width: 1200px; margin: 0 auto; padding: 70px 15px 40px; }
+    .pro-wrap { max-width: 1200px; margin: 0 auto; padding: 70px 15px 40px; overflow-x: hidden; }
     .pro-header { text-align: center; margin-bottom: 18px; }
-    .pro-header h2 { color: var(--primary); }
+    .pro-header h2 { color: var(--primary); font-size: 1.5rem; }
     .pro-tabs {
-      display: flex; flex-wrap: wrap; gap: 8px; background: white; padding: 8px;
+      display: flex; flex-wrap: nowrap; gap: 8px; background: white; padding: 8px;
       border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 20px;
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
     }
     .pro-tab {
       padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600;
       transition: all 0.3s; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+      white-space: nowrap; flex-shrink: 0;
     }
     .pro-tab.active { background: var(--primary); color: white; }
     .pro-card {
       background: white; border-radius: 20px; padding: 22px;
       box-shadow: 0 12px 30px rgba(0,0,0,0.08); margin-bottom: 25px;
+      overflow-x: hidden;
     }
+    .pro-card h3 { font-size: 1.15rem; }
     .pro-controls { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items:center; }
     .pro-controls input, .pro-controls select { padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; }
-    .pro-table { width: 100%; border-collapse: collapse; }
-    .pro-table th, .pro-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+    .pro-scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pro-table { width: 100%; border-collapse: collapse; min-width: 480px; }
+    .pro-table th, .pro-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; white-space: nowrap; }
     .pro-table th { background: #f8fafc; color: var(--primary); font-weight: 600; }
     .pro-table tr:hover { background: #f1f5f9; }
     .pro-stat-card { background: #f8fafc; padding: 18px; border-radius: 16px; text-align: center; }
+    .pro-stat-card h4 { font-size: 0.85rem; color: #64748b; margin-bottom: 6px; }
+    .pro-stat-card h2 { font-size: 1.5rem; }
     .pro-contract-item {
       padding: 12px; border-left: 5px solid var(--primary); background: #f8fafc;
-      margin-bottom: 10px; border-radius: 8px;
+      margin-bottom: 10px; border-radius: 8px; word-break: break-word;
     }
     .pro-edit-btn {
       background: #eff6ff; color: var(--primary); border: none; padding: 8px 12px;
@@ -596,11 +603,28 @@
     .pro-modal-overlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.6); z-index: 10500; align-items: center; justify-content: center;
+      padding: 15px; box-sizing: border-box;
     }
     .pro-modal-box {
-      background: white; border-radius: 20px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      background: white; border-radius: 20px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      box-sizing: border-box;
     }
-    #proRevenueChart { margin: 15px 0 20px 0; max-height: 300px; width: 100% !important; }
+    .pro-chart-wrap { position: relative; width: 100%; height: 260px; margin: 15px 0 20px 0; }
+    #proRevenueChart { width: 100% !important; height: 100% !important; }
+
+    @media (max-width: 600px) {
+      .pro-wrap { padding: 62px 10px 30px; }
+      .pro-header h2 { font-size: 1.25rem; }
+      .pro-card { padding: 16px; border-radius: 16px; }
+      .pro-tab { padding: 10px 14px; font-size: 0.85rem; }
+      .pro-controls { flex-direction: column; align-items: stretch; }
+      .pro-controls input, .pro-controls select, .pro-controls button { width: 100%; box-sizing: border-box; }
+      .pro-stat-card h2 { font-size: 1.25rem; }
+      .pro-table th, .pro-table td { padding: 10px 8px; font-size: 0.82rem; }
+      .pro-chart-wrap { height: 220px; }
+      .pro-modal-box { max-width: 100% !important; }
+    }
+
 
     /* Tối ưu khi vào chế độ Pro */
     body.pro-mode {
@@ -1715,20 +1739,20 @@ input:focus, select:focus, textarea:focus {
                 </select>
                 <button onclick="proRenderRevenue()" class="btn btn-primary">Xem</button>
               </div>
-              <canvas id="proRevenueChart" height="110"></canvas>
-              <div id="proRevenueContent"></div>
+              <div class="pro-chart-wrap"><canvas id="proRevenueChart"></canvas></div>
+              <div id="proRevenueContent" class="pro-scroll-x"></div>
             </div>
 
             <!-- LỊCH XE -->
             <div id="proTab4" class="pro-card pro-tab-content" style="display:none;">
               <h3><i class="fas fa-calendar-alt"></i> Lịch Xe Đang Xử Lý</h3>
-              <div id="proScheduleContent"></div>
+              <div id="proScheduleContent" class="pro-scroll-x"></div>
             </div>
 
             <!-- DANH SÁCH XE -->
             <div id="proTab5" class="pro-card pro-tab-content" style="display:none;">
               <h3><i class="fas fa-car-side"></i> Danh sách Xe</h3>
-              <div id="proCarListContent"></div>
+              <div id="proCarListContent" class="pro-scroll-x"></div>
             </div>
           </div>
 
@@ -5189,7 +5213,7 @@ function proRenderRevenueChartTotal(filtered, year) {
       labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'],
       datasets: [{ label: year ? `Doanh thu năm ${year}` : 'Tổng doanh thu', data: byMonth, backgroundColor: '#2563eb', borderRadius: 6 }]
     },
-    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) + ' ₫' } } } }
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) + ' ₫' } } } }
   });
 }
 
@@ -5207,7 +5231,7 @@ function proRenderRevenueChartByCar(filtered, car) {
       labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'],
       datasets: [{ label: `Xe ${car}`, data: byMonth, backgroundColor: '#16a34a', borderRadius: 6 }]
     },
-    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) + ' ₫' } } } }
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) + ' ₫' } } } }
   });
 }
 
