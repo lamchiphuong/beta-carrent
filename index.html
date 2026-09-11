@@ -27,6 +27,7 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <!-- ==================== FIREBASE SDK ==================== -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -552,23 +553,54 @@
         width: 100%;
         margin: 0;
         padding: 0;
-        background: white;
+        background: #f8fafc;
         position: fixed;
         top: 0;
         left: 0;
         z-index: 100;
+        overflow-y: auto;
     }
 
-    #proIframe {
-        width: 100% !important;
-        height: 100% !important;
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        position: relative;
-        z-index: 1;
-        transform: translateZ(0);
+    /* ==================== BỘ QUẢN LÝ PRO (nội dung inline, dùng chung dữ liệu contracts/cars) ==================== */
+    .pro-wrap { max-width: 1200px; margin: 0 auto; padding: 70px 15px 40px; }
+    .pro-header { text-align: center; margin-bottom: 18px; }
+    .pro-header h2 { color: var(--primary); }
+    .pro-tabs {
+      display: flex; flex-wrap: wrap; gap: 8px; background: white; padding: 8px;
+      border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); margin-bottom: 20px;
     }
+    .pro-tab {
+      padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 600;
+      transition: all 0.3s; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;
+    }
+    .pro-tab.active { background: var(--primary); color: white; }
+    .pro-card {
+      background: white; border-radius: 20px; padding: 22px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08); margin-bottom: 25px;
+    }
+    .pro-controls { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; align-items:center; }
+    .pro-controls input, .pro-controls select { padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 0.95rem; }
+    .pro-table { width: 100%; border-collapse: collapse; }
+    .pro-table th, .pro-table td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+    .pro-table th { background: #f8fafc; color: var(--primary); font-weight: 600; }
+    .pro-table tr:hover { background: #f1f5f9; }
+    .pro-stat-card { background: #f8fafc; padding: 18px; border-radius: 16px; text-align: center; }
+    .pro-contract-item {
+      padding: 12px; border-left: 5px solid var(--primary); background: #f8fafc;
+      margin-bottom: 10px; border-radius: 8px;
+    }
+    .pro-edit-btn {
+      background: #eff6ff; color: var(--primary); border: none; padding: 8px 12px;
+      border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+    }
+    .pro-modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); z-index: 10500; align-items: center; justify-content: center;
+    }
+    .pro-modal-box {
+      background: white; border-radius: 20px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    #proRevenueChart { margin: 15px 0 20px 0; max-height: 300px; width: 100% !important; }
 
     /* Tối ưu khi vào chế độ Pro */
     body.pro-mode {
@@ -1337,7 +1369,7 @@ input:focus, select:focus, textarea:focus {
     <div class="tab active" onclick="switchTab(0)">📋 Hợp đồng đang xử lý</div>
     <div class="tab" onclick="switchTab(1)">🚗 Quản lý xe</div>
     <div class="tab" onclick="switchTab(2)">📊 Lịch sử & Doanh thu</div>
-    <div class="tab" onclick="switchTab(3)" id="proTab" style="display:none;">⭐ Bộ quản lý Pro</div><!-- Tab Pro đang bị ẩn tạm thời, xoá style="display:none;" ở trên để bật lại -->
+    <div class="tab" onclick="switchTab(3)" id="proTab">⭐ Bộ quản lý Pro</div>
   </div>
 
     <!-- Tab 0 -->
@@ -1509,33 +1541,17 @@ input:focus, select:focus, textarea:focus {
             <div style="text-align:center; padding:40px 20px; max-width:500px; width:100%; margin:auto;">
 
                 <!-- Icon -->
-                <i class="fas fa-lock"
-                   style="font-size:4.5rem; color:#94a3b8; margin-bottom:25px;"></i>
+                <i class="fas fa-crown"
+                   style="font-size:4.5rem; color:#f59e0b; margin-bottom:25px;"></i>
 
                 <!-- Tiêu đề -->
-                <h3 style="margin-bottom:10px;">
-                    Bạn cần License Pro để truy cập
+                <h3 style="margin-bottom:10px;" id="proLockedTitle">
+                    Tính năng dành riêng cho gói Premium
                 </h3>
 
-                <p style="color:#64748b; margin:20px auto;">
-                    Nhập License Key bạn đã mua để mở khóa toàn bộ Bộ quản lý Pro.
+                <p style="color:#64748b; margin:20px auto;" id="proLockedText">
+                    Nâng cấp lên gói Premium để mở khoá toàn bộ Bộ quản lý Pro.
                 </p>
-
-                <!-- Ô nhập License -->
-                <input
-                    type="text"
-                    id="licenseInput"
-                    placeholder="Nhập License Key (VD: PRO-2026-XXXXXX)"
-                    style="
-                        width:100%;
-                        padding:16px;
-                        font-size:1.05rem;
-                        border:1px solid #cbd5e1;
-                        border-radius:12px;
-                        box-sizing:border-box;
-                        margin-top:15px;
-                    "
-                >
 
                 <!-- Nút -->
                 <div style="display:flex; gap:12px; margin-top:20px;">
@@ -1546,23 +1562,18 @@ input:focus, select:focus, textarea:focus {
                         style="flex:1; padding:14px;"
                     >
                         <i class="fas fa-arrow-left"></i>
-                        Huỷ
+                        Quay lại
                     </button>
 
                     <button
-                        onclick="activateProLicense()"
+                        onclick="requestUpgradePremium()"
                         class="btn btn-primary"
                         style="flex:1; padding:14px;"
                     >
-                        <i class="fas fa-unlock"></i>
-                        Kích hoạt License
+                        <i class="fas fa-crown"></i>
+                        Nâng cấp Premium
                     </button>
 
-                </div>
-
-                <!-- Thông báo -->
-                <div id="licenseMessage"
-                     style="margin-top:20px; min-height:24px;">
                 </div>
 
                 <!-- Khung giới thiệu PRO -->
@@ -1635,7 +1646,7 @@ input:focus, select:focus, textarea:focus {
                         color:#1d4ed8;
                         font-weight:600;
                     ">
-                        ⭐ Mở khóa một lần • Sử dụng trọn đời • Cập nhật miễn phí
+                        ⭐ Đã bao gồm trong gói Premium
                     </div>
 
                 </div>
@@ -1650,10 +1661,114 @@ input:focus, select:focus, textarea:focus {
               <i class="fas fa-arrow-left"></i>
           </div>
 
-          <iframe id="proIframe" 
-                  src="https://lamchiphuong.github.io/carrent-toolkit/" 
-                  allowfullscreen></iframe>
+          <div class="pro-wrap">
+            <div class="pro-header">
+              <h2><i class="fas fa-crown"></i> Bộ quản lý Pro</h2>
+            </div>
+
+            <div class="pro-tabs" id="proTabsBar">
+              <div class="pro-tab active" onclick="proSwitchInnerTab(1)"><i class="fas fa-tachometer-alt"></i> Dashboard</div>
+              <div class="pro-tab" onclick="proSwitchInnerTab(2)"><i class="fas fa-users"></i> Khách Hàng</div>
+              <div class="pro-tab" onclick="proSwitchInnerTab(3)"><i class="fas fa-chart-bar"></i> Doanh Thu</div>
+              <div class="pro-tab" onclick="proSwitchInnerTab(4)"><i class="fas fa-calendar-alt"></i> Lịch Xe</div>
+              <div class="pro-tab" onclick="proSwitchInnerTab(5)"><i class="fas fa-car-side"></i> Danh Sách Xe</div>
+            </div>
+
+            <!-- DASHBOARD -->
+            <div id="proTab1" class="pro-card pro-tab-content">
+              <h3><i class="fas fa-tachometer-alt"></i> Dashboard Tổng Quan</h3>
+              <div id="proDashboardContent"></div>
+            </div>
+
+            <!-- KHÁCH HÀNG -->
+            <div id="proTab2" class="pro-card pro-tab-content" style="display:none;">
+              <h3><i class="fas fa-users"></i> Quản Lý Khách Hàng</h3>
+              <div class="pro-controls">
+                <input type="text" id="proSearchInput" placeholder="🔎 Tìm tên hoặc SĐT...">
+                <select id="proSortFilter" onchange="proRenderCustomers()">
+                  <option value="count">Số lần thuê</option>
+                  <option value="revenue">Doanh thu cao nhất</option>
+                  <option value="name">Tên A-Z</option>
+                </select>
+                <button onclick="proExportCustomersExcel()" class="btn btn-success">
+                  <i class="fas fa-file-excel"></i> Xuất Excel
+                </button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="pro-table">
+                  <thead><tr><th>#</th><th>Tên Khách Hàng</th><th>SĐT</th><th>Số lần thuê</th><th>Doanh thu</th><th>Lần thuê gần nhất</th><th>Hành động</th></tr></thead>
+                  <tbody id="proCustomerBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- DOANH THU -->
+            <div id="proTab3" class="pro-card pro-tab-content" style="display:none;">
+              <h3><i class="fas fa-chart-bar"></i> Phân Tích Doanh Thu</h3>
+              <div class="pro-controls">
+                <select id="proYearFilter" onchange="proRenderRevenue()"></select>
+                <select id="proMonthFilter" onchange="proRenderRevenue()">
+                  <option value="">Tất cả tháng</option>
+                </select>
+                <select id="proCarFilter" onchange="proRenderRevenue()">
+                  <option value="">Tất cả xe</option>
+                </select>
+                <button onclick="proRenderRevenue()" class="btn btn-primary">Xem</button>
+              </div>
+              <canvas id="proRevenueChart" height="110"></canvas>
+              <div id="proRevenueContent"></div>
+            </div>
+
+            <!-- LỊCH XE -->
+            <div id="proTab4" class="pro-card pro-tab-content" style="display:none;">
+              <h3><i class="fas fa-calendar-alt"></i> Lịch Xe Đang Xử Lý</h3>
+              <div id="proScheduleContent"></div>
+            </div>
+
+            <!-- DANH SÁCH XE -->
+            <div id="proTab5" class="pro-card pro-tab-content" style="display:none;">
+              <h3><i class="fas fa-car-side"></i> Danh sách Xe</h3>
+              <div id="proCarListContent"></div>
+            </div>
+          </div>
+
+          <!-- PRO: LỊCH SỬ KHÁCH HÀNG -->
+          <div id="proHistoryModal" class="pro-modal-overlay">
+            <div class="pro-modal-box" style="max-width:820px; max-height:85vh; overflow:hidden;">
+              <div style="padding:20px 25px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                <h3 id="proModalCustomerName" style="margin:0; color:var(--primary);"></h3>
+                <button onclick="proCloseHistoryModal()" style="background:none; border:none; font-size:28px; cursor:pointer; color:#64748b;">×</button>
+              </div>
+              <div style="padding:20px; overflow-y:auto; max-height:65vh;" id="proModalContent"></div>
+              <div style="padding:15px 25px; text-align:right; border-top:1px solid #e2e8f0;">
+                <button onclick="proCloseHistoryModal()" class="btn btn-primary">Đóng</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PRO: SỬA KHÁCH HÀNG -->
+          <div id="proEditCustomerModal" class="pro-modal-overlay">
+            <div class="pro-modal-box" style="max-width:480px;">
+              <div style="padding:20px 25px; border-bottom:1px solid #e2e8f0;">
+                <h3 style="margin:0; color:var(--primary);">Sửa thông tin khách hàng</h3>
+              </div>
+              <div style="padding:25px;">
+                <label style="display:block; margin-bottom:8px; font-weight:600;">Tên khách hàng</label>
+                <input type="text" id="proEditName" style="width:100%; margin-bottom:20px; padding:10px; border:2px solid #e2e8f0; border-radius:10px; box-sizing:border-box;">
+
+                <label style="display:block; margin-bottom:8px; font-weight:600;">Số điện thoại (SĐT)</label>
+                <input type="tel" id="proEditPhone" placeholder="Ví dụ: 0912345678" style="width:100%; margin-bottom:10px; padding:10px; border:2px solid #e2e8f0; border-radius:10px; box-sizing:border-box;">
+
+                <small style="color:#64748b;">Thông tin khách hàng sẽ tự động cập nhật vào tất cả hợp đồng trên hệ thống.</small>
+              </div>
+              <div style="padding:15px 25px; text-align:right; border-top:1px solid #e2e8f0; display:flex; gap:12px; justify-content:flex-end;">
+                <button onclick="proCloseEditModal()" class="btn" style="background:#e2e8f0;">Hủy</button>
+                <button onclick="proSaveCustomerEdit()" class="btn btn-primary">Lưu thay đổi</button>
+              </div>
+            </div>
+          </div>
     </div>
+
 
   <!-- FAB -->
   <div class="fab" id="fabAddBtn" onclick="showAddContractModal()"><i class="fas fa-plus"></i></div>
@@ -2059,7 +2174,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v2.0 - (2026) 
+    CarRent v2.1 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -4497,7 +4612,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v2.0 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v2.1 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
@@ -4647,48 +4762,545 @@ function exportRevenueToExcel() {
   showToast(`Đã xuất file: <strong>${fileName}</strong>`);
 }
 
-// ==================== PRO LICENSE ====================
-const PRO_LICENSE_KEY = "PRO-2026-CARRENT-PHUONG123"; // ← Bạn có thể thay key này
-
-function isProUnlocked() {
-  return localStorage.getItem('proLicense') === 'unlocked';
-}
-
-function activateProLicense() {
-  const input = document.getElementById('licenseInput').value.trim().toUpperCase();
-  const messageEl = document.getElementById('licenseMessage');
-
-  if (input === PRO_LICENSE_KEY) {
-    localStorage.setItem('proLicense', 'unlocked');
-    
-    if (currentUser) {
-      db.ref('users/' + currentUser.uid + '/proLicense').set({
-        status: 'unlocked',
-        activatedAt: new Date().toISOString()
-      });
-    }
-
-    messageEl.innerHTML = `<span style="color:#16a34a;">✅ Kích hoạt thành công! Đang tải...</span>`;
-    setTimeout(() => {
-      document.getElementById('proLockedScreen').style.display = 'none';
-      document.getElementById('proContent').style.display = 'block';
-    }, 800);
-  } else {
-    messageEl.innerHTML = `<span style="color:#dc2626;">❌ License không hợp lệ. Vui lòng liên hệ admin.</span>`;
-  }  // ← ĐÃ SỬA
+// ==================== BỘ QUẢN LÝ PRO (mở khoá theo gói Premium) ====================
+function hasPremiumAccess() {
+  return !!(subscriptionInfo && subscriptionInfo.plan === 'premium' && !isAccountLocked());
 }
 
 function checkProAccess() {
     const lockedScreen = document.getElementById('proLockedScreen');
     const proContent = document.getElementById('proContent');
+    const titleEl = document.getElementById('proLockedTitle');
+    const textEl = document.getElementById('proLockedText');
 
-    if (isProUnlocked()) {
+    if (hasPremiumAccess()) {
         lockedScreen.style.display = 'none';
         proContent.style.display = 'block';
+        proRenderAll();
     } else {
-        lockedScreen.style.display = 'flex';      // ← Sửa thành flex
+        lockedScreen.style.display = 'flex';
         proContent.style.display = 'none';
+
+        // Thông báo phù hợp: Premium đã hết hạn khác với chưa nâng cấp
+        if (subscriptionInfo && subscriptionInfo.plan === 'premium' && isAccountLocked()) {
+          titleEl.textContent = 'Gói Premium của bạn đã hết hạn';
+          textEl.textContent = 'Gia hạn Premium để tiếp tục sử dụng Bộ quản lý Pro.';
+        } else {
+          titleEl.textContent = 'Tính năng dành riêng cho gói Premium';
+          textEl.textContent = 'Nâng cấp lên gói Premium để mở khoá toàn bộ Bộ quản lý Pro.';
+        }
     }
+}
+
+// ---- Điều hướng giữa 5 tab con bên trong Pro ----
+function proSwitchInnerTab(n) {
+  document.querySelectorAll('.pro-tab-content').forEach(el => el.style.display = 'none');
+  document.getElementById('proTab' + n).style.display = 'block';
+  document.querySelectorAll('#proTabsBar .pro-tab').forEach((t, i) => t.classList.toggle('active', i + 1 === n));
+}
+
+// ---- Helper: lấy toàn bộ xe (bao gồm cả xe đã xoá nhưng còn trong hợp đồng) ----
+function proGetAllCars() {
+  const carMap = new Map();
+
+  cars.forEach(car => {
+    if (car.plate) {
+      const plate = car.plate.toUpperCase().trim();
+      carMap.set(plate, { plate: car.plate, type: car.type || '—', isDeleted: false });
+    }
+  });
+
+  contracts.forEach(c => {
+    let plate = null, type = '—';
+    if (c.status === "Đã hoàn tất" && c.frozenData) {
+      plate = c.frozenData.plate;
+      type = c.frozenData.carType || c.frozenData.type || '—';
+    } else {
+      plate = c.plate;
+      type = c.carType || c.type || '—';
+    }
+    if (plate) {
+      const key = plate.toUpperCase().trim();
+      if (!carMap.has(key)) {
+        carMap.set(key, {
+          plate: plate, type: type,
+          isDeleted: !cars.some(car => car.plate && car.plate.toUpperCase().trim() === key)
+        });
+      }
+    }
+  });
+
+  return Array.from(carMap.values());
+}
+
+// ---- Dashboard ----
+function proRenderDashboard() {
+  let activeContracts = contracts.filter(c => c.status !== "Đã hoàn tất");
+  activeContracts.sort((a, b) => new Date(a.rentDate || 0) - new Date(b.rentDate || 0));
+
+  let activeHTML = `<h4>Hợp đồng đang xử lý (${activeContracts.length})</h4>`;
+  if (activeContracts.length === 0) {
+    activeHTML += `<p style="color:#64748b;">Không có hợp đồng đang xử lý.</p>`;
+  } else {
+    activeHTML += `<div style="max-height:450px; overflow-y:auto; margin-top:10px;">`;
+    activeContracts.forEach(c => {
+      activeHTML += `
+        <div class="pro-contract-item">
+          <strong>${c.customer || 'Không tên'}</strong> — ${c.plate || '—'}
+          <span style="color:#64748b">(${c.rentDate ? new Date(c.rentDate).toLocaleDateString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'}) : '—'})</span>
+        </div>`;
+    });
+    activeHTML += `</div>`;
+  }
+
+  const totalRevenue = contracts
+    .filter(c => c.status === "Đã hoàn tất")
+    .reduce((sum, c) => sum + (c.frozenData?.totalAmount || 0), 0);
+
+  document.getElementById('proDashboardContent').innerHTML = `
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:16px;">
+      <div class="pro-stat-card"><h4>Đang xử lý</h4><h2 style="color:#16a34a;">${activeContracts.length}</h2></div>
+      <div class="pro-stat-card"><h4>Tổng doanh thu</h4><h2 style="color:#d97706;">${formatMoney(totalRevenue)} ₫</h2></div>
+      <div class="pro-stat-card"><h4>Tổng khách</h4><h2 style="color:#1e40af;">${new Set(contracts.map(c => c.phone || c.customer)).size}</h2></div>
+      <div class="pro-stat-card"><h4>Tổng xe</h4><h2 style="color:#7c3aed;">${proGetAllCars().length}</h2></div>
+    </div>
+    <div style="margin-top:20px;">${activeHTML}</div>
+  `;
+}
+
+// ---- Khách hàng ----
+function proGetCustomerData(sortBy = "count") {
+  const map = new Map();
+  contracts.forEach(c => {
+    const key = (c.phone || c.customer || '').trim();
+    if (!key) return;
+    if (!map.has(key)) {
+      map.set(key, { name: c.customer || "Không tên", phone: c.phone || "", count: 0, revenue: 0, lastRent: null });
+    }
+    const cust = map.get(key);
+    cust.count++;
+    cust.revenue += (c.frozenData?.totalAmount || 0);
+    if (c.rentDate) {
+      const d = new Date(c.rentDate);
+      if (!cust.lastRent || d > cust.lastRent) cust.lastRent = d;
+    }
+  });
+
+  let result = Array.from(map.values());
+
+  if (sortBy === "revenue") {
+    result.sort((a, b) => b.revenue - a.revenue);
+  } else if (sortBy === "name") {
+    const getLastName = (fullName) => {
+      if (!fullName) return "";
+      const parts = fullName.trim().split(/\s+/);
+      return parts[parts.length - 1].toLowerCase();
+    };
+    result.sort((a, b) => {
+      const lastA = getLastName(a.name), lastB = getLastName(b.name);
+      if (lastA === lastB) return a.name.localeCompare(b.name, 'vi-VN');
+      return lastA.localeCompare(lastB, 'vi-VN');
+    });
+  } else {
+    result.sort((a, b) => b.count - a.count);
+  }
+
+  return result;
+}
+
+function proRenderCustomers() {
+  const sortEl = document.getElementById('proSortFilter');
+  const searchEl = document.getElementById('proSearchInput');
+  if (!sortEl || !searchEl) return;
+
+  const sortBy = sortEl.value;
+  const search = searchEl.value.toLowerCase().trim();
+  let data = proGetCustomerData(sortBy);
+
+  if (search) {
+    data = data.filter(c => c.name.toLowerCase().includes(search) || (c.phone && c.phone.includes(search)));
+  }
+
+  const tbody = document.getElementById('proCustomerBody');
+  tbody.innerHTML = data.map((c, i) => {
+    const phone = c.phone ? c.phone.trim() : '';
+    const zaloLink = phone ? `https://zalo.me/${phone}` : '#';
+    const lastRentStr = c.lastRent ? c.lastRent.toLocaleDateString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'}) : '—';
+
+    return `
+      <tr>
+        <td>${i + 1}</td>
+        <td>
+          <a href="${zaloLink}" target="_blank" style="text-decoration:none; color:inherit;">
+            <strong style="cursor:pointer; color:var(--primary);">${c.name}</strong>
+          </a>
+        </td>
+        <td>
+          ${phone ? `
+            <a href="tel:${phone}" style="margin-right:8px; color:#16a34a; font-weight:600; text-decoration:none;">📞 ${phone}</a>
+            <a href="${zaloLink}" target="_blank" style="color:#0068ff; font-weight:600; text-decoration:none;">💬 Zalo</a>
+          ` : '—'}
+        </td>
+        <td style="text-align:center;font-weight:700;">${c.count}</td>
+        <td style="color:#16a34a;font-weight:700;">${formatMoney(c.revenue)} ₫</td>
+        <td style="cursor:pointer; color:var(--primary);" onclick="proShowCustomerHistory('${phone || c.name}')">${lastRentStr}</td>
+        <td>
+          <button class="pro-edit-btn" onclick="proOpenEditModal('${phone || c.name}', '${c.name}', '${phone}')">
+            <i class="fas fa-edit"></i> Sửa
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function proExportCustomersExcel() {
+  const data = proGetCustomerData("count");
+  const excelData = data.map((c, i) => ({
+    "STT": i + 1,
+    "Tên Khách Hàng": c.name,
+    "Số Điện Thoại": c.phone,
+    "Số lần thuê": c.count,
+    "Tổng doanh thu (₫)": c.revenue,
+    "Lần thuê gần nhất": c.lastRent ? c.lastRent.toLocaleDateString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'}) : ''
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "KhachHang");
+  ws['!cols'] = [{ wch: 6 }, { wch: 30 }, { wch: 15 }, { wch: 12 }, { wch: 20 }, { wch: 15 }];
+  XLSX.writeFile(wb, `KhachHang_CarRent_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  showToast('✅ Đã xuất file Excel thành công!');
+}
+
+function proShowCustomerHistory(key) {
+  const modal = document.getElementById('proHistoryModal');
+  const nameEl = document.getElementById('proModalCustomerName');
+  const contentEl = document.getElementById('proModalContent');
+
+  const customerContracts = contracts
+    .filter(c => {
+      const phoneMatch = c.phone && (c.phone || '').trim() === key;
+      const nameMatch = !c.phone && (c.customer || '').trim() === key;
+      return phoneMatch || nameMatch;
+    })
+    .sort((a, b) => new Date(b.rentDate || 0) - new Date(a.rentDate || 0));
+
+  if (customerContracts.length === 0) {
+    contentEl.innerHTML = `<p style="text-align:center; color:#64748b; padding:40px;">Không tìm thấy lịch sử thuê.</p>`;
+    nameEl.textContent = "Lịch sử khách hàng";
+    modal.style.display = 'flex';
+    return;
+  }
+
+  const customerName = customerContracts[0].customer || customerContracts[0].frozenData?.customer || "Khách hàng";
+
+  let html = `
+    <table class="pro-table">
+      <thead><tr><th>Thời gian thuê</th><th>Loại xe</th><th>Biển số</th><th>Số tiền</th><th>Trạng thái</th></tr></thead>
+      <tbody>
+  `;
+
+  customerContracts.forEach(c => {
+    const data = (c.status === "Đã hoàn tất" && c.frozenData) ? c.frozenData : c;
+    const amount = (data.totalAmount || data.frozenData?.totalAmount || 0);
+
+    let dateDisplay = '—';
+    if (data.rentDate) {
+      const start = new Date(data.rentDate);
+      const startStr = start.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
+      if (data.returnDate) {
+        const end = new Date(data.returnDate);
+        const diffDays = Math.ceil(Math.abs(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 1) {
+          const endStr = end.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'Asia/Ho_Chi_Minh' });
+          dateDisplay = `<strong>${startStr}</strong> <small style="color:#64748b;"> - </small><strong> ${endStr} </strong>`;
+        } else {
+          dateDisplay = `<strong>${startStr}</strong>`;
+        }
+      } else {
+        dateDisplay = `<strong>${startStr}</strong>`;
+      }
+    }
+
+    html += `
+      <tr>
+        <td>${dateDisplay}</td>
+        <td>${data.carType || data.type || '—'}</td>
+        <td><strong>${data.plate || '—'}</strong></td>
+        <td style="color:#16a34a; font-weight:700;">${formatMoney(amount)} ₫</td>
+        <td><span style="padding:4px 10px; border-radius:9999px; font-size:0.9rem; background:${c.status === 'Đã hoàn tất' ? '#dcfce7' : '#fef3c7'}; color:${c.status === 'Đã hoàn tất' ? '#166534' : '#b45309'};">${c.status || 'Đang xử lý'}</span></td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  nameEl.textContent = `${customerName} (${customerContracts.length} lần thuê)`;
+  contentEl.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
+function proCloseHistoryModal() {
+  document.getElementById('proHistoryModal').style.display = 'none';
+}
+
+let proCurrentEditingKey = null;
+
+function proOpenEditModal(key, name, phone) {
+  proCurrentEditingKey = key;
+  document.getElementById('proEditName').value = name || '';
+  document.getElementById('proEditPhone').value = phone || '';
+  document.getElementById('proEditCustomerModal').style.display = 'flex';
+}
+
+function proCloseEditModal() {
+  document.getElementById('proEditCustomerModal').style.display = 'none';
+  proCurrentEditingKey = null;
+}
+
+async function proSaveCustomerEdit() {
+  const newName = document.getElementById('proEditName').value.trim();
+  let newPhone = document.getElementById('proEditPhone').value.trim().replace(/\s+/g, '');
+
+  if (!newName) {
+    showToast("Vui lòng nhập tên khách hàng!");
+    return;
+  }
+
+  const affectedContracts = contracts.filter(c => (c.phone || c.customer || '').trim() === proCurrentEditingKey);
+
+  if (affectedContracts.length === 0) {
+    showToast("Không tìm thấy hợp đồng nào để sửa!");
+    proCloseEditModal();
+    return;
+  }
+
+  if (newPhone) {
+    const existingWithNewPhone = contracts.filter(c => c.phone === newPhone && (c.phone || c.customer || '').trim() !== proCurrentEditingKey);
+    if (existingWithNewPhone.length > 0) {
+      if (!confirm(`SĐT ${newPhone} đã tồn tại cho khách khác. Bạn có muốn GỘP lịch sử không?`)) {
+        proCloseEditModal();
+        return;
+      }
+    }
+  }
+
+  affectedContracts.forEach(c => {
+    c.customer = newName;
+    if (newPhone) c.phone = newPhone;
+  });
+
+  const ok = await saveData();
+  if (ok) {
+    showToast('✅ Đã cập nhật thông tin khách hàng thành công!');
+    proCloseEditModal();
+    renderAll();
+    proRenderAll();
+  }
+}
+
+// ---- Doanh thu ----
+let proRevenueChartInstance = null;
+
+function proRenderRevenue() {
+  const year = document.getElementById('proYearFilter').value;
+  const month = document.getElementById('proMonthFilter').value;
+  const selectedCar = document.getElementById('proCarFilter').value;
+
+  let filtered = contracts.filter(c => c.status === "Đã hoàn tất" && c.rentDate);
+
+  if (year) filtered = filtered.filter(c => new Date(c.rentDate).getFullYear() == year);
+  if (month) filtered = filtered.filter(c => (new Date(c.rentDate).getMonth() + 1) == month);
+  if (selectedCar) {
+    filtered = filtered.filter(c => {
+      const plate = (c.status === "Đã hoàn tất" && c.frozenData) ? (c.frozenData.plate || c.plate) : c.plate;
+      return plate && plate.toUpperCase().trim() === selectedCar.toUpperCase().trim();
+    });
+  }
+
+  const total = filtered.reduce((sum, c) => sum + (c.frozenData?.totalAmount || c.totalAmount || 0), 0);
+
+  if (selectedCar) {
+    proRenderRevenueChartByCar(filtered, selectedCar);
+  } else {
+    proRenderRevenueChartTotal(filtered, year);
+  }
+
+  let html = `<h3>Tổng doanh thu: <strong style="color:#16a34a; font-size: 2rem;">${formatMoney(total)} ₫</strong></h3>`;
+
+  if (selectedCar) {
+    const carInfo = proGetAllCars().find(c => c.plate.toUpperCase().trim() === selectedCar.toUpperCase().trim());
+    const note = carInfo && carInfo.isDeleted ? ` <span style="color:#ef4444;">(xe đã xoá)</span>` : '';
+    html += `<h4>Chi tiết xe ${selectedCar}${note}</h4>`;
+    html += `<table class="pro-table"><thead><tr><th>Ngày</th><th>Khách hàng</th><th>Loại xe</th><th>Số tiền</th></tr></thead><tbody>`;
+    filtered.sort((a, b) => new Date(b.rentDate) - new Date(a.rentDate)).forEach(c => {
+      const data = (c.status === "Đã hoàn tất" && c.frozenData) ? c.frozenData : c;
+      const amount = c.frozenData?.totalAmount || c.totalAmount || 0;
+      html += `<tr>
+        <td>${new Date(c.rentDate).toLocaleDateString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'})}</td>
+        <td>${c.customer || '—'}</td>
+        <td>${data.carType || data.type || '—'}</td>
+        <td style="color:#16a34a;font-weight:700;">${formatMoney(amount)} ₫</td>
+      </tr>`;
+    });
+  } else {
+    html += `<h4>Doanh thu theo xe</h4>`;
+    html += `<table class="pro-table"><thead><tr><th>Biển số xe</th><th>Loại xe</th><th>Doanh thu</th><th>Ghi chú</th></tr></thead><tbody>`;
+    const byCar = {};
+    filtered.forEach(c => {
+      const plate = (c.status === "Đã hoàn tất" && c.frozenData) ? (c.frozenData.plate || c.plate) : c.plate;
+      if (!plate) return;
+      const key = plate.toUpperCase().trim();
+      if (!byCar[key]) {
+        byCar[key] = {
+          plate: plate, revenue: 0,
+          type: (c.frozenData?.carType || c.carType || c.type || '—'),
+          isDeleted: !cars.some(car => car.plate && car.plate.toUpperCase().trim() === key)
+        };
+      }
+      byCar[key].revenue += (c.frozenData?.totalAmount || c.totalAmount || 0);
+    });
+    Object.values(byCar).sort((a, b) => b.revenue - a.revenue).forEach(data => {
+      const note = data.isDeleted ? `<span style="color:#ef4444;">(xe đã xoá)</span>` : '';
+      html += `<tr>
+        <td><strong>${data.plate}</strong></td>
+        <td>${data.type}</td>
+        <td style="color:#16a34a;font-weight:700;">${formatMoney(data.revenue)} ₫</td>
+        <td>${note}</td>
+      </tr>`;
+    });
+  }
+
+  html += `</tbody></table>`;
+  document.getElementById('proRevenueContent').innerHTML = html;
+}
+
+function proRenderRevenueChartTotal(filtered, year) {
+  if (proRevenueChartInstance) proRevenueChartInstance.destroy();
+  const byMonth = Array(12).fill(0);
+  filtered.forEach(c => {
+    const m = new Date(c.rentDate).getMonth();
+    byMonth[m] += c.frozenData?.totalAmount || 0;
+  });
+
+  proRevenueChartInstance = new Chart(document.getElementById('proRevenueChart'), {
+    type: 'bar',
+    data: {
+      labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'],
+      datasets: [{ label: year ? `Doanh thu năm ${year}` : 'Tổng doanh thu', data: byMonth, backgroundColor: '#2563eb', borderRadius: 6 }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) + ' ₫' } } } }
+  });
+}
+
+function proRenderRevenueChartByCar(filtered, car) {
+  if (proRevenueChartInstance) proRevenueChartInstance.destroy();
+  const byMonth = Array(12).fill(0);
+  filtered.forEach(c => {
+    const m = new Date(c.rentDate).getMonth();
+    byMonth[m] += c.frozenData?.totalAmount || c.totalAmount || 0;
+  });
+
+  proRevenueChartInstance = new Chart(document.getElementById('proRevenueChart'), {
+    type: 'bar',
+    data: {
+      labels: ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12'],
+      datasets: [{ label: `Xe ${car}`, data: byMonth, backgroundColor: '#16a34a', borderRadius: 6 }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) + ' ₫' } } } }
+  });
+}
+
+// ---- Lịch xe ----
+function proRenderSchedule() {
+  const activeContracts = contracts.filter(c => c.status !== "Đã hoàn tất" && c.rentDate);
+  const schedule = {};
+
+  activeContracts.forEach(c => {
+    if (!c.rentDate) return;
+    const startDate = new Date(c.rentDate);
+    let endDate = c.returnDate ? new Date(c.returnDate) : startDate;
+    if (endDate < startDate) endDate = startDate;
+
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const dateStr = current.toISOString().split('T')[0];
+      const [y, m, d] = dateStr.split('-');
+      const displayDate = `${d}-${m}-${y}`;
+      if (!schedule[dateStr]) schedule[dateStr] = { display: displayDate, items: [] };
+      schedule[dateStr].items.push({ plate: c.plate || 'N/A', customer: c.customer || 'Không tên' });
+      current.setDate(current.getDate() + 1);
+    }
+  });
+
+  let html = `<table class="pro-table"><thead><tr><th>Ngày</th><th>Xe đang bận</th><th>Khách hàng</th></tr></thead><tbody>`;
+  Object.entries(schedule).sort((a, b) => a[0].localeCompare(b[0])).forEach(([sortKey, data]) => {
+    const uniquePlates = [...new Set(data.items.map(item => item.plate))];
+    const uniqueCustomers = [...new Set(data.items.map(item => item.customer))];
+    html += `<tr>
+      <td><strong>${data.display}</strong></td>
+      <td>${uniquePlates.join(', ')}</td>
+      <td>${uniqueCustomers.join(', ')}</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+
+  if (activeContracts.length === 0) {
+    html = `<p style="color:#64748b; text-align:center; padding:40px;">Không có xe nào đang có lịch xử lý.</p>`;
+  } else if (Object.keys(schedule).length === 0) {
+    html = `<p style="color:#64748b; text-align:center; padding:40px;">Không có dữ liệu lịch xe.</p>`;
+  }
+
+  document.getElementById('proScheduleContent').innerHTML = html;
+}
+
+// ---- Danh sách xe ----
+function proRenderCarList() {
+  const allCars = proGetAllCars();
+  let html = `
+    <table class="pro-table">
+      <thead><tr><th>Loại xe</th><th>Biển số</th><th>Số lần thuê</th><th>Ghi chú</th></tr></thead>
+      <tbody>`;
+
+  allCars.forEach(car => {
+    const count = contracts.filter(c => {
+      const contractPlate = (c.status === "Đã hoàn tất" && c.frozenData) ? (c.frozenData.plate || c.plate) : c.plate;
+      return contractPlate && contractPlate.toUpperCase().trim() === car.plate.toUpperCase().trim();
+    }).length;
+    const note = car.isDeleted ? `<span style="color:#ef4444; font-weight:600;">(xe đã xoá)</span>` : '';
+    html += `<tr>
+      <td>${car.type}</td>
+      <td><strong>${car.plate}</strong></td>
+      <td style="text-align:center; font-weight:700;">${count}</td>
+      <td>${note}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  if (allCars.length === 0) html = `<p style="color:#64748b; text-align:center; padding:40px;">Chưa có dữ liệu xe.</p>`;
+
+  document.getElementById('proCarListContent').innerHTML = html;
+}
+
+// ---- Khởi tạo toàn bộ Pro tab + bộ lọc ----
+function proRenderAll() {
+  proRenderDashboard();
+
+  if (!document.getElementById('proSearchInput').dataset.bound) {
+    document.getElementById('proSearchInput').addEventListener('input', proRenderCustomers);
+    document.getElementById('proSearchInput').dataset.bound = '1';
+  }
+  proRenderCustomers();
+
+  const years = [...new Set(contracts.filter(c => c.rentDate).map(c => new Date(c.rentDate).getFullYear()))].sort((a, b) => b - a);
+  document.getElementById('proYearFilter').innerHTML = `<option value="">Tất cả năm</option>` + years.map(y => `<option value="${y}">${y}</option>`).join('');
+  document.getElementById('proMonthFilter').innerHTML = `<option value="">Tất cả tháng</option>` + Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${(i + 1).toString().padStart(2, '0')}</option>`).join('');
+  const allCars = proGetAllCars();
+  document.getElementById('proCarFilter').innerHTML = `<option value="">Tất cả xe</option>` + allCars.map(car => `<option value="${car.plate}">${car.plate} - ${car.type}${car.isDeleted ? ' (xe đã xoá)' : ''}</option>`).join('');
+  proRenderRevenue();
+
+  proRenderSchedule();
+  proRenderCarList();
 }
 
 <!-- ====================== XEM HỢP ĐỒNG ====================== -->
