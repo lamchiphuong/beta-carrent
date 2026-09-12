@@ -293,11 +293,40 @@
     /* iOS Safari: input[type=date]/[type=time] có kích thước nội dung tối thiểu riêng,
        khiến grid tự giãn cột không đều. Ép min-width:0 để 2 cột luôn chia đều 50/50. */
     .form-grid > div { min-width: 0; }
-    .form-grid input[type="date"],
-    .form-grid input[type="time"] {
+    .form-grid input,
+    .form-grid select {
       min-width: 0;
       width: 100%;
       box-sizing: border-box;
+    }
+
+    /* Ép định dạng hiển thị ngày luôn là dd/mm/yyyy, bất kể ngôn ngữ/vùng máy
+       (mặc định iOS/Safari thường hiện mm/dd/yyyy theo locale máy -> dễ hiểu nhầm & tràn chữ).
+       Cách làm: ẩn phần chữ gốc của input[type=date] (giữ icon lịch), rồi phủ 1 lớp
+       chữ tự viết theo đúng định dạng dd/mm/yyyy lên trên. */
+    .date-input-wrap {
+      position: relative;
+    }
+    .date-input-wrap input[type="date"]::-webkit-datetime-edit,
+    .date-input-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+    .date-input-wrap input[type="date"]::-webkit-datetime-edit-text,
+    .date-input-wrap input[type="date"]::-webkit-datetime-edit-month-field,
+    .date-input-wrap input[type="date"]::-webkit-datetime-edit-day-field,
+    .date-input-wrap input[type="date"]::-webkit-datetime-edit-year-field {
+      color: transparent;
+    }
+    .date-overlay {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      font-size: 1rem;
+      color: #0f172a;
+      white-space: nowrap;
+    }
+    .date-overlay.placeholder {
+      color: #94a3b8;
     }
 
     /* ===== SEGMENTED TOGGLE (chọn 2 lựa chọn kiểu button, thay cho <select>) ===== */
@@ -1856,9 +1885,19 @@ input:focus, select:focus, textarea:focus {
         <datalist id="phoneList"></datalist>
 
         <div class="form-grid">
-          <div><label>Ngày bắt đầu thuê</label><input type="date" id="rentDate" required></div>
+          <div><label>Ngày bắt đầu thuê</label>
+            <div class="date-input-wrap">
+              <input type="date" id="rentDate" required oninput="updateDateOverlay('rentDate','rentDateOverlay')">
+              <span class="date-overlay placeholder" id="rentDateOverlay">dd/mm/yyyy</span>
+            </div>
+          </div>
           <div><label>Thời gian nhận xe</label><input type="time" id="rentTime" value="08:00"></div>
-          <div><label>Ngày trả xe</label><input type="date" id="returnDate" required></div>
+          <div><label>Ngày trả xe</label>
+            <div class="date-input-wrap">
+              <input type="date" id="returnDate" required oninput="updateDateOverlay('returnDate','returnDateOverlay')">
+              <span class="date-overlay placeholder" id="returnDateOverlay">dd/mm/yyyy</span>
+            </div>
+          </div>
           <div><label>Thời gian trả xe</label><input type="time" id="returnTime" value="20:00"></div>
         </div>
 
@@ -4156,7 +4195,26 @@ function showAddContractModal() {
   toggleExternalCarFields();
 
   updateCustomerDatalists();
+  updateDateOverlay('rentDate', 'rentDateOverlay');
+  updateDateOverlay('returnDate', 'returnDateOverlay');
   document.getElementById('contractModal').style.display = 'flex';
+}
+
+// Hiển thị ngày trong ô ngày luôn theo định dạng dd/mm/yyyy, không phụ thuộc
+// ngôn ngữ/vùng của máy (khắc phục iOS hay hiện mm/dd/yyyy gây khó đọc/tràn chữ)
+function updateDateOverlay(inputId, overlayId) {
+  const input = document.getElementById(inputId);
+  const overlay = document.getElementById(overlayId);
+  if (!input || !overlay) return;
+  const val = input.value; // luôn ở dạng yyyy-mm-dd bất kể locale
+  if (val) {
+    const [y, m, d] = val.split('-');
+    overlay.textContent = `${d}/${m}/${y}`;
+    overlay.classList.remove('placeholder');
+  } else {
+    overlay.textContent = 'dd/mm/yyyy';
+    overlay.classList.add('placeholder');
+  }
 }
 
 function closeModal() { document.getElementById('contractModal').style.display = 'none'; }
@@ -4217,6 +4275,8 @@ function editContract(id) {
   document.getElementById('phone').value = contract.phone || '';
   document.getElementById('rentDate').value = contract.rentDate || '';
   document.getElementById('returnDate').value = contract.returnDate || '';
+  updateDateOverlay('rentDate', 'rentDateOverlay');
+  updateDateOverlay('returnDate', 'returnDateOverlay');
   document.getElementById('rentTime').value = contract.rentTime || '08:00';
   document.getElementById('returnTime').value = contract.returnTime || '20:00';
   setRentDayType(contract.rentDayType || 'cungngay');
@@ -4651,7 +4711,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v2.1 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v2.2 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
