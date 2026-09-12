@@ -290,6 +290,15 @@
       grid-template-columns: 1fr 1fr;
       gap: 15px;
     }
+    /* iOS Safari: input[type=date]/[type=time] có kích thước nội dung tối thiểu riêng,
+       khiến grid tự giãn cột không đều. Ép min-width:0 để 2 cột luôn chia đều 50/50. */
+    .form-grid > div { min-width: 0; }
+    .form-grid input[type="date"],
+    .form-grid input[type="time"] {
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
 
     /* ===== SEGMENTED TOGGLE (chọn 2 lựa chọn kiểu button, thay cho <select>) ===== */
     .segmented-toggle {
@@ -638,6 +647,12 @@
     body.pro-mode .action-buttons,
     body.pro-mode .version {
         display: none !important;
+    }
+
+    /* Khi ẩn <header> ở trên, .app-topbar (flex: space-between) chỉ còn lại
+       nút chuông + avatar -> bị đẩy về bên trái. Ép về bên phải như bình thường. */
+    body.pro-mode .app-topbar {
+        justify-content: flex-end;
     }
 
     /* Nút quay về Pro */
@@ -2198,7 +2213,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v2.1 - (2026) 
+    CarRent v2.2 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
