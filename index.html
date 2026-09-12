@@ -290,9 +290,14 @@
       grid-template-columns: 1fr 1fr;
       gap: 15px;
     }
-    /* iOS Safari: input[type=date]/[type=time] có kích thước nội dung tối thiểu riêng,
+    /* iOS Safari: input[type=date]/[type=time]/select có kích thước nội dung tối thiểu riêng,
        khiến grid tự giãn cột không đều. Ép min-width:0 để 2 cột luôn chia đều 50/50. */
-    .form-grid > div { min-width: 0; }
+    .form-grid > div {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end; /* nếu 1 label xuống 2 dòng, ô input/select vẫn thẳng hàng đáy với ô bên cạnh */
+    }
     .form-grid input,
     .form-grid select {
       min-width: 0;
@@ -300,33 +305,54 @@
       box-sizing: border-box;
     }
 
-    /* Ép định dạng hiển thị ngày luôn là dd/mm/yyyy, bất kể ngôn ngữ/vùng máy
-       (mặc định iOS/Safari thường hiện mm/dd/yyyy theo locale máy -> dễ hiểu nhầm & tràn chữ).
-       Cách làm: ẩn phần chữ gốc của input[type=date] (giữ icon lịch), rồi phủ 1 lớp
-       chữ tự viết theo đúng định dạng dd/mm/yyyy lên trên. */
+    /* Ép định dạng hiển thị ngày luôn là dd/mm/yyyy, bất kể ngôn ngữ/vùng máy.
+       iOS Safari không cho CSS can thiệp vào chữ hiển thị bên trong input[type=date]
+       (thử ẩn bằng ::-webkit-datetime-edit không ăn trên iOS như trên desktop),
+       nên cách chắc ăn là: ẩn HẲN input gốc (opacity:0, vẫn bấm/mở lịch bình thường
+       vì nó phủ kín và nằm trên cùng), rồi vẽ 1 khung giả y hệt input phía dưới để
+       hiển thị chữ dd/mm/yyyy tự viết + icon lịch. */
     .date-input-wrap {
       position: relative;
     }
-    .date-input-wrap input[type="date"]::-webkit-datetime-edit,
-    .date-input-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-    .date-input-wrap input[type="date"]::-webkit-datetime-edit-text,
-    .date-input-wrap input[type="date"]::-webkit-datetime-edit-month-field,
-    .date-input-wrap input[type="date"]::-webkit-datetime-edit-day-field,
-    .date-input-wrap input[type="date"]::-webkit-datetime-edit-year-field {
-      color: transparent;
+    .date-fake-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+      margin-bottom: 8px;
+      font-size: 1rem;
     }
     .date-overlay {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
       pointer-events: none;
-      font-size: 1rem;
       color: #0f172a;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .date-overlay.placeholder {
       color: #94a3b8;
+    }
+    .date-fake-icon {
+      color: #94a3b8;
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+    .date-input-wrap input[type="date"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      margin: 0;
+      padding: 0;
+      border: none;
+      z-index: 2;
     }
 
     /* ===== SEGMENTED TOGGLE (chọn 2 lựa chọn kiểu button, thay cho <select>) ===== */
@@ -1887,15 +1913,21 @@ input:focus, select:focus, textarea:focus {
         <div class="form-grid">
           <div><label>Ngày bắt đầu thuê</label>
             <div class="date-input-wrap">
+              <div class="date-fake-box">
+                <span class="date-overlay placeholder" id="rentDateOverlay">dd/mm/yyyy</span>
+                <i class="fas fa-calendar-alt date-fake-icon"></i>
+              </div>
               <input type="date" id="rentDate" required oninput="updateDateOverlay('rentDate','rentDateOverlay')">
-              <span class="date-overlay placeholder" id="rentDateOverlay">dd/mm/yyyy</span>
             </div>
           </div>
           <div><label>Thời gian nhận xe</label><input type="time" id="rentTime" value="08:00"></div>
           <div><label>Ngày trả xe</label>
             <div class="date-input-wrap">
+              <div class="date-fake-box">
+                <span class="date-overlay placeholder" id="returnDateOverlay">dd/mm/yyyy</span>
+                <i class="fas fa-calendar-alt date-fake-icon"></i>
+              </div>
               <input type="date" id="returnDate" required oninput="updateDateOverlay('returnDate','returnDateOverlay')">
-              <span class="date-overlay placeholder" id="returnDateOverlay">dd/mm/yyyy</span>
             </div>
           </div>
           <div><label>Thời gian trả xe</label><input type="time" id="returnTime" value="20:00"></div>
