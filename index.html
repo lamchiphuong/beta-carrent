@@ -1917,7 +1917,7 @@ input:focus, select:focus, textarea:focus {
                 <span class="date-overlay placeholder" id="rentDateOverlay">dd/mm/yyyy</span>
                 <i class="fas fa-calendar-alt date-fake-icon"></i>
               </div>
-              <input type="date" id="rentDate" required oninput="updateDateOverlay('rentDate','rentDateOverlay')">
+              <input type="date" id="rentDate" required oninput="updateDateOverlay('rentDate','rentDateOverlay')" onclick="reopenDatePicker(event)">
             </div>
           </div>
           <div><label>Thời gian nhận xe</label><input type="time" id="rentTime" value="08:00"></div>
@@ -1927,7 +1927,7 @@ input:focus, select:focus, textarea:focus {
                 <span class="date-overlay placeholder" id="returnDateOverlay">dd/mm/yyyy</span>
                 <i class="fas fa-calendar-alt date-fake-icon"></i>
               </div>
-              <input type="date" id="returnDate" required oninput="updateDateOverlay('returnDate','returnDateOverlay')">
+              <input type="date" id="returnDate" required oninput="updateDateOverlay('returnDate','returnDateOverlay')" onclick="reopenDatePicker(event)">
             </div>
           </div>
           <div><label>Thời gian trả xe</label><input type="time" id="returnTime" value="20:00"></div>
@@ -4246,6 +4246,24 @@ function updateDateOverlay(inputId, overlayId) {
   } else {
     overlay.textContent = 'dd/mm/yyyy';
     overlay.classList.add('placeholder');
+  }
+}
+
+// Khắc phục lỗi: input[type=date] ẩn nếu ĐANG giữ focus thì đa số trình duyệt
+// di động (nhất là Safari iOS) sẽ KHÔNG mở lại lịch khi bấm lần nữa - chỉ mở
+// khi input đang ở trạng thái chưa focus. Sau khi chọn ngày xong, input này
+// vẫn giữ focus nên lần bấm kế tiếp bị "im". Cách khắc phục: mỗi lần bấm,
+// chủ động blur() rồi focus() lại ngay trong cùng thao tác bấm (vẫn tính là
+// hành động của người dùng) để trình duyệt luôn coi là một lượt focus mới,
+// từ đó luôn mở được lịch mỗi lần bấm.
+function reopenDatePicker(e) {
+  const input = e.currentTarget;
+  if (document.activeElement === input) {
+    input.blur();
+    input.focus();
+    if (typeof input.showPicker === 'function') {
+      try { input.showPicker(); } catch (err) {}
+    }
   }
 }
 
