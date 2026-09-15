@@ -132,6 +132,39 @@
   .target-radio-group{display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;}
   .target-radio-group label{display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;}
 
+  /* ===== Rich Text Toolbar - soạn nội dung thông báo ===== */
+  .rte-toolbar{
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+    background:#f1f5f9;border:1px solid #cbd5e1;border-bottom:none;
+    border-radius:10px 10px 0 0;padding:6px;
+  }
+  .rte-btn{
+    width:34px;height:34px;border:1px solid transparent;border-radius:8px;background:#fff;
+    color:#334155;font-size:0.92rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all .15s ease;
+  }
+  .rte-btn b,.rte-btn i,.rte-btn u,.rte-btn s{pointer-events:none;}
+  .rte-btn:hover{background:#e2e8f0;}
+  .rte-btn.active{background:var(--primary);color:#fff;border-color:var(--primary-dark);}
+  .rte-btn-wide{width:auto;padding:0 10px;font-size:0.76rem;font-weight:700;}
+  .rte-sep{width:1px;align-self:stretch;background:#cbd5e1;margin:2px 2px;}
+  .rte-editor{
+    width:100%;min-height:120px;max-height:320px;overflow-y:auto;padding:11px 12px;
+    border:1px solid #cbd5e1;border-radius:0 0 10px 10px;font-size:0.95rem;
+    font-family:inherit;line-height:1.55;outline:none;background:#fff;
+  }
+  .rte-editor:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,0.12);}
+  .rte-editor:empty:before{content:attr(data-placeholder);color:#94a3b8;}
+  .rte-editor b,.rte-editor strong{font-weight:700;}
+  .rte-editor i,.rte-editor em{font-style:italic;}
+  .rte-editor u{text-decoration:underline;}
+  .rte-editor s,.rte-editor strike,.rte-editor del{text-decoration:line-through;}
+  .rte-hint{font-size:0.75rem;color:var(--gray);margin-top:6px;}
+  .detail-box b,.detail-box strong{font-weight:700;}
+  .detail-box i,.detail-box em{font-style:italic;}
+  .detail-box u{text-decoration:underline;}
+  .detail-box s,.detail-box strike,.detail-box del{text-decoration:line-through;}
+
   .detail-box{background:#f8fafc;border-radius:12px;padding:14px;font-size:0.88rem;line-height:1.5;white-space:pre-wrap;}
   .detail-meta{font-size:0.78rem;color:var(--gray);margin-top:10px;}
   .detail-target-list{margin-top:10px;max-height:180px;overflow-y:auto;font-size:0.82rem;}
@@ -222,7 +255,17 @@
 
       <div class="field">
         <label>Nội dung</label>
-        <textarea id="notifMessage" placeholder="Nội dung thông báo gửi tới người dùng..."></textarea>
+        <div class="rte-toolbar" id="rteToolbar">
+          <button type="button" class="rte-btn" data-cmd="bold" title="In đậm (Ctrl+B)"><b>B</b></button>
+          <button type="button" class="rte-btn" data-cmd="italic" title="In nghiêng (Ctrl+I)"><i>I</i></button>
+          <button type="button" class="rte-btn" data-cmd="underline" title="Gạch chân (Ctrl+U)"><u>U</u></button>
+          <button type="button" class="rte-btn" data-cmd="strikeThrough" title="Gạch ngang"><s>S</s></button>
+          <span class="rte-sep"></span>
+          <button type="button" class="rte-btn rte-btn-wide" data-cmd="removeFormat" title="Xoá định dạng">Xoá ĐD</button>
+        </div>
+        <div id="notifMessage" class="rte-editor" contenteditable="true"
+             data-placeholder="Nội dung thông báo gửi tới người dùng..."></div>
+        <div class="rte-hint">Bôi đen đoạn chữ rồi bấm nút định dạng ở trên (hoặc Ctrl+B / Ctrl+I / Ctrl+U).</div>
       </div>
 
       <div class="field">
@@ -652,6 +695,96 @@ let pickedUids = new Set();     // uid đang được chọn trong modal chọn 
 let confirmedTargetUids = [];   // uid đã xác nhận để gửi thông báo (targetType = 'selected')
 let rawNotifByUid = {};         // {uid: {notifId: {..., read}}} - lấy từ snapshot 'users' khi loadUsers(), dùng để tính số người đã đọc
 
+// ---------- Rich text toolbar (Nội dung thông báo): B / I / U / Gạch ngang ----------
+// #notifMessage giờ là 1 div contenteditable thay vì textarea, để admin bôi đen chữ và bấm
+// nút định dạng. Khi lưu xuống Firebase, nội dung được "khử trùng" (sanitizeRichText) — chỉ
+// giữ lại đúng các thẻ b/i/u/s + xuống dòng, loại bỏ mọi thẻ/markup khác có thể lọt vào từ
+// paste (Word, trang web...), để dữ liệu ghi vào users/{uid}/notifications luôn sạch và an toàn.
+const RTE_ALLOWED_TAGS = { B:'b', STRONG:'b', I:'i', EM:'i', U:'u', S:'s', STRIKE:'s', DEL:'s', BR:'br' };
+function sanitizeRichText(html){
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html || '';
+  const out = document.createElement('div');
+
+  function walk(srcNode, destParent){
+    srcNode.childNodes.forEach(node => {
+      if(node.nodeType === Node.TEXT_NODE){
+        destParent.appendChild(document.createTextNode(node.textContent));
+        return;
+      }
+      if(node.nodeType !== Node.ELEMENT_NODE) return;
+      const mapped = RTE_ALLOWED_TAGS[node.tagName];
+      if(mapped){
+        const el = document.createElement(mapped);
+        walk(node, el);
+        destParent.appendChild(el);
+        return;
+      }
+      // contenteditable hay bọc mỗi dòng mới trong <div>/<p> -> quy về xuống dòng
+      if(node.tagName === 'DIV' || node.tagName === 'P'){
+        if(destParent.lastChild) destParent.appendChild(document.createElement('br'));
+        walk(node, destParent);
+        return;
+      }
+      // Thẻ không nằm trong whitelist -> bỏ thẻ, chỉ giữ nội dung chữ bên trong
+      walk(node, destParent);
+    });
+  }
+  walk(tpl.content, out);
+  return out.innerHTML.replace(/(<br>\s*){3,}/g, '<br><br>'); // gọn bớt dòng trống thừa
+}
+
+// Lấy text thuần từ nội dung đã lưu (có thể chứa thẻ b/i/u/s) — dùng cho phần preview rút gọn
+// trong bảng "Thông báo đã gửi" / "Lịch sử đã thu hồi".
+function richTextToPlain(html){
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
+(function initNotifRte(){
+  const toolbar = document.getElementById('rteToolbar');
+  const editor = document.getElementById('notifMessage');
+  if(!toolbar || !editor) return;
+
+  function updateToolbarState(){
+    toolbar.querySelectorAll('.rte-btn[data-cmd]').forEach(btn => {
+      if(btn.dataset.cmd === 'removeFormat') return;
+      let active = false;
+      try { active = document.queryCommandState(btn.dataset.cmd); } catch(e) {}
+      btn.classList.toggle('active', active);
+    });
+  }
+
+  toolbar.querySelectorAll('.rte-btn').forEach(btn => {
+    // preventDefault ở mousedown để không mất vùng bôi đen (selection) trong editor khi bấm nút
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => {
+      editor.focus();
+      document.execCommand(btn.dataset.cmd, false, null);
+      updateToolbarState();
+    });
+  });
+
+  editor.addEventListener('keyup', updateToolbarState);
+  editor.addEventListener('mouseup', updateToolbarState);
+  editor.addEventListener('keydown', e => {
+    if(!(e.ctrlKey || e.metaKey)) return;
+    const key = e.key.toLowerCase();
+    if(key === 'b' || key === 'i' || key === 'u') {
+      // để trình duyệt tự xử lý Ctrl+B/I/U mặc định (execCommand tương ứng), chỉ cập nhật lại UI
+      setTimeout(updateToolbarState, 0);
+    }
+  });
+  document.addEventListener('selectionchange', () => {
+    if(document.activeElement === editor) updateToolbarState();
+  });
+
+  window.getNotifMessageHtml = () => sanitizeRichText(editor.innerHTML);
+  window.getNotifMessageText = () => (editor.textContent || '').trim();
+  window.clearNotifMessage = () => { editor.innerHTML = ''; };
+})();
+
 function onTargetTypeChange(){
   const type = document.querySelector('input[name="notifTarget"]:checked').value;
   const btnPick = document.getElementById('btnPickUsers');
@@ -730,10 +863,11 @@ function confirmUserPicker(){
 // ---------- Gửi thông báo ----------
 function sendNotification(){
   const title = document.getElementById('notifTitle').value.trim();
-  const message = document.getElementById('notifMessage').value.trim();
+  const messagePlain = window.getNotifMessageText ? window.getNotifMessageText() : '';
+  const message = window.getNotifMessageHtml ? window.getNotifMessageHtml() : ''; // đã sanitize, có thể chứa b/i/u/s
   const targetType = document.querySelector('input[name="notifTarget"]:checked').value;
 
-  if(!title || !message){
+  if(!title || !messagePlain){
     showToast('⚠️ Vui lòng nhập đầy đủ tiêu đề và nội dung.');
     return;
   }
@@ -774,7 +908,7 @@ function sendNotification(){
   db.ref().update(updates).then(() => {
     showToast(`✅ Đã gửi thông báo tới ${targetUids.length} người dùng!`);
     document.getElementById('notifTitle').value = '';
-    document.getElementById('notifMessage').value = '';
+    if(window.clearNotifMessage) window.clearNotifMessage();
     document.querySelector('input[name="notifTarget"][value="all"]').checked = true;
     confirmedTargetUids = [];
     onTargetTypeChange();
@@ -841,7 +975,7 @@ function renderNotifTable(){
   tbody.innerHTML = sentNotifications.map(n => `
     <tr>
       <td class="wrap-cell">${escapeHtml(n.title) || '(không có tiêu đề)'}</td>
-      <td class="wrap-cell">${escapeHtml(truncateText(n.message, 60))}</td>
+      <td class="wrap-cell">${escapeHtml(truncateText(richTextToPlain(n.message), 60))}</td>
       <td>${targetLabel(n)}</td>
       <td>${escapeHtml(n.senderEmail) || '—'}</td>
       <td>${formatDateTime(n.createdAt)}</td>
@@ -905,7 +1039,7 @@ function renderRecalledTable(){
   tbody.innerHTML = recalledNotifications.map(n => `
     <tr>
       <td class="wrap-cell">${escapeHtml(n.title) || '(không có tiêu đề)'}</td>
-      <td class="wrap-cell">${escapeHtml(truncateText(n.message, 60))}</td>
+      <td class="wrap-cell">${escapeHtml(truncateText(richTextToPlain(n.message), 60))}</td>
       <td>${targetLabel(n)}</td>
       <td>${formatDateTime(n.createdAt)}</td>
       <td>${formatDateTime(n.recalledAt)}</td>
@@ -923,7 +1057,7 @@ function viewNotifDetail(id, isRecalled){
   if(!n) return;
 
   document.getElementById('notifDetailTitleModal').textContent = n.title || '(không có tiêu đề)';
-  document.getElementById('notifDetailContentModal').textContent = n.message || '';
+  document.getElementById('notifDetailContentModal').innerHTML = sanitizeRichText(n.message || '');
 
   let meta = `Người gửi: ${n.senderEmail || '—'} · Gửi lúc: ${formatDateTime(n.createdAt)}`;
   if(isRecalled) meta += ` · Thu hồi lúc: ${formatDateTime(n.recalledAt)}`;
