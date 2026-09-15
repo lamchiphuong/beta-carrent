@@ -1091,18 +1091,31 @@ body.pro-mode #actionPopup {
   color: #94a3b8;
   margin-top: 4px;
 }
-.notif-item.unread .notif-item-title,
-.notif-item.unread .notif-item-preview {
+/* Thông báo CHƯA ĐỌC: chỉ in đậm Tiêu đề. Nội dung (preview) giữ trọng lượng chữ bình
+   thường để tránh cảm giác bị "hét vào mặt" khi cả khối cùng in đậm. */
+.notif-item.unread .notif-item-title {
   font-weight: 700;
   color: #0f172a;
 }
+.notif-item.unread .notif-item-preview {
+  font-weight: 400;
+  color: #334155;
+}
 .notif-item.unread { background: #eff6ff; }
 .notif-item.unread:hover { background: #e0f2fe; }
-.notif-item.read .notif-item-title,
+.notif-item.read .notif-item-title {
+  font-weight: 400;
+  color: #64748b;
+}
 .notif-item.read .notif-item-preview {
   font-weight: 400;
   color: #94a3b8;
 }
+/* Định dạng chữ trong nội dung thông báo (do admin soạn: đậm/nghiêng/gạch chân/gạch ngang) */
+#notifDetailContent b, #notifDetailContent strong { font-weight: 700; }
+#notifDetailContent i, #notifDetailContent em { font-style: italic; }
+#notifDetailContent u { text-decoration: underline; }
+#notifDetailContent s, #notifDetailContent strike, #notifDetailContent del { text-decoration: line-through; }
 .notif-empty {
   padding: 30px 16px;
   text-align: center;
@@ -2284,7 +2297,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v2.2 - (2026) 
+    CarRent v2.3 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -2768,6 +2781,56 @@ function truncateNotifText(str, maxLen) {
   return clean.length > maxLen ? clean.slice(0, maxLen).trim() + '…' : clean;
 }
 
+function escapeNotifText(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+// Nội dung thông báo do admin soạn có thể chứa các thẻ định dạng <b>/<i>/<u>/<s>
+// (xem tool admin, tab Thông báo). Hàm này quy nội dung về text thuần — dùng để hiển
+// thị phần preview rút gọn trong dropdown (preview không cần giữ định dạng).
+function notifMessageToPlainText(raw) {
+  if (!raw) return '';
+  const div = document.createElement('div');
+  div.innerHTML = raw;
+  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
+// Hiển thị đầy đủ định dạng (đậm/nghiêng/gạch chân/gạch ngang) khi xem chi tiết thông báo,
+// nhưng chỉ cho phép đúng các thẻ này lọt qua — mọi thẻ khác (kể cả thẻ lạ nếu dữ liệu trong
+// Firebase từng bị chỉnh tay) đều bị loại bỏ, chỉ giữ lại phần chữ bên trong.
+const NOTIF_ALLOWED_TAGS = { B: 'b', STRONG: 'b', I: 'i', EM: 'i', U: 'u', S: 's', STRIKE: 's', DEL: 's', BR: 'br' };
+function renderNotifMessageInto(container, raw) {
+  container.innerHTML = '';
+  const tpl = document.createElement('template');
+  tpl.innerHTML = raw || '';
+
+  function walk(srcNode, destParent) {
+    srcNode.childNodes.forEach(node => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        destParent.appendChild(document.createTextNode(node.textContent));
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+      const mapped = NOTIF_ALLOWED_TAGS[node.tagName];
+      if (mapped) {
+        const el = document.createElement(mapped);
+        walk(node, el);
+        destParent.appendChild(el);
+        return;
+      }
+      if (node.tagName === 'DIV' || node.tagName === 'P') {
+        if (destParent.lastChild) destParent.appendChild(document.createElement('br'));
+        walk(node, destParent);
+        return;
+      }
+      walk(node, destParent);
+    });
+  }
+  walk(tpl.content, container);
+}
+
 function formatNotifTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -2786,11 +2849,11 @@ function renderNotifDropdown() {
 
   listEl.innerHTML = notifications.map(n => {
     const isRead = !!n.read;
-    const preview = truncateNotifText(n.message, 80);
+    const preview = truncateNotifText(notifMessageToPlainText(n.message), 80);
     return `
       <div class="notif-item ${isRead ? 'read' : 'unread'}" onclick="openNotifDetail('${n.id}')">
-        <div class="notif-item-title">${n.title || 'Thông báo'}</div>
-        <div class="notif-item-preview">${preview}</div>
+        <div class="notif-item-title">${escapeNotifText(n.title || 'Thông báo')}</div>
+        <div class="notif-item-preview">${escapeNotifText(preview)}</div>
         <div class="notif-item-time">${formatNotifTime(n.createdAt)}</div>
       </div>
     `;
@@ -2834,7 +2897,7 @@ function openNotifDetail(id) {
 
   document.getElementById('notifDetailTitle').textContent = n.title || 'Thông báo';
   document.getElementById('notifDetailTime').textContent = formatNotifTime(n.createdAt);
-  document.getElementById('notifDetailContent').textContent = n.message || '';
+  renderNotifMessageInto(document.getElementById('notifDetailContent'), n.message || '');
   document.getElementById('notifDetailModal').style.display = 'flex';
 
   // Đánh dấu đã đọc trên Firebase (chỉ ghi nếu trước đó chưa đọc) — chỉ ghi đúng field "read"
@@ -4761,7 +4824,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v2.2 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v2.3 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
