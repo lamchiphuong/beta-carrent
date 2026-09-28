@@ -1278,7 +1278,7 @@ body.pro-mode #actionPopup {
 #completedContractTable th:first-child,
 #completedContractTable td:first-child {
   position: sticky; left: 0;
-  box-shadow: 4px 0 6px -3px rgba(15,23,42,0.18);
+  box-shadow: none !important;
 }
 #activeContractTable th:first-child,
 #completedContractTable th:first-child { z-index: 3; background: #f8fafc; }
@@ -1298,11 +1298,21 @@ body.pro-mode #actionPopup {
   #completedContractTable th, #completedContractTable td { padding: 8px 6px; font-size: 0.9rem; }
   #activeContractTable th:first-child, #activeContractTable td:first-child,
   #completedContractTable th:first-child, #completedContractTable td:first-child {
-    width: 96px; min-width: 96px; max-width: 96px;
+    width: 110px; min-width: 110px; max-width: 110px;
     white-space: normal; word-break: break-word; line-height: 1.25;
     font-size: 0.9rem; padding-left: 8px; padding-right: 6px;
   }
   #activeContractTable td:first-child strong, #completedContractTable td:first-child strong { font-size: 0.9rem; }
+}
+
+/* Khối tổng doanh thu / công nợ: xếp dọc trên điện thoại */
+.rev-debt .btn { white-space: nowrap; }
+@media (max-width: 768px) {
+  .rev-summary { flex-direction: column; align-items: stretch !important; }
+  .rev-summary #totalRevenue { font-size: 1.9rem !important; word-break: keep-all; }
+  .rev-debt { text-align: left !important; border-top: 1px dashed #bbf7d0; padding-top: 14px; width: 100%; }
+  .rev-debt h2 { font-size: 1.5rem; margin: 4px 0 12px 0 !important; }
+  .rev-debt .btn { width: 100%; justify-content: center; }
 }
 .tabs {
   box-shadow: 0 4px 6px rgba(15,23,42,0.04), 0 14px 32px rgba(15,23,42,0.12);
@@ -1648,12 +1658,12 @@ input:focus, select:focus, textarea:focus {
         </button>
       </div>
 
-      <div style="background:#f0fdf4; border-radius:16px; padding:20px; margin-bottom:25px; display:flex; justify-content:space-between; align-items:center;">
+      <div class="rev-summary" style="background:#f0fdf4; border-radius:16px; padding:20px; margin-bottom:25px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
         <div>
           <span id="revenueTitle" style="font-size:1.05rem; color:#166534;">Tổng doanh thu từ tất cả hợp đồng đã hoàn tất</span>
           <h1 id="totalRevenue" style="color:#16a34a; font-size:2.5rem; margin:8px 0 0 0;">0 ₫</h1>
         </div>
-        <div id="debtCard" style="text-align:right;display:none;">
+        <div id="debtCard" class="rev-debt" style="text-align:right;display:none;">
           <span style="font-size:1.05rem;color:#b91c1c;">Tổng công nợ khách còn nợ</span>
           <h2 id="totalDebt" style="color:#dc2626;margin:6px 0 10px 0;">0 ₫</h2>
           <button onclick="showDebtModal()" class="btn btn-danger">💸 Xem khách còn nợ (<span id="debtCount">0</span>)</button>
