@@ -1509,7 +1509,7 @@ input:focus, select:focus, textarea:focus {
               <th>Ngày thuê</th>
               <th>Ngày trả</th>
               <th>Tổng tiền</th>
-              <th>Cọc</th>
+              <th>Thanh toán</th>
               <th>Còn lại</th>
               <th>Trạng thái</th>
               <th>Ghi chú</th>
@@ -1615,6 +1615,11 @@ input:focus, select:focus, textarea:focus {
           <span id="revenueTitle" style="font-size:1.05rem; color:#166534;">Tổng doanh thu từ tất cả hợp đồng đã hoàn tất</span>
           <h1 id="totalRevenue" style="color:#16a34a; font-size:2.5rem; margin:8px 0 0 0;">0 ₫</h1>
         </div>
+        <div id="debtCard" style="text-align:right;display:none;">
+          <span style="font-size:1.05rem;color:#b91c1c;">Tổng công nợ khách còn nợ</span>
+          <h2 id="totalDebt" style="color:#dc2626;margin:6px 0 10px 0;">0 ₫</h2>
+          <button onclick="showDebtModal()" class="btn btn-danger">💸 Xem khách còn nợ (<span id="debtCount">0</span>)</button>
+        </div>
       </div>
 
       <div class="table-container">
@@ -1633,6 +1638,7 @@ input:focus, select:focus, textarea:focus {
               <th>Phụ phí</th>
               <th>Giảm giá</th>
               <th>Tổng doanh thu</th>
+              <th class="debt-col" style="display:none;">Còn nợ</th>
               <th>Ghi chú lịch sử</th>
               <th>Hành động</th>
             </tr>
@@ -2222,6 +2228,45 @@ input:focus, select:focus, textarea:focus {
     </div>
   </div>
 
+  <!-- Pay Modal (nhận/trả xe chưa thu đủ) -->
+  <div id="payModal" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+      <div class="modal-header" style="justify-content:center;flex-direction:column;text-align:center;">
+        <div id="payIcon" class="confirm-icon"></div>
+        <h2 id="payTitle" class="confirm-title"></h2>
+        <span class="close" onclick="closePayModal()" style="position:absolute;top:15px;right:20px;">×</span>
+      </div>
+      <div id="payMessage" class="confirm-message"></div>
+      <div id="payInputWrap" style="display:none;margin-bottom:20px;">
+        <label style="display:block;font-weight:600;color:#475569;margin-bottom:6px;">Số tiền khách thanh toán thêm (VNĐ)</label>
+        <input type="text" id="payAmountInput" inputmode="numeric" placeholder="Ví dụ: 500 000" oninput="formatPriceInput(event);updatePayInfo()" style="width:100%;margin-bottom:8px;">
+        <div id="payAfterInfo" style="font-size:0.95rem;color:#ea580c;font-weight:600;"></div>
+      </div>
+      <div id="payBtnsStep1" class="confirm-buttons">
+        <button class="btn btn-warning" onclick="payChoosePartial()">Chưa thu đủ</button>
+        <button class="btn btn-success" onclick="payFinish(true)">Đã thu đủ</button>
+      </div>
+      <div id="payBtnsStep2" class="confirm-buttons" style="display:none;">
+        <button class="btn btn-secondary" onclick="payBackStep1()">Quay lại</button>
+        <button class="btn btn-primary" onclick="payFinish(false)">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Debt Modal -->
+  <div id="debtModal" class="modal">
+    <div class="modal-content" style="max-width:860px;">
+      <div class="modal-header">
+        <h2>💸 Khách còn nợ</h2>
+        <span class="close" onclick="closeDebtModal()">×</span>
+      </div>
+      <div id="debtSummary" style="background:#fef2f2;border-radius:14px;padding:14px 18px;margin-bottom:14px;font-weight:700;color:#b91c1c;"></div>
+      <input type="text" id="debtSearchInput" oninput="renderDebtList()" placeholder="Tìm tên khách, SĐT, biển số..." style="width:100%;margin-bottom:14px;">
+      <div id="debtList" style="max-height:60vh;overflow:auto;"></div>
+      <div style="text-align:center;margin-top:16px;"><button onclick="closeDebtModal()" class="btn btn-secondary" style="min-width:160px;">Đóng</button></div>
+    </div>
+  </div>
+
   <!-- Simple Confirm Modal -->
   <div id="simpleConfirmModal" class="modal">
     <div class="modal-content" style="max-width: 480px;">
@@ -2297,7 +2342,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v2.3 - (2026) 
+    CarRent v2.4 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -3205,7 +3250,29 @@ function calculateDays(rent, ret) {
 }
 
 function calculateRemaining(c) {
-  return (c.fullPaymentReceived || c.status === "Đã hoàn tất") ? 0 : calculateTotal(c) - (c.deposit || 0);
+  if (c.fullPaymentReceived || c.status === "Đã hoàn tất") return 0;
+  return Math.max(0, calculateTotal(c) - (c.deposit || 0) - (c.extraPaid || 0));
+}
+
+// Số tiền khách đã thanh toán (cọc + các khoản trả thêm)
+function getPaidAmount(c) {
+  if (c.status === "Đã hoàn tất") {
+    const d = getCompletedDisplay(c);
+    return Math.max(0, (d.totalAmount || 0) - getDebt(c));
+  }
+  if (c.fullPaymentReceived) return calculateTotal(c);
+  return (c.deposit || 0) + (c.extraPaid || 0);
+}
+function hasPaidBeyondDeposit(c) { return !!(c.fullPaymentReceived || (c.extraPaid || 0) > 0 || c.status === "Đã hoàn tất"); }
+function paidLabelHTML(c) {
+  return hasPaidBeyondDeposit(c) ? '<small style="color:#16a34a;">đã thanh toán</small>' : '<small style="color:#64748b;">cọc</small>';
+}
+
+// Công nợ còn lại của hợp đồng đã hoàn tất
+function getDebtPaid(c) { return (c.debtPayments || []).reduce((s, p) => s + (p.amount || 0), 0); }
+function getDebt(c) {
+  if (!c.debtAmount) return 0;
+  return Math.max(0, c.debtAmount - getDebtPaid(c));
 }
 
 function freezeContract(contract) {
@@ -3431,7 +3498,7 @@ function showActionPopup(id) {
         ${contract.rentDayType === "homtruoc" ? '(tối hôm trước)' : ''}${rentHalfText}<br>
         <strong>Trả:</strong> ${formatDate(contract.returnDate)} ${contract.returnTime || ''}${returnHalfText}<br>
         <strong>Tổng tiền:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(calculateTotal(contract))} ₫</span><br>
-        <strong>Đã thanh toán:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(contract.fullPaymentReceived ? calculateTotal(contract) : (contract.deposit || 0))} ₫</span><br>
+        <strong>Đã thanh toán:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(getPaidAmount(contract))} ₫</span> ${paidLabelHTML(contract)}<br>
         <strong>Còn lại:</strong> <span style="color:${calculateRemaining(contract) === 0 ? '#16a34a' : '#ea580c'};">${formatMoney(calculateRemaining(contract))} ₫</span>
     `;
     document.getElementById('popupContractInfo').innerHTML = infoHTML;
@@ -3880,7 +3947,7 @@ function renderActiveContracts() {
         <td>${formatDate(contract.rentDate)}<br>${rentNote}</td>
         <td>${formatDate(contract.returnDate)}<br>${returnNote}</td>
         <td>${totalHTML}</td>
-        <td style="color:#16a34a;font-weight:600;">${formatMoney(contract.deposit||0)} ₫</td>
+        <td style="color:#16a34a;font-weight:600;">${formatMoney(getPaidAmount(contract))} ₫<br>${paidLabelHTML(contract)}</td>
         <td style="color:${remain===0?'#16a34a':'#ea580c'};font-weight:600;">
           ${remain === 0 ? `0 ₫ <small style="color:#16a34a;">(Đã thu đủ)</small>` : `${formatMoney(remain)} ₫`}
         </td>
@@ -4042,6 +4109,8 @@ function renderCompletedContracts() {
   const tbody = document.getElementById('completedContractBody');
   tbody.innerHTML = '';
   let totalRevenue = 0;
+  updateDebtSummaryUI();
+  window._hasDebt = getDebtContracts().length > 0;
 
   let filtered = contracts.filter(c => c.status === "Đã hoàn tất");
 
@@ -4099,6 +4168,7 @@ function renderCompletedContracts() {
       <td style="text-align:right;">${formatMoney(Array.isArray(d.extraFees) ? d.extraFees.reduce((s,f)=>s+(f.amount||0),0) : 0)} ₫</td>
       <td style="text-align:right;">${formatMoney(d.discount)} ₫</td>
       <td style="color:#16a34a;font-weight:700;text-align:right;">${formatMoney(d.totalAmount)} ₫</td>
+      <td class="debt-col" style="display:${window._hasDebt ? '' : 'none'};text-align:right;font-weight:700;color:${getDebt(contract) > 0 ? '#dc2626' : '#94a3b8'};">${getDebt(contract) > 0 ? formatMoney(getDebt(contract)) + ' ₫' : (contract.debtAmount ? '<small style="color:#16a34a;">Đã trả hết nợ</small>' : '—')}</td>
       <td>${noteShort}</td>
       <td><button onclick="openHistoryNoteModal(${contract.id}); event.stopImmediatePropagation();" class="btn btn-note" style="padding:8px 12px;">📝 Sửa</button></td>
     `;
@@ -4438,46 +4508,210 @@ function deleteContract(id) {
   });
 }
 
+let payModalState = null;
+
+function showPayModal(opts) {
+  payModalState = opts;
+  document.getElementById('payTitle').textContent = opts.title;
+  document.getElementById('payIcon').innerHTML = opts.icon;
+  document.getElementById('payMessage').innerHTML = opts.message;
+  document.getElementById('payAmountInput').value = '';
+  payBackStep1();
+  document.getElementById('payModal').style.display = 'flex';
+}
+function closePayModal() { document.getElementById('payModal').style.display = 'none'; payModalState = null; }
+function payChoosePartial() {
+  document.getElementById('payInputWrap').style.display = 'block';
+  document.getElementById('payBtnsStep1').style.display = 'none';
+  document.getElementById('payBtnsStep2').style.display = 'flex';
+  updatePayInfo();
+  setTimeout(() => document.getElementById('payAmountInput').focus(), 50);
+}
+function payBackStep1() {
+  document.getElementById('payInputWrap').style.display = 'none';
+  document.getElementById('payBtnsStep1').style.display = 'flex';
+  document.getElementById('payBtnsStep2').style.display = 'none';
+}
+function updatePayInfo() {
+  if (!payModalState) return;
+  const paid = parseMoney(document.getElementById('payAmountInput').value);
+  const left = payModalState.remaining - paid;
+  const el = document.getElementById('payAfterInfo');
+  if (paid > payModalState.remaining) el.innerHTML = '⚠️ Số tiền vượt quá số còn phải thu (' + formatMoney(payModalState.remaining) + ' ₫)';
+  else if (left === 0) el.innerHTML = '<span style="color:#16a34a;">Khách đã thanh toán đủ</span>';
+  else el.innerHTML = 'Sau khi ghi nhận, khách còn thiếu: ' + formatMoney(left) + ' ₫' + (payModalState.debtHint ? ' (chuyển thành nợ)' : '');
+}
+function payFinish(isFull) {
+  const st = payModalState;
+  if (!st) return;
+  let paidNow;
+  if (isFull) paidNow = st.remaining;
+  else {
+    paidNow = parseMoney(document.getElementById('payAmountInput').value);
+    if (paidNow > st.remaining) { showToast('Số tiền vượt quá số còn phải thu!'); return; }
+  }
+  closePayModal();
+  st.onConfirm(paidNow >= st.remaining, paidNow);
+}
+
 function confirmReceive(id) {
   if (!guardAgainstLock()) return;
   const contract = contracts.find(c => c.id === id);
   if (!contract) return;
 
-  const rental = calculateRentalTotal(contract);
-  const extra = calculateExtraTotal(contract);
-  const discountAmt = contract.discount || 0;
-  const total = rental + extra - discountAmt;
-  const remaining = total - (contract.deposit || 0);
+  const total = calculateTotal(contract);
+  const remaining = calculateRemaining(contract);
   const days = calculateDays(contract.rentDate, contract.returnDate);
 
   const message = `Khách: ${contract.customer}<br>SĐT: ${contract.phone}<br>Xe: ${contract.carType} - ${contract.plate}<br>
   Nhận: ${formatDate(contract.rentDate)} ${contract.rentTime || ''}<br>
   Trả: ${formatDate(contract.returnDate)} ${contract.returnTime || ''} (${days} ngày)<br><br>
   Tổng tiền: ${formatMoney(total)} ₫<br>
-  Đã cọc: ${formatMoney(contract.deposit || 0)} ₫<br>
-  Còn phải thu: ${formatMoney(remaining)} ₫`;
+  Đã thanh toán: ${formatMoney(getPaidAmount(contract))} ₫<br>
+  <strong>Còn phải thu: ${formatMoney(remaining)} ₫</strong>`;
 
-  showConfirm("Xác nhận nhận xe", message, "🚗", (isPaidFull) => {
-    contract.status = "Đang thuê";
-    contract.fullPaymentReceived = isPaidFull;
-    renderAll();
-    saveData();
-    showToast(isPaidFull ? "Đã nhận xe và thu đủ tiền!" : `Đã nhận xe. Còn phải thu: ${formatMoney(remaining)} ₫`);
+  showPayModal({
+    title: "Xác nhận nhận xe", icon: "🚗", message, remaining, debtHint: false,
+    onConfirm: (isFull, paidNow) => {
+      contract.status = "Đang thuê";
+      if (isFull) contract.fullPaymentReceived = true;
+      else { contract.fullPaymentReceived = false; contract.extraPaid = (contract.extraPaid || 0) + paidNow; }
+      renderAll();
+      saveData();
+      showToast(isFull ? "Đã nhận xe và thu đủ tiền!" : `Đã nhận xe. Còn phải thu: ${formatMoney(remaining - paidNow)} ₫`);
+    }
   });
+}
+
+function finishReturn(contract, isFull, paidNow, remaining) {
+  if (isFull) {
+    contract.fullPaymentReceived = true;
+  } else {
+    contract.extraPaid = (contract.extraPaid || 0) + paidNow;
+    const debt = remaining - paidNow;
+    if (debt > 0) {
+      contract.debtAmount = debt;
+      contract.debtPayments = [];
+      contract.debtDate = new Date().toISOString().split('T')[0];
+    }
+  }
+  freezeContract(contract);
+  contract.status = "Đã hoàn tất";
+  renderAll();
+  saveData();
+  showToast(contract.debtAmount ? `Hợp đồng hoàn tất. Khách còn nợ ${formatMoney(getDebt(contract))} ₫` : "Hợp đồng đã hoàn tất!");
 }
 
 function confirmReturn(id) {
   if (!guardAgainstLock()) return;
-  showConfirm("Xác nhận trả xe", "Bạn chắc chắn khách đã trả xe?<br><strong>Toàn bộ thông tin sẽ được lưu lại.</strong>", "🔄", () => {
-    const contract = contracts.find(c => c.id === id);
-    if (contract) {
-      freezeContract(contract);
-      contract.status = "Đã hoàn tất";
-    }
-    renderAll();
-    saveData();
-    showToast("Hợp đồng đã hoàn tất!");
+  const contract = contracts.find(c => c.id === id);
+  if (!contract) return;
+  const remaining = calculateRemaining(contract);
+
+  if (remaining <= 0) {
+    showConfirm("Xác nhận trả xe", "Bạn chắc chắn khách đã trả xe?<br><strong>Toàn bộ thông tin sẽ được lưu lại.</strong>", "🔄", () => {
+      finishReturn(contract, true, 0, 0);
+    });
+    return;
+  }
+
+  const message = `Khách: ${contract.customer} - ${contract.plate}<br><br>
+  Tổng tiền: ${formatMoney(calculateTotal(contract))} ₫<br>
+  Đã thanh toán: ${formatMoney(getPaidAmount(contract))} ₫<br>
+  <strong>Còn phải thu: ${formatMoney(remaining)} ₫</strong><br><br>
+  <small>Nếu chưa thu đủ, số tiền còn thiếu sẽ chuyển thành nợ.</small>`;
+
+  showPayModal({
+    title: "Xác nhận trả xe", icon: "🔄", message, remaining, debtHint: true,
+    onConfirm: (isFull, paidNow) => finishReturn(contract, isFull, paidNow, remaining)
   });
+}
+
+// ====================== CÔNG NỢ ======================
+function getDebtContracts() {
+  return contracts.filter(c => c.status === "Đã hoàn tất" && c.debtAmount > 0 && getDebt(c) > 0);
+}
+
+function updateDebtSummaryUI() {
+  const list = getDebtContracts();
+  const total = list.reduce((sum, c) => sum + getDebt(c), 0);
+  const t = document.getElementById('totalDebt'), n = document.getElementById('debtCount');
+  if (t) t.textContent = formatMoney(total) + ' ₫';
+  const card = document.getElementById('debtCard');
+  if (card) card.style.display = list.length > 0 ? 'block' : 'none';
+  document.querySelectorAll('th.debt-col').forEach(th => th.style.display = list.length > 0 ? '' : 'none');
+  if (n) n.textContent = new Set(list.map(c => (c.phone || c.customer || '').trim())).size;
+}
+
+function showDebtModal() {
+  document.getElementById('debtSearchInput').value = '';
+  renderDebtList();
+  document.getElementById('debtModal').style.display = 'flex';
+}
+function closeDebtModal() { document.getElementById('debtModal').style.display = 'none'; }
+
+function renderDebtList() {
+  const term = (document.getElementById('debtSearchInput').value || '').toLowerCase().trim();
+  let list = getDebtContracts();
+  const total = list.reduce((sum, c) => sum + getDebt(c), 0);
+
+  // gom theo khách
+  const groups = {};
+  list.forEach(c => {
+    const d = getCompletedDisplay(c);
+    const hay = `${d.customer||''} ${d.phone||''} ${d.plate||''}`.toLowerCase();
+    if (term && !hay.includes(term)) return;
+    const key = (d.phone || d.customer || '').trim();
+    (groups[key] = groups[key] || { name: d.customer, phone: d.phone, items: [] }).items.push(c);
+  });
+  const arr = Object.values(groups).sort((a, b) =>
+    b.items.reduce((s, c) => s + getDebt(c), 0) - a.items.reduce((s, c) => s + getDebt(c), 0));
+
+  document.getElementById('debtSummary').textContent =
+    `Tổng nợ: ${formatMoney(total)} ₫ — ${new Set(list.map(c => (c.phone || c.customer || '').trim())).size} khách`;
+
+  const box = document.getElementById('debtList');
+  if (arr.length === 0) { box.innerHTML = '<p style="text-align:center;color:#16a34a;padding:30px;">🎉 Không có khách nào còn nợ</p>'; return; }
+
+  box.innerHTML = arr.map(g => {
+    const sum = g.items.reduce((s, c) => s + getDebt(c), 0);
+    const rows = g.items.map(c => {
+      const d = getCompletedDisplay(c);
+      const hist = (c.debtPayments || []).map(p => `${formatDate(p.date)}: ${formatMoney(p.amount)} ₫`).join(' • ');
+      return `<div style="padding:12px 0;border-top:1px dashed #e2e8f0;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+          <span>${d.carType || ''} - <strong>${d.plate || ''}</strong> · ${formatDate(d.rentDate)} → ${formatDate(d.returnDate)}</span>
+          <span>Tổng ${formatMoney(d.totalAmount)} ₫ · Nợ gốc ${formatMoney(c.debtAmount)} ₫ · <strong style="color:#dc2626;">Còn nợ ${formatMoney(getDebt(c))} ₫</strong></span>
+        </div>
+        ${hist ? `<div style="font-size:0.85rem;color:#64748b;margin-top:4px;">Đã thu nợ: ${hist}</div>` : ''}
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <input type="text" id="debtAmt_${c.id}" inputmode="numeric" placeholder="Số tiền thu" oninput="formatPriceInput(event)" style="flex:1;min-width:140px;margin:0;">
+          <button class="btn btn-primary" onclick="collectDebt(${c.id}, false)">Thu một phần</button>
+          <button class="btn btn-success" onclick="collectDebt(${c.id}, true)">Thu đủ</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="background:#fff;border:2px solid #fecaca;border-radius:14px;padding:14px 18px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:1.1rem;">${g.name || ''} <span style="color:#64748b;font-weight:400;">${g.phone || ''}</span></strong>
+        <strong style="color:#dc2626;">${formatMoney(sum)} ₫</strong>
+      </div>${rows}</div>`;
+  }).join('');
+}
+
+function collectDebt(id, full) {
+  const c = contracts.find(x => x.id === id);
+  if (!c) return;
+  const debt = getDebt(c);
+  let amt = full ? debt : parseMoney(document.getElementById('debtAmt_' + id).value);
+  if (amt <= 0) { showToast('Vui lòng nhập số tiền thu'); return; }
+  if (amt > debt) { showToast('Số tiền vượt quá số còn nợ!'); return; }
+  c.debtPayments = c.debtPayments || [];
+  c.debtPayments.push({ date: new Date().toISOString().split('T')[0], amount: amt });
+  saveData();
+  renderAll();
+  renderDebtList();
+  showToast(getDebt(c) === 0 ? 'Khách đã trả hết nợ!' : `Đã thu ${formatMoney(amt)} ₫. Còn nợ ${formatMoney(getDebt(c))} ₫`);
 }
 
 function editCar(id) {
@@ -4824,7 +5058,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v2.3 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v2.4 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
@@ -5525,7 +5759,7 @@ function viewContract(id) {
   const extra = calculateExtraTotal(contract);
   const discount = contract.discount || 0;
   const deposit = contract.deposit || 0;
-  const remaining = calculateRemaining(contract);
+  const remaining = contract.status === "Đã hoàn tất" ? getDebt(contract) : calculateRemaining(contract);
 
   // === TÍNH NGÀY NHẬN XE THỰC TẾ ===
   let displayReceiveDate = formatDate(contract.rentDate);
@@ -5538,11 +5772,10 @@ function viewContract(id) {
   }
 
   // === LOGIC HIỂN THỊ TIỀN ĐÃ THANH TOÁN ===
-  let paidAmount = deposit;
-  let paidLabel = "Số tiền đã thanh toán (cọc)";
-
-  if (contract.fullPaymentReceived || contract.status === "Đã hoàn tất") {
-    paidAmount = total;
+  let paidAmount = getPaidAmount(contract);
+  let paidLabel = hasPaidBeyondDeposit(contract) ? "Số tiền đã thanh toán" : "Số tiền đã thanh toán (cọc)";
+  const debtLeft = getDebt(contract);
+  if (contract.fullPaymentReceived || (contract.status === "Đã hoàn tất" && !contract.debtAmount)) {
     paidLabel = "Số tiền đã thanh toán <strong style='color:#16a34a'>(ĐÃ THU ĐỦ)</strong>";
   }
 
@@ -5572,7 +5805,7 @@ function viewContract(id) {
       <strong>Giảm giá:</strong> <span style="color:#16a34a;">-${formatMoney(discount)} ₫</span><br>
       <strong><span style="color:#1e40af;">TỔNG TIỀN:</span></strong> <span style="color:#16a34a; font-weight:700; font-size:1.1em;">${formatMoney(total)} ₫</span><br>
       <strong>${paidLabel}:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(paidAmount)} ₫</span><br>
-      <strong>Còn lại phải thu:</strong> <span style="color:${remaining === 0 ? '#16a34a' : '#ea580c'}; font-weight:700;">${formatMoney(remaining)} ₫</span>
+      <strong>${contract.status === "Đã hoàn tất" && contract.debtAmount ? "CÒN NỢ" : "Còn lại phải thu"}:</strong> <span style="color:${remaining === 0 ? '#16a34a' : '#ea580c'}; font-weight:700;">${formatMoney(remaining)} ₫</span>
     </div>
   `;
 
