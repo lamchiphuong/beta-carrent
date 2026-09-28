@@ -1290,6 +1290,20 @@ body.pro-mode #actionPopup {
 #activeContractTable tr.dang-thue-normal td:first-child { background: #dbeafe !important; }
 #activeContractTable tr:hover td:first-child,
 #completedContractTable tr:hover td:first-child { background: #f1f5f9 !important; }
+
+/* Điện thoại: thu nhỏ chữ bảng, cột Khách hàng gọn lại để không che nội dung khi cuộn */
+@media (max-width: 768px) {
+  #activeContractTable, #completedContractTable { min-width: 1400px; font-size: 0.8rem; }
+  #activeContractTable th, #activeContractTable td,
+  #completedContractTable th, #completedContractTable td { padding: 8px 6px; font-size: 0.8rem; }
+  #activeContractTable th:first-child, #activeContractTable td:first-child,
+  #completedContractTable th:first-child, #completedContractTable td:first-child {
+    width: 84px; min-width: 84px; max-width: 84px;
+    white-space: normal; word-break: break-word; line-height: 1.25;
+    font-size: 0.78rem; padding-left: 8px; padding-right: 6px;
+  }
+  #activeContractTable td:first-child strong, #completedContractTable td:first-child strong { font-size: 0.78rem; }
+}
 .tabs {
   box-shadow: 0 4px 6px rgba(15,23,42,0.04), 0 14px 32px rgba(15,23,42,0.12);
 }
