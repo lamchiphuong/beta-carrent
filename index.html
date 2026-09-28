@@ -76,7 +76,7 @@
 
     .tabs {
       display: flex;
-      background: white;
+      background: #e8ecf1;
       border-radius: 16px;
       padding: 6px;
       box-shadow: 0 8px 25px rgba(0,0,0,0.1);
@@ -1266,6 +1266,30 @@ body.pro-mode #actionPopup {
 }
 
 /* Thanh tab: bóng nổi rõ hơn */
+
+/* Thanh lọc lịch sử & doanh thu: các ô cùng chiều cao, thẳng hàng */
+.rev-filter label { display:block; line-height:1.2; margin-bottom:6px !important; white-space:nowrap; }
+.rev-filter input, .rev-filter select { height:48px !important; margin:0 !important; box-sizing:border-box !important; padding-top:0 !important; padding-bottom:0 !important; }
+.rev-filter .btn { height:48px !important; margin:0; white-space:nowrap; padding-left:16px; padding-right:16px; }
+
+/* Cố định cột Khách hàng khi cuộn ngang (Quản lý hợp đồng) */
+#activeContractTable th:first-child,
+#activeContractTable td:first-child,
+#completedContractTable th:first-child,
+#completedContractTable td:first-child {
+  position: sticky; left: 0;
+  box-shadow: 4px 0 6px -3px rgba(15,23,42,0.18);
+}
+#activeContractTable th:first-child,
+#completedContractTable th:first-child { z-index: 3; background: #f8fafc; }
+#activeContractTable td:first-child,
+#completedContractTable td:first-child { z-index: 2; background: #fff; }
+#activeContractTable tr.waiting-today td:first-child { background: #d1fae5 !important; }
+#activeContractTable tr.due-today td:first-child { background: #fef3c7 !important; }
+#activeContractTable tr.overdue td:first-child { background: #fee2e2 !important; }
+#activeContractTable tr.dang-thue-normal td:first-child { background: #dbeafe !important; }
+#activeContractTable tr:hover td:first-child,
+#completedContractTable tr:hover td:first-child { background: #f1f5f9 !important; }
 .tabs {
   box-shadow: 0 4px 6px rgba(15,23,42,0.04), 0 14px 32px rgba(15,23,42,0.12);
 }
@@ -1273,7 +1297,7 @@ body.pro-mode #actionPopup {
   box-shadow: 0 6px 16px rgba(37,99,235,0.35), 0 2px 4px rgba(37,99,235,0.2);
 }
 .tab:not(.active):hover {
-  background: #f1f5f9;
+  background: #dbe1e8;
   transform: translateY(-1px);
 }
 
@@ -1499,7 +1523,7 @@ input:focus, select:focus, textarea:focus {
       </div>
 
       <div class="table-container">
-        <table>
+        <table id="activeContractTable">
           <thead>
             <tr>
               <th>Khách hàng</th>
@@ -1551,8 +1575,8 @@ input:focus, select:focus, textarea:focus {
     <div id="tab2" class="card" style="display: none;">
       <h2><i class="fas fa-history"></i> Lịch sử hợp đồng & Doanh thu</h2>
       
-      <div style="margin: 20px 0; padding: 20px; background: #f8fafc; border-radius: 16px; display: flex; gap: 15px; flex-wrap: wrap; align-items: end;">
-        <div style="flex: 1; min-width: 220px;">
+      <div class="rev-filter" style="margin: 20px 0; padding: 20px; background: #f8fafc; border-radius: 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+        <div style="flex: 1; min-width: 160px;">
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Tìm hợp đồng</label>
           <input type="text" id="revenueSearchInput" oninput="filterCompletedContracts()"
                  placeholder="Tên khách, SĐT, biển số..."
@@ -1561,13 +1585,13 @@ input:focus, select:focus, textarea:focus {
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Năm</label>
           <select id="revenueYearFilter" onchange="filterCompletedContracts()" 
-                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:140px;">
+                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:110px;">
           </select>
         </div>
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Tháng</label>
           <select id="revenueMonthFilter" onchange="filterCompletedContracts()" 
-                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:160px;">
+                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:130px;">
             <option value="">Tất cả tháng</option>
             <option value="1">Tháng 1</option>
             <option value="2">Tháng 2</option>
@@ -1586,7 +1610,7 @@ input:focus, select:focus, textarea:focus {
         <div>
           <label style="display:block; font-weight:600; margin-bottom:5px; color:#475569;">Xe</label>
           <select id="revenueCarFilter" onchange="filterCompletedContracts()" 
-                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:220px;">
+                  style="padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; min-width:190px;">
             <option value="">Tất cả xe</option>
           </select>
         </div>
@@ -1623,7 +1647,7 @@ input:focus, select:focus, textarea:focus {
       </div>
 
       <div class="table-container">
-        <table>
+        <table id="completedContractTable">
           <thead>
             <tr>
               <th>Khách hàng</th>
@@ -2342,7 +2366,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v2.4 - (2026) 
+    CarRent v2.3 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -5058,7 +5082,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v2.4 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v2.3 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
