@@ -1463,6 +1463,28 @@ input:focus, select:focus, textarea:focus {
   #activeContractTable th:first-child, #completedContractTable th:first-child { padding-left: 13px; }
 }
 
+/* --- 1b) Bảng Quản lý xe: cùng style (vạch xanh đầu hàng, khoảng trống giữa các hàng) --- */
+#carTable { border-collapse: separate; border-spacing: 0 8px; }
+#carTable tr { background: transparent !important; }
+#carTable td { background: #f8fafc; border-bottom: none; }
+#carTable tbody tr:hover td { background: #f1f5f9 !important; }
+#carTable td:first-child {
+  border-radius: 12px 0 0 12px;
+  box-shadow: inset 5px 0 0 var(--primary);
+  padding-left: 18px;
+}
+#carTable th:first-child { border-radius: 12px 0 0 12px; padding-left: 18px; }
+/* Cột Xe (đã gộp loại xe + biển số): thu hẹp, tên xe dài thì xuống dòng */
+#carTable th:first-child, #carTable td:first-child {
+  width: 170px; min-width: 150px; max-width: 170px;
+  white-space: normal; word-break: break-word; line-height: 1.35;
+}
+#carTable td:last-child, #carTable th:last-child { border-radius: 0 12px 12px 0; }
+@media (max-width: 768px) {
+  #carTable { border-spacing: 0 6px; }
+  #carTable td:first-child, #carTable th:first-child { padding-left: 13px; }
+}
+
 /* --- 2) Pop-up: zoom in khi mở, zoom out khi đóng --- */
 @keyframes uiZoomIn {
   0%   { transform: scale(.82); opacity: 0; }
@@ -1675,12 +1697,11 @@ body { overflow-x: clip; }
         </button>
       </div>
       <div class="table-container">
-        <table>
+        <table id="carTable">
           <thead>
             <tr>
-              <th>Loại xe</th>
-              <th>Biển số</th>
-              <th>Trạng thái xe</th>
+              <th>Xe</th>
+              <th>Trạng thái hôm nay</th>
               <th>Giá ngày thường</th>
               <th>Giá cuối tuần</th>
               <th>Giá lễ/Tết</th>
@@ -4120,11 +4141,21 @@ function getRowClass(contract) {
 function renderCars() {
   const tbody = document.getElementById('carBody');
   tbody.innerHTML = '';
+
+  const _n = new Date();
+  const todayLocalStr = `${_n.getFullYear()}-${String(_n.getMonth() + 1).padStart(2, '0')}-${String(_n.getDate()).padStart(2, '0')}`;
   
   cars.forEach(car => {
-    const busy = contracts.some(c => c.plate === car.plate && c.status !== "Đã hoàn tất");
+    // Trạng thái HÔM NAY: có hợp đồng chưa hoàn tất mà hôm nay nằm trong [ngày nhận, ngày trả]
+    // (cùng cách tính ngày "booked" với lịch xe)
+    const busy = contracts.some(c =>
+      c.plate === car.plate && c.status !== "Đã hoàn tất" &&
+      c.rentDate && c.returnDate &&
+      String(c.rentDate).slice(0, 10) <= todayLocalStr &&
+      todayLocalStr <= String(c.returnDate).slice(0, 10)
+    );
     const statusHTML = busy ? 
-      `<span class="status busy">Đang có lịch</span>` : 
+      `<span class="status busy">Đang cho thuê</span>` : 
       `<span class="status available">Đang rảnh</span>`;
 
     const tr = document.createElement('tr');
@@ -4136,8 +4167,10 @@ function renderCars() {
     };
 
     tr.innerHTML = `
-      <td>${car.type}</td>
-      <td><strong>${car.plate}</strong></td>
+      <td>
+        ${car.type || ''}<br>
+        <span style="color:#1e40af;font-weight:600;">${car.plate || ''}</span>
+      </td>
       <td>${statusHTML}</td>
       <td>${formatMoney(car.daily)} ₫</td>
       <td>${formatMoney(car.weekend)} ₫</td>
@@ -4148,15 +4181,17 @@ function renderCars() {
           📅 Xem lịch
         </button>
       </td>
-      <td style="display:flex; gap:6px;">
-        <button onclick="editCar(${car.id}); event.stopImmediatePropagation();" 
-                class="btn btn-edit" style="padding:8px 12px;">
-          <i class="fas fa-edit"></i>
-        </button>
-        <button onclick="deleteCar(${car.id}); event.stopImmediatePropagation();" 
-                class="btn btn-danger" style="padding:8px 12px;">
-          <i class="fas fa-trash"></i>
-        </button>
+      <td>
+        <div style="display:flex; gap:6px;">
+          <button onclick="editCar(${car.id}); event.stopImmediatePropagation();" 
+                  class="btn btn-edit" style="padding:8px 12px;">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button onclick="deleteCar(${car.id}); event.stopImmediatePropagation();" 
+                  class="btn btn-danger" style="padding:8px 12px;">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
