@@ -1597,7 +1597,7 @@ body { overflow-x: clip; }
       <div class="splash-car"><i class="fas fa-car"></i></div>
     </div>
     <h1 class="splash-title">CarRent</h1>
-    <p class="splash-sub">Quản lý thuê xe thông minh<span class="splash-dots"><span>.</span><span>.</span><span>.</span></span></p>
+    <p class="splash-sub">Đang đăng nhập<span class="splash-dots"><span>.</span><span>.</span><span>.</span></span></p>
   </div>
 
   <!-- ==================== LOGIN SCREEN ==================== -->
@@ -1853,9 +1853,9 @@ body { overflow-x: clip; }
               <th>Tiền thuê xe</th>
               <th>Phụ phí</th>
               <th>Giảm giá</th>
-              <th>Tổng doanh thu</th>
+              <th>Doanh thu</th>
               <th class="debt-col" style="display:none;">Còn nợ</th>
-              <th>Ghi chú lịch sử</th>
+              <th>Ghi chú</th>
               <th>Hành động</th>
             </tr>
           </thead>
@@ -2372,14 +2372,14 @@ body { overflow-x: clip; }
   <div id="historyNoteModal" class="modal">
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
-        <h2 id="historyNoteModalTitle">Ghi chú lịch sử</h2>
+        <h2 id="historyNoteModalTitle">Ghi chú</h2>
         <span class="close" onclick="closeHistoryNoteModal()">×</span>
       </div>
       <textarea id="historyNoteText" rows="6" style="width:100%; resize:vertical;" placeholder="Nhập ghi chú cho hợp đồng đã hoàn tất..."></textarea>
       <input type="hidden" id="historyNoteContractId">
       <div style="margin-top:20px; display:flex; gap:12px;">
         <button onclick="closeHistoryNoteModal()" class="btn btn-secondary" style="flex:1;">Huỷ</button>
-        <button onclick="saveHistoryNote()" class="btn btn-primary" style="flex:1;">Lưu ghi chú lịch sử</button>
+        <button onclick="saveHistoryNote()" class="btn btn-primary" style="flex:1;">Lưu ghi chú</button>
       </div>
     </div>
   </div>
@@ -3397,12 +3397,36 @@ function retryLoad() {
   loadData();
 }
 
+// Firebase Realtime DB TỪ CHỐI toàn bộ lệnh ghi nếu có giá trị undefined / NaN / Infinity
+// (hợp đồng cũ thiếu vài trường như rentDayType, rentTime... là dính ngay lỗi này).
+// Hàm này tạo bản sao đã làm sạch để gửi đi, không đụng tới dữ liệu đang dùng trên màn hình.
+function cleanForFirebase(v) {
+  if (Array.isArray(v)) return v.filter(x => x !== undefined).map(cleanForFirebase);
+  if (v && typeof v === 'object') {
+    const o = {};
+    Object.keys(v).forEach(k => {
+      if (v[k] === undefined) return;
+      o[k] = cleanForFirebase(v[k]);
+    });
+    return o;
+  }
+  if (typeof v === 'number' && !isFinite(v)) return 0;
+  return v;
+}
+
+// Ngày hôm nay theo GIỜ ĐỊA PHƯƠNG (toISOString dùng UTC nên trước 7h sáng ở VN sẽ bị lùi 1 ngày)
+function todayLocal() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+
 async function saveData() {
   try {
     console.log("🔄 Đang lưu dữ liệu...");
     // Dùng update() thay vì set() để KHÔNG xoá mất các nhánh khác
     // của user (profile, subscription, notifications, proLicense...)
-    await dataRef.update({ cars: cars, contracts: contracts });
+    await dataRef.update({ cars: cleanForFirebase(cars), contracts: cleanForFirebase(contracts) });
     console.log("✅ Lưu thành công!");
     return true;
   } catch (e) {
@@ -3505,6 +3529,13 @@ function getDebt(c) {
   return Math.max(0, c.debtAmount - getDebtPaid(c));
 }
 
+// DOANH THU THỰC THU của 1 hợp đồng = tổng tiền hợp đồng - công nợ khách còn nợ.
+// Khách trả nợ dần thì doanh thu tăng dần theo số tiền đã thanh toán.
+function getCollectedRevenue(c) {
+  const total = (c.frozenData && c.frozenData.totalAmount) || c.totalAmount || 0;
+  return c.status === "Đã hoàn tất" ? Math.max(0, total - getDebt(c)) : total;
+}
+
 function freezeContract(contract) {
   if (contract.frozenData) return;
 
@@ -3515,9 +3546,9 @@ function freezeContract(contract) {
     plate: contract.plate,
     rentDate: contract.rentDate,
     returnDate: contract.returnDate,
-    rentTime: contract.rentTime,
-    returnTime: contract.returnTime,
-    rentDayType: contract.rentDayType,
+    rentTime: contract.rentTime || '',
+    returnTime: contract.returnTime || '',
+    rentDayType: contract.rentDayType || 'cungngay',
     rentHalf: contract.rentHalf || 'full',
     returnHalf: contract.returnHalf || 'full',
     deposit: contract.deposit || 0,
@@ -3647,7 +3678,7 @@ function openHistoryNoteModal(id) {
   if (!contract) return;
   document.getElementById('historyNoteContractId').value = id;
   document.getElementById('historyNoteText').value = contract.historyNote || '';
-  document.getElementById('historyNoteModalTitle').textContent = `Ghi chú lịch sử - ${contract.customer || (contract.frozenData ? contract.frozenData.customer : '')}`;
+  document.getElementById('historyNoteModalTitle').textContent = `Ghi chú - ${contract.customer || (contract.frozenData ? contract.frozenData.customer : '')}`;
   document.getElementById('historyNoteModal').style.display = 'flex';
 }
 
@@ -3728,7 +3759,7 @@ function showActionPopup(id) {
         ${contract.rentDayType === "homtruoc" ? '(tối hôm trước)' : ''}${rentHalfText}<br>
         <strong>Trả:</strong> ${formatDate(contract.returnDate)} ${contract.returnTime || ''}${returnHalfText}<br>
         <strong>Tổng tiền:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(calculateTotal(contract))} ₫</span><br>
-        <strong>Đã thanh toán:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(getPaidAmount(contract))} ₫</span> ${paidLabelHTML(contract)}<br>
+        <strong>Đã thanh toán:</strong> <span style="color:#16a34a;font-weight:600;">${formatMoney(getPaidAmount(contract))} ₫</span><br>
         <strong>Còn lại:</strong> <span style="color:${calculateRemaining(contract) === 0 ? '#16a34a' : '#ea580c'};">${formatMoney(calculateRemaining(contract))} ₫</span>
     `;
     document.getElementById('popupContractInfo').innerHTML = infoHTML;
@@ -4392,7 +4423,7 @@ function renderCompletedContracts() {
 
   filtered.forEach(contract => {
     const d = getCompletedDisplay(contract);  // Luôn dùng frozenData nếu có
-    totalRevenue += d.totalAmount || 0;
+    totalRevenue += Math.max(0, (d.totalAmount || 0) - getDebt(contract));   // chỉ tính tiền đã thu
 
     const typeLabel = d.contractType === 'app' ? 'Đặt qua app' : 'Thuê thường';
     const noteShort = contract.historyNote ? (contract.historyNote.length > 40 ? contract.historyNote.substring(0,40) + '...' : contract.historyNote) : '<small style="color:#94a3b8;">—</small>';
@@ -4410,7 +4441,7 @@ function renderCompletedContracts() {
       <td style="text-align:right;">${formatMoney(d.rentalAmount)} ₫</td>
       <td style="text-align:right;">${formatMoney(Array.isArray(d.extraFees) ? d.extraFees.reduce((s,f)=>s+(f.amount||0),0) : 0)} ₫</td>
       <td style="text-align:right;">${formatMoney(d.discount)} ₫</td>
-      <td style="color:#16a34a;font-weight:700;text-align:right;">${formatMoney(d.totalAmount)} ₫</td>
+      <td style="color:#16a34a;font-weight:700;text-align:right;">${formatMoney(Math.max(0, (d.totalAmount || 0) - getDebt(contract)))} ₫</td>
       <td class="debt-col" style="display:${window._hasDebt ? '' : 'none'};text-align:right;font-weight:700;color:${getDebt(contract) > 0 ? '#dc2626' : '#94a3b8'};">${getDebt(contract) > 0 ? formatMoney(getDebt(contract)) + ' ₫' : (contract.debtAmount ? '<small style="color:#16a34a;">Đã trả hết nợ</small>' : '—')}</td>
       <td>${noteShort}</td>
       <td><button onclick="openHistoryNoteModal(${contract.id}); event.stopImmediatePropagation();" class="btn btn-note" style="padding:8px 12px;">📝 Sửa</button></td>
@@ -4486,7 +4517,7 @@ function printRevenue() {
             <th>Tiền thuê xe</th>
             <th>Phụ phí</th>
             <th>Giảm giá</th>
-            <th>Tổng doanh thu</th>
+            <th>Doanh thu</th>
           </tr>
         </thead>
         <tbody>
@@ -4510,7 +4541,7 @@ function printRevenue() {
         <td style="text-align:right;">${formatMoney(d.rentalAmount)} ₫</td>
         <td style="text-align:right;">${formatMoney(Array.isArray(d.extraFees) ? d.extraFees.reduce((s,f)=>s+(f.amount||0),0) : 0)} ₫</td>
         <td style="text-align:right;">${formatMoney(d.discount)} ₫</td>
-        <td style="font-weight:bold;color:#16a34a;text-align:right;">${formatMoney(d.totalAmount)} ₫</td>
+        <td style="font-weight:bold;color:#16a34a;text-align:right;">${formatMoney(Math.max(0, (d.totalAmount || 0) - getDebt(con)))} ₫</td>
       </tr>`;
   });
 
@@ -4845,11 +4876,11 @@ function finishReturn(contract, isFull, paidNow, remaining) {
     contract.fullPaymentReceived = true;
   } else {
     contract.extraPaid = (contract.extraPaid || 0) + paidNow;
-    const debt = remaining - paidNow;
+    const debt = Math.round(remaining - paidNow);   // làm tròn để không bị nợ lẻ .5 không thu dứt điểm được
     if (debt > 0) {
       contract.debtAmount = debt;
       contract.debtPayments = [];
-      contract.debtDate = new Date().toISOString().split('T')[0];
+      contract.debtDate = todayLocal();
     }
   }
   freezeContract(contract);
@@ -4928,7 +4959,12 @@ function renderDebtList() {
     `Tổng nợ: ${formatMoney(total)} ₫ — ${new Set(list.map(c => (c.phone || c.customer || '').trim())).size} khách`;
 
   const box = document.getElementById('debtList');
-  if (arr.length === 0) { box.innerHTML = '<p style="text-align:center;color:#16a34a;padding:30px;">🎉 Không có khách nào còn nợ</p>'; return; }
+  if (arr.length === 0) {
+    box.innerHTML = term
+      ? '<p style="text-align:center;color:#64748b;padding:30px;">Không tìm thấy khách nợ phù hợp với từ khóa</p>'
+      : '<p style="text-align:center;color:#16a34a;padding:30px;">🎉 Không có khách nào còn nợ</p>';
+    return;
+  }
 
   box.innerHTML = arr.map(g => {
     const sum = g.items.reduce((s, c) => s + getDebt(c), 0);
@@ -4956,19 +4992,44 @@ function renderDebtList() {
   }).join('');
 }
 
-function collectDebt(id, full) {
+let _collectingDebt = false;
+async function collectDebt(id, full) {
+  if (!guardAgainstLock()) return;
+  if (_collectingDebt) return;                       // chống bấm đúp
   const c = contracts.find(x => x.id === id);
-  if (!c) return;
+  if (!c) { showToast('Không tìm thấy hợp đồng!'); return; }
   const debt = getDebt(c);
-  let amt = full ? debt : parseMoney(document.getElementById('debtAmt_' + id).value);
+  if (debt <= 0) { showToast('Hợp đồng này đã hết nợ'); renderDebtList(); return; }
+
+  const input = document.getElementById('debtAmt_' + id);
+  const amt = full ? debt : parseMoney(input ? input.value : '');
   if (amt <= 0) { showToast('Vui lòng nhập số tiền thu'); return; }
   if (amt > debt) { showToast('Số tiền vượt quá số còn nợ!'); return; }
-  c.debtPayments = c.debtPayments || [];
-  c.debtPayments.push({ date: new Date().toISOString().split('T')[0], amount: amt });
-  saveData();
+
+  _collectingDebt = true;
+  const prevPayments = (c.debtPayments || []).slice();
+  c.debtPayments = prevPayments.concat([{ date: todayLocal(), amount: amt }]);
+  let ok = false;
+  try {
+    ok = await saveData();
+  } finally {
+    _collectingDebt = false;
+  }
+
+  if (!ok) {
+    // Lưu thất bại -> hoàn tác, không báo "đã thu" sai sự thật
+    const cur = contracts.find(x => x.id === id);
+    if (cur) cur.debtPayments = prevPayments;
+    renderAll();
+    renderDebtList();
+    showToast('Chưa lưu được khoản thu nợ, vui lòng thử lại!');
+    return;
+  }
+
+  const left = debt - amt;
   renderAll();
   renderDebtList();
-  showToast(getDebt(c) === 0 ? 'Khách đã trả hết nợ!' : `Đã thu ${formatMoney(amt)} ₫. Còn nợ ${formatMoney(getDebt(c))} ₫`);
+  showToast(left <= 0 ? 'Khách đã trả hết nợ!' : `Đã thu ${formatMoney(amt)} ₫. Còn nợ ${formatMoney(left)} ₫`);
 }
 
 function editCar(id) {
@@ -5370,7 +5431,7 @@ function exportRevenueToExcel() {
     [], // dòng trống ngăn cách
     ["STT", "Khách hàng", "SĐT", "Loại xe", "Biển số", "Loại hợp đồng", 
      "Ngày nhận xe", "Ngày trả xe", "Số ngày", "Tiền thuê xe", "Phụ phí", 
-     "Giảm giá", "Tổng doanh thu", "Ghi chú"]
+     "Giảm giá", "Doanh thu", "Ghi chú"]
   ];
   const HEADER_ROW = data.length - 1; // dòng chứa tiêu đề cột
   const DATA_START_ROW = data.length; // dòng bắt đầu dữ liệu
@@ -5382,7 +5443,7 @@ function exportRevenueToExcel() {
     const rental = d.rentalAmount || calculateRentalTotal(con);
     const extra = Array.isArray(d.extraFees) ? d.extraFees.reduce((s, f) => s + (f.amount || 0), 0) : 0;
     const discount = d.discount || 0;
-    const total = d.totalAmount || (rental + extra - discount);
+    const total = Math.max(0, (d.totalAmount || (rental + extra - discount)) - getDebt(con));   // chỉ tính tiền đã thu
     
     totalRevenue += total;
 
@@ -5558,12 +5619,15 @@ function proRenderDashboard() {
 
   const totalRevenue = contracts
     .filter(c => c.status === "Đã hoàn tất")
-    .reduce((sum, c) => sum + (c.frozenData?.totalAmount || 0), 0);
+    .reduce((sum, c) => sum + getCollectedRevenue(c), 0);
+  const totalDebtAll = contracts
+    .filter(c => c.status === "Đã hoàn tất")
+    .reduce((sum, c) => sum + getDebt(c), 0);
 
   document.getElementById('proDashboardContent').innerHTML = `
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap:16px;">
       <div class="pro-stat-card"><h4>Đang xử lý</h4><h2 style="color:#16a34a;">${activeContracts.length}</h2></div>
-      <div class="pro-stat-card"><h4>Tổng doanh thu</h4><h2 style="color:#d97706;">${formatMoney(totalRevenue)} ₫</h2></div>
+      <div class="pro-stat-card"><h4>Tổng doanh thu</h4><h2 style="color:#d97706;">${formatMoney(totalRevenue)} ₫</h2>${totalDebtAll > 0 ? `<small style="color:#dc2626;font-weight:700;">Còn nợ ${formatMoney(totalDebtAll)} ₫</small>` : ''}</div>
       <div class="pro-stat-card"><h4>Tổng khách</h4><h2 style="color:#1e40af;">${new Set(contracts.map(c => c.phone || c.customer)).size}</h2></div>
       <div class="pro-stat-card"><h4>Tổng xe</h4><h2 style="color:#7c3aed;">${proGetAllCars().length}</h2></div>
     </div>
@@ -5578,11 +5642,12 @@ function proGetCustomerData(sortBy = "count") {
     const key = (c.phone || c.customer || '').trim();
     if (!key) return;
     if (!map.has(key)) {
-      map.set(key, { name: c.customer || "Không tên", phone: c.phone || "", count: 0, revenue: 0, lastRent: null });
+      map.set(key, { name: c.customer || "Không tên", phone: c.phone || "", count: 0, revenue: 0, debt: 0, lastRent: null });
     }
     const cust = map.get(key);
     cust.count++;
-    cust.revenue += (c.frozenData?.totalAmount || 0);
+    cust.revenue += getCollectedRevenue(c);
+    cust.debt += getDebt(c);
     if (c.rentDate) {
       const d = new Date(c.rentDate);
       if (!cust.lastRent || d > cust.lastRent) cust.lastRent = d;
@@ -5645,7 +5710,7 @@ function proRenderCustomers() {
           ` : '—'}
         </td>
         <td style="text-align:center;font-weight:700;">${c.count}</td>
-        <td style="color:#16a34a;font-weight:700;">${formatMoney(c.revenue)} ₫</td>
+        <td style="color:#16a34a;font-weight:700;">${formatMoney(c.revenue)} ₫${c.debt > 0 ? `<br><small style="color:#dc2626;font-weight:700;">Còn nợ ${formatMoney(c.debt)} ₫</small>` : ''}</td>
         <td style="cursor:pointer; color:var(--primary);" onclick="proShowCustomerHistory('${phone || c.name}')">${lastRentStr}</td>
         <td>
           <button class="pro-edit-btn" onclick="proOpenEditModal('${phone || c.name}', '${c.name}', '${phone}')">
@@ -5700,13 +5765,14 @@ function proShowCustomerHistory(key) {
 
   let html = `
     <table class="pro-table">
-      <thead><tr><th>Thời gian thuê</th><th>Loại xe</th><th>Biển số</th><th>Số tiền</th><th>Trạng thái</th></tr></thead>
+      <thead><tr><th>Thời gian thuê</th><th>Loại xe</th><th>Biển số</th><th>Doanh thu</th><th>Trạng thái</th></tr></thead>
       <tbody>
   `;
 
   customerContracts.forEach(c => {
     const data = (c.status === "Đã hoàn tất" && c.frozenData) ? c.frozenData : c;
-    const amount = (data.totalAmount || data.frozenData?.totalAmount || 0);
+    const amount = getCollectedRevenue(c);   // chỉ tính tiền đã thu
+    const debtLeft = getDebt(c);
 
     let dateDisplay = '—';
     if (data.rentDate) {
@@ -5731,7 +5797,7 @@ function proShowCustomerHistory(key) {
         <td>${dateDisplay}</td>
         <td>${data.carType || data.type || '—'}</td>
         <td><strong>${data.plate || '—'}</strong></td>
-        <td style="color:#16a34a; font-weight:700;">${formatMoney(amount)} ₫</td>
+        <td style="color:#16a34a; font-weight:700;">${formatMoney(amount)} ₫${debtLeft > 0 ? `<br><small style="color:#dc2626;font-weight:700;">Còn nợ ${formatMoney(debtLeft)} ₫</small>` : ''}</td>
         <td><span style="padding:4px 10px; border-radius:9999px; font-size:0.9rem; background:${c.status === 'Đã hoàn tất' ? '#dcfce7' : '#fef3c7'}; color:${c.status === 'Đã hoàn tất' ? '#166534' : '#b45309'};">${c.status || 'Đang xử lý'}</span></td>
       </tr>
     `;
@@ -5821,7 +5887,7 @@ function proRenderRevenue() {
     });
   }
 
-  const total = filtered.reduce((sum, c) => sum + (c.frozenData?.totalAmount || c.totalAmount || 0), 0);
+  const total = filtered.reduce((sum, c) => sum + getCollectedRevenue(c), 0);
 
   if (selectedCar) {
     proRenderRevenueChartByCar(filtered, selectedCar);
@@ -5829,7 +5895,11 @@ function proRenderRevenue() {
     proRenderRevenueChartTotal(filtered, year);
   }
 
+  const totalDebtFiltered = filtered.reduce((sum, c) => sum + getDebt(c), 0);
   let html = `<h3>Tổng doanh thu: <strong style="color:#16a34a; font-size: 2rem;">${formatMoney(total)} ₫</strong></h3>`;
+  if (totalDebtFiltered > 0) {
+    html += `<p style="color:#dc2626;font-weight:700;margin:-6px 0 14px;">Khách còn nợ chưa tính vào doanh thu: ${formatMoney(totalDebtFiltered)} ₫</p>`;
+  }
 
   if (selectedCar) {
     const carInfo = proGetAllCars().find(c => c.plate.toUpperCase().trim() === selectedCar.toUpperCase().trim());
@@ -5838,12 +5908,12 @@ function proRenderRevenue() {
     html += `<table class="pro-table"><thead><tr><th>Ngày</th><th>Khách hàng</th><th>Loại xe</th><th>Số tiền</th></tr></thead><tbody>`;
     filtered.sort((a, b) => new Date(b.rentDate) - new Date(a.rentDate)).forEach(c => {
       const data = (c.status === "Đã hoàn tất" && c.frozenData) ? c.frozenData : c;
-      const amount = c.frozenData?.totalAmount || c.totalAmount || 0;
+      const amount = getCollectedRevenue(c);
       html += `<tr>
         <td>${new Date(c.rentDate).toLocaleDateString('vi-VN', {timeZone:'Asia/Ho_Chi_Minh'})}</td>
         <td>${c.customer || '—'}</td>
         <td>${data.carType || data.type || '—'}</td>
-        <td style="color:#16a34a;font-weight:700;">${formatMoney(amount)} ₫</td>
+        <td style="color:#16a34a;font-weight:700;">${formatMoney(amount)} ₫${getDebt(c) > 0 ? `<br><small style="color:#dc2626;font-weight:700;">Còn nợ ${formatMoney(getDebt(c))} ₫</small>` : ''}</td>
       </tr>`;
     });
   } else {
@@ -5856,19 +5926,20 @@ function proRenderRevenue() {
       const key = plate.toUpperCase().trim();
       if (!byCar[key]) {
         byCar[key] = {
-          plate: plate, revenue: 0,
+          plate: plate, revenue: 0, debt: 0,
           type: (c.frozenData?.carType || c.carType || c.type || '—'),
           isDeleted: !cars.some(car => car.plate && car.plate.toUpperCase().trim() === key)
         };
       }
-      byCar[key].revenue += (c.frozenData?.totalAmount || c.totalAmount || 0);
+      byCar[key].revenue += getCollectedRevenue(c);
+      byCar[key].debt += getDebt(c);
     });
     Object.values(byCar).sort((a, b) => b.revenue - a.revenue).forEach(data => {
       const note = data.isDeleted ? `<span style="color:#ef4444;">(xe đã xoá)</span>` : '';
       html += `<tr>
         <td><strong>${data.plate}</strong></td>
         <td>${data.type}</td>
-        <td style="color:#16a34a;font-weight:700;">${formatMoney(data.revenue)} ₫</td>
+        <td style="color:#16a34a;font-weight:700;">${formatMoney(data.revenue)} ₫${data.debt > 0 ? `<br><small style="color:#dc2626;font-weight:700;">Còn nợ ${formatMoney(data.debt)} ₫</small>` : ''}</td>
         <td>${note}</td>
       </tr>`;
     });
@@ -5883,7 +5954,7 @@ function proRenderRevenueChartTotal(filtered, year) {
   const byMonth = Array(12).fill(0);
   filtered.forEach(c => {
     const m = new Date(c.rentDate).getMonth();
-    byMonth[m] += c.frozenData?.totalAmount || 0;
+    byMonth[m] += getCollectedRevenue(c);
   });
 
   proRevenueChartInstance = new Chart(document.getElementById('proRevenueChart'), {
@@ -5901,7 +5972,7 @@ function proRenderRevenueChartByCar(filtered, car) {
   const byMonth = Array(12).fill(0);
   filtered.forEach(c => {
     const m = new Date(c.rentDate).getMonth();
-    byMonth[m] += c.frozenData?.totalAmount || c.totalAmount || 0;
+    byMonth[m] += getCollectedRevenue(c);
   });
 
   proRevenueChartInstance = new Chart(document.getElementById('proRevenueChart'), {
