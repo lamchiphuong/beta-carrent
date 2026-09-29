@@ -1420,6 +1420,104 @@ input:focus, select:focus, textarea:focus {
 #toast {
   box-shadow: 0 12px 32px rgba(0,0,0,0.35);
 }
+
+/* =====================================================================
+   [UI] Style tên khách hàng (Quản lý hợp đồng) + animation pop-up + đổi tab
+   Không thay đổi logic màu trạng thái của hàng.
+   ===================================================================== */
+
+/* --- 1) Đầu mỗi hàng: vạch xanh bo góc (toàn bộ chiều cao hàng) ---
+   Đổi 2 bảng sang border-collapse: separate để bo góc được.
+   Màu trạng thái chuyển từ <tr> xuống <td> -> giữ NGUYÊN màu & logic cũ. */
+#activeContractTable, #completedContractTable {
+  border-collapse: separate; border-spacing: 0 8px;   /* khoảng trống giữa các hàng */
+}
+#activeContractTable td, #completedContractTable td {
+  background: #f8fafc;               /* hàng thường: nền nhạt để tách khỏi nền thẻ */
+  border-bottom: none;               /* bỏ đường kẻ, đã có khoảng trống */
+}
+#activeContractTable td:last-child, #completedContractTable td:last-child { border-radius: 0 12px 12px 0; }
+#activeContractTable th:last-child, #completedContractTable th:last-child { border-radius: 0 12px 12px 0; }
+#activeContractTable tr, #completedContractTable tr { background: transparent !important; }
+
+#activeContractTable tr.waiting-today td      { background: #d1fae5 !important; }
+#activeContractTable tr.due-today td          { background: #fef3c7 !important; }
+#activeContractTable tr.overdue td            { background: #fee2e2 !important; }
+#activeContractTable tr.dang-thue-normal td   { background: #dbeafe !important; }
+/* hover: như cũ, các ô (trừ ô đầu) chuyển xám nhạt */
+#activeContractTable tbody tr:hover td:not(:first-child),
+#completedContractTable tbody tr:hover td:not(:first-child) { background: #f1f5f9 !important; }
+
+#activeContractTable td:first-child,
+#completedContractTable td:first-child {
+  background: #f8fafc;   /* cùng màu với các ô còn lại (ghi đè nền trắng cũ của cột cố định) */
+  border-radius: 12px 0 0 12px;
+  box-shadow: inset 5px 0 0 var(--primary) !important;   /* vạch xanh, tự bo theo góc */
+  padding-left: 18px;
+}
+#activeContractTable th:first-child,
+#completedContractTable th:first-child { border-radius: 12px 0 0 12px; padding-left: 18px; }
+@media (max-width: 768px) {
+  #activeContractTable, #completedContractTable { border-spacing: 0 6px; }
+  #activeContractTable td:first-child, #completedContractTable td:first-child { padding-left: 13px; }
+  #activeContractTable th:first-child, #completedContractTable th:first-child { padding-left: 13px; }
+}
+
+/* --- 2) Pop-up: zoom in khi mở, zoom out khi đóng --- */
+@keyframes uiZoomIn {
+  0%   { transform: scale(.82); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+@keyframes uiZoomOut {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(.82); opacity: 0; }
+}
+@keyframes uiFadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes uiFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+.modal, .action-popup, .pro-modal-overlay { animation: uiFadeIn .25s ease both; }
+.modal-content, .action-popup-content, .pro-modal-overlay > .pro-modal-box {
+  animation: uiZoomIn .3s cubic-bezier(.22,1,.36,1) both;
+}
+.modal.is-closing, .action-popup.is-closing, .pro-modal-overlay.is-closing {
+  animation: uiFadeOut .24s ease forwards;
+  pointer-events: none;
+}
+.modal.is-closing > .modal-content,
+.action-popup.is-closing > .action-popup-content,
+.pro-modal-overlay.is-closing > .pro-modal-box {
+  animation: uiZoomOut .24s cubic-bezier(.4,0,1,1) forwards;
+}
+
+/* --- 3) Đổi tab: thanh nền trượt + nội dung trượt vào --- */
+.tabs { position: relative; }
+.tabs .tab { position: relative; z-index: 1; }
+.tabs .tab.active { background: transparent; box-shadow: none; }
+.tab-indicator {
+  position: absolute; top: 0; left: 0; z-index: 0;
+  width: 0; height: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  box-shadow: 0 6px 16px rgba(37,99,235,0.35), 0 2px 4px rgba(37,99,235,0.2);
+  pointer-events: none;
+}
+.tab-indicator.ready {
+  transition: transform .38s cubic-bezier(.22,1,.36,1),
+              width .38s cubic-bezier(.22,1,.36,1),
+              height .38s cubic-bezier(.22,1,.36,1);
+}
+@keyframes tabSlideFromRight { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
+@keyframes tabSlideFromLeft  { from { opacity: 0; transform: translateX(-36px); } to { opacity: 1; transform: none; } }
+.tab-enter-right { animation: tabSlideFromRight .4s cubic-bezier(.22,1,.36,1) both; }
+.tab-enter-left  { animation: tabSlideFromLeft  .4s cubic-bezier(.22,1,.36,1) both; }
+body { overflow-x: clip; }
+
+@media (prefers-reduced-motion: reduce) {
+  .modal, .action-popup, .pro-modal-overlay,
+  .modal-content, .action-popup-content, .pro-modal-overlay > .pro-modal-box,
+  .tab-enter-right, .tab-enter-left { animation: none !important; }
+  .tab-indicator.ready { transition: none; }
+}
   </style>
 </head>
 <body>
@@ -2390,7 +2488,7 @@ input:focus, select:focus, textarea:focus {
   </div>
 
   <div class="version">
-    CarRent v2.4 - (2026) 
+    CarRent v2.5 - (2026) 
   </div>
 
   <!-- Loading Overlay -->
@@ -3595,7 +3693,6 @@ function showActionPopup(id) {
 function closeActionPopup() {
     const popup = document.getElementById('actionPopup');
     popup.style.display = 'none';
-    popup.style.opacity = '0';
     popup.style.zIndex = '2500';
     currentActionContractId = null;
 }
@@ -4337,6 +4434,8 @@ function renderAll() {
   renderCompletedContracts();
 }
 
+let currentTabIndex = 0;
+
 function switchTab(tab) {
     // Active tab
     document.querySelectorAll('.tab').forEach((t, i) => {
@@ -4368,6 +4467,18 @@ function switchTab(tab) {
         else if (tab === 1) document.getElementById('tab1').style.display = 'block';
         else if (tab === 2) document.getElementById('tab2').style.display = 'block';
     }
+
+    // === Hiệu ứng di chuyển khi đổi tab ===
+    if (tab !== currentTabIndex) {
+        const el = document.getElementById('tab' + tab);
+        if (el) {
+            el.classList.remove('tab-enter-left', 'tab-enter-right');
+            void el.offsetWidth; // restart animation
+            el.classList.add(tab > currentTabIndex ? 'tab-enter-right' : 'tab-enter-left');
+        }
+    }
+    currentTabIndex = tab;
+    if (typeof positionTabIndicator === 'function') positionTabIndicator();
 }
 
 function goBackToHome() {
@@ -5106,7 +5217,7 @@ async function initApp() {
     checkProAccess();
   }
 
-  console.log("🚀 CarRent v2.4 (chọn xe ngoài + đổi xe + đăng nhập)");
+  console.log("🚀 CarRent v2.5 (chọn xe ngoài + đổi xe + đăng nhập)");
 }
 
 function formatPriceInput(e) {
@@ -5873,6 +5984,87 @@ function viewContractFromPopup() {
   }
 }
 
+</script>
+
+<script>
+/* ===== [UI] Animation pop-up (zoom out khi đóng) + thanh trượt tab ===== */
+(function () {
+  // --- Pop-up: khi display bị đặt thành 'none' -> giữ lại, chạy zoom out rồi mới ẩn thật ---
+  // Dùng MutationObserver theo dõi thuộc tính style nên không phụ thuộc trình duyệt
+  // và không cần sửa từng hàm đóng pop-up.
+  const CLOSE_MS = 240;
+  const isVis = v => !!v && v !== 'none';
+
+  function enhance(el) {
+    if (el.__animPopup) return;
+    el.__animPopup = true;
+    let closing = false, timer = null;
+    let wasVisible = isVis(el.style.display);
+    let lastDisplay = wasVisible ? el.style.display : 'flex';
+
+    const mo = new MutationObserver(() => {
+      if (closing) return;                       // đang chạy zoom out: bỏ qua
+      const d = el.style.display;
+      if (isVis(d)) { wasVisible = true; lastDisplay = d; return; }
+      if (!wasVisible) return;                   // vốn đang ẩn
+      // Vừa bị đóng -> giữ hiển thị, chạy zoom out, rồi ẩn thật
+      closing = true;
+      el.style.display = lastDisplay;
+      el.classList.add('is-closing');
+      mo.takeRecords();
+      timer = setTimeout(() => {
+        el.classList.remove('is-closing');
+        el.style.display = 'none';
+        mo.takeRecords();
+        closing = false; wasVisible = false; timer = null;
+      }, CLOSE_MS);
+    });
+    mo.observe(el, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  const SEL = '.modal, .action-popup, .pro-modal-overlay';
+  function init() {
+    document.querySelectorAll(SEL).forEach(enhance);
+    // Pop-up được tạo động về sau cũng tự có hiệu ứng
+    new MutationObserver(muts => {
+      muts.forEach(m => m.addedNodes.forEach(n => {
+        if (n.nodeType !== 1) return;
+        if (n.matches && n.matches(SEL)) enhance(n);
+        n.querySelectorAll && n.querySelectorAll(SEL).forEach(enhance);
+      }));
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
+  // --- Thanh nền trượt dưới tab đang chọn ---
+  let indicator = null, placed = false;
+  window.positionTabIndicator = function () {
+    const tabs = document.querySelector('.tabs');
+    if (!tabs) return;
+    if (!indicator) {
+      indicator = document.createElement('span');
+      indicator.className = 'tab-indicator';
+      tabs.insertBefore(indicator, tabs.firstChild);
+    }
+    const active = tabs.querySelector('.tab.active');
+    if (!active || !active.offsetWidth) return;         // tabs đang bị ẩn
+    indicator.style.width  = active.offsetWidth  + 'px';
+    indicator.style.height = active.offsetHeight + 'px';
+    indicator.style.transform = 'translate(' + active.offsetLeft + 'px,' + active.offsetTop + 'px)';
+    if (!placed) { placed = true; requestAnimationFrame(() => indicator.classList.add('ready')); }
+  };
+
+  function initTabs() {
+    window.positionTabIndicator();
+    const tabs = document.querySelector('.tabs');
+    if (tabs && window.ResizeObserver) new ResizeObserver(() => window.positionTabIndicator()).observe(tabs);
+    window.addEventListener('resize', window.positionTabIndicator);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(window.positionTabIndicator);
+  }
+
+  function boot() { init(); initTabs(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
 </script>
 </body>
 </html>
